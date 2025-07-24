@@ -91,10 +91,16 @@ namespace RestaurantManagement.Models
         public string Unit { get; set; } = string.Empty;
         public decimal CurrentStock { get; set; }
         public decimal MinStock { get; set; }
+        public decimal MaxStock { get; set; }
         public decimal UnitPrice { get; set; }
         public int? SupplierID { get; set; }
+        public int? StaffID { get; set; }
+        public int? StoreID { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string? StorageLocation { get; set; }
         public DateTime? LastInTime { get; set; }
         public decimal? LastInQuantity { get; set; }
+        public DateTime? ExpiryDate { get; set; }
     }
 
     // 供应商

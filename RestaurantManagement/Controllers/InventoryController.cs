@@ -15,6 +15,20 @@ namespace RestaurantManagement.Controllers
             _inventoryService = inventoryService;
         }
 
+        [HttpGet("test")]
+        public async Task<IActionResult> TestConnection()
+        {
+            try
+            {
+                var count = await _inventoryService.GetMaterialCountAsync();
+                return Ok(new { message = "数据库连接成功", materialCount = count });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
         [HttpGet("materials")]
         public async Task<IActionResult> GetAllMaterials()
         {
