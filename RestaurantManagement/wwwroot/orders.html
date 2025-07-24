@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单管理 - 餐饮管理系统</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <h1>餐饮管理系统</h1>
+        <div class="nav-links">
+            <a href="index.html">首页</a>
+            <a href="tables.html">桌台管理</a>
+            <a href="orders.html" class="active">订单管理</a>
+            <a href="menu.html">菜单管理</a>
+            <a href="staff.html">员工管理</a>
+            <a href="inventory.html">库存管理</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="main-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2>订单管理</h2>
+                <div>
+                    <button onclick="refreshOrders()" class="btn btn-secondary">刷新数据</button>
+                    <button onclick="exportOrders()" class="btn btn-primary">导出报表</button>
+                </div>
+            </div>
+
+            <!-- 统计卡片 -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-orders">0</div>
+                    <div class="stat-label">总订单数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="today-orders">0</div>
+                    <div class="stat-label">今日订单</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="active-orders">0</div>
+                    <div class="stat-label">进行中订单</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="today-revenue">¥0</div>
+                    <div class="stat-label">今日营业额</div>
+                </div>
+            </div>
+
+            <!-- 搜索和过滤器 -->
+            <div class="card">
+                <h3>订单查询</h3>
+                <div class="search-filters">
+                    <div class="form-group">
+                        <label for="dateRange">日期范围:</label>
+                        <select id="dateRange" class="form-control" onchange="filterOrders()">
+                            <option value="today">今天</option>
+                            <option value="yesterday">昨天</option>
+                            <option value="week">本周</option>
+                            <option value="month">本月</option>
+                            <option value="all">全部</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="statusFilter">订单状态:</label>
+                        <select id="statusFilter" class="form-control" onchange="filterOrders()">
+                            <option value="all">全部状态</option>
+                            <option value="进行中">进行中</option>
+                            <option value="已结账">已结账</option>
+                            <option value="已取消">已取消</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tableFilter">桌台号:</label>
+                        <input type="text" id="tableFilter" class="form-control" placeholder="输入桌台号" onkeyup="filterOrders()">
+                    </div>
+                    <div class="form-group">
+                        <label for="orderSearch">订单号搜索:</label>
+                        <input type="text" id="orderSearch" class="form-control" placeholder="输入订单号" onkeyup="filterOrders()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 订单列表 -->
+            <div class="card">
+                <h3>订单列表</h3>
+                <div style="overflow-x: auto;">
+                    <table class="table" id="ordersTable">
+                        <thead>
+                            <tr>
+                                <th>订单号</th>
+                                <th>桌台号</th>
+                                <th>下单时间</th>
+                                <th>服务员</th>
+                                <th>订单状态</th>
+                                <th>总金额</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTableBody">
+                            <!-- 订单数据将通过JavaScript动态填充 -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 分页 -->
+                <div class="pagination" id="pagination">
+                    <!-- 分页按钮将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 订单详情模态框 -->
+    <div id="orderDetailModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 id="orderDetailTitle">订单详情</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body" id="orderDetailBody">
+                <!-- 订单详情内容将通过JavaScript动态填充 -->
+            </div>
+            <div class="modal-footer">
+                <button onclick="Utils.hideModal('orderDetailModal')" class="btn btn-secondary">关闭</button>
+                <button id="printOrderBtn" onclick="printOrder()" class="btn btn-primary">打印小票</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加菜模态框 -->
+    <div id="addDishModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>为订单加菜</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="dishSelect">选择菜品:</label>
+                    <select id="dishSelect" class="form-control" required>
+                        <option value="">请选择菜品</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="dishQuantity">数量:</label>
+                    <input type="number" id="dishQuantity" class="form-control" min="1" value="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="specialRequests">特殊要求:</label>
+                    <textarea id="specialRequests" class="form-control" rows="3" placeholder="如：不要辣、多放香菜等"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="Utils.hideModal('addDishModal')" class="btn btn-secondary">取消</button>
+                <button onclick="confirmAddDish()" class="btn btn-primary">确认加菜</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/common.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        let allOrders = [];
+        let filteredOrders = [];
+        let currentPage = 1;
+        const pageSize = 10;
+        let currentOrderId = null;
+        let dishes = [];
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadOrders();
+            loadDishes();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // 模态框关闭事件
+            document.querySelectorAll('.close').forEach(closeBtn => {
+                closeBtn.onclick = function() {
+                    const modal = this.closest('.modal');
+                    if (modal) {
+                        modal.style.display = 'none';
+                    }
+                };
+            });
+        }
+
+        async function loadOrders() {
+            try {
+                allOrders = await API.get('/orders');
+                filteredOrders = [...allOrders];
+                renderOrdersTable();
+                updateStatistics();
+            } catch (error) {
+                console.error('加载订单数据失败:', error);
+                Utils.showNotification('加载订单数据失败', 'error');
+            }
+        }
+
+        async function loadDishes() {
+            try {
+                const dishData = await API.get('/menu/dishes');
+                dishes = dishData.filter(d => d.isAvailable);
+                populateDishSelect();
+            } catch (error) {
+                console.error('加载菜品数据失败:', error);
+            }
+        }
+
+        function populateDishSelect() {
+            const select = document.getElementById('dishSelect');
+            select.innerHTML = '<option value="">请选择菜品</option>';
+            
+            dishes.forEach(dish => {
+                const option = document.createElement('option');
+                option.value = dish.dishID;
+                option.textContent = `${dish.dishName} - ${Utils.formatCurrency(dish.price)}`;
+                option.dataset.price = dish.price;
+                select.appendChild(option);
+            });
+        }
+
+        function renderOrdersTable() {
+            const tbody = document.getElementById('ordersTableBody');
+            tbody.innerHTML = '';
+
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+            const pageOrders = filteredOrders.slice(startIndex, endIndex);
+
+            if (pageOrders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #666;">暂无订单数据</td></tr>';
+                return;
+            }
+
+            pageOrders.forEach(order => {
+                const row = document.createElement('tr');
+                const statusInfo = Utils.getStatusInfo(order.orderStatus, 'order');
+                
+                row.innerHTML = `
+                    <td>${order.orderID}</td>
+                    <td>桌台${order.tableID || '-'}</td>
+                    <td>${Utils.formatDateTime(order.orderTime)}</td>
+                    <td>${getStaffName(order.staffID)}</td>
+                    <td><span class="status-badge ${statusInfo.class}">${statusInfo.text}</span></td>
+                    <td>${Utils.formatCurrency(order.totalAmount)}</td>
+                    <td>
+                        <button onclick="viewOrderDetails(${order.orderID})" class="btn btn-primary" style="margin-right: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">详情</button>
+                        ${order.orderStatus === '进行中' ? `
+                            <button onclick="showAddDishModal(${order.orderID})" class="btn btn-secondary" style="margin-right: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">加菜</button>
+                            <button onclick="checkoutOrder(${order.orderID})" class="btn btn-success" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">结账</button>
+                        ` : ''}
+                        ${order.orderStatus === '进行中' ? `
+                            <button onclick="cancelOrder(${order.orderID})" class="btn btn-danger" style="margin-left: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">取消</button>
+                        ` : ''}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            renderPagination();
+        }
+
+        function renderPagination() {
+            const pagination = document.getElementById('pagination');
+            const totalPages = Math.ceil(filteredOrders.length / pageSize);
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '';
+            
+            // 上一页按钮
+            paginationHTML += `<button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>上一页</button>`;
+            
+            // 页码按钮
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === currentPage) {
+                    paginationHTML += `<button class="active">${i}</button>`;
+                } else {
+                    paginationHTML += `<button onclick="changePage(${i})">${i}</button>`;
+                }
+            }
+            
+            // 下一页按钮
+            paginationHTML += `<button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>下一页</button>`;
+            
+            pagination.innerHTML = paginationHTML;
+        }
+
+        function changePage(page) {
+            const totalPages = Math.ceil(filteredOrders.length / pageSize);
+            if (page < 1 || page > totalPages) return;
+            
+            currentPage = page;
+            renderOrdersTable();
+        }
+
+        function filterOrders() {
+            const dateRange = document.getElementById('dateRange').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const tableFilter = document.getElementById('tableFilter').value.trim();
+            const orderSearch = document.getElementById('orderSearch').value.trim();
+
+            filteredOrders = allOrders.filter(order => {
+                // 日期过滤
+                const orderDate = new Date(order.orderTime);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                let dateMatch = true;
+                if (dateRange === 'today') {
+                    const orderDateOnly = new Date(orderDate);
+                    orderDateOnly.setHours(0, 0, 0, 0);
+                    dateMatch = orderDateOnly.getTime() === today.getTime();
+                } else if (dateRange === 'yesterday') {
+                    const yesterday = new Date(today);
+                    yesterday.setDate(today.getDate() - 1);
+                    const orderDateOnly = new Date(orderDate);
+                    orderDateOnly.setHours(0, 0, 0, 0);
+                    dateMatch = orderDateOnly.getTime() === yesterday.getTime();
+                } else if (dateRange === 'week') {
+                    const weekAgo = new Date(today);
+                    weekAgo.setDate(today.getDate() - 7);
+                    dateMatch = orderDate >= weekAgo;
+                } else if (dateRange === 'month') {
+                    const monthAgo = new Date(today);
+                    monthAgo.setMonth(today.getMonth() - 1);
+                    dateMatch = orderDate >= monthAgo;
+                }
+
+                // 状态过滤
+                const statusMatch = statusFilter === 'all' || order.orderStatus === statusFilter;
+
+                // 桌台过滤
+                const tableMatch = !tableFilter || (order.tableID && order.tableID.toString().includes(tableFilter));
+
+                // 订单号搜索
+                const orderMatch = !orderSearch || order.orderID.toString().includes(orderSearch);
+
+                return dateMatch && statusMatch && tableMatch && orderMatch;
+            });
+
+            currentPage = 1;
+            renderOrdersTable();
+        }
+
+        function updateStatistics() {
+            const totalOrders = allOrders.length;
+            const today = new Date().toDateString();
+            const todayOrders = allOrders.filter(o => new Date(o.orderTime).toDateString() === today);
+            const activeOrders = allOrders.filter(o => o.orderStatus === '进行中');
+            const todayRevenue = todayOrders
+                .filter(o => o.orderStatus === '已结账')
+                .reduce((sum, o) => sum + o.totalAmount, 0);
+
+            document.getElementById('total-orders').textContent = totalOrders;
+            document.getElementById('today-orders').textContent = todayOrders.length;
+            document.getElementById('active-orders').textContent = activeOrders.length;
+            document.getElementById('today-revenue').textContent = Utils.formatCurrency(todayRevenue);
+        }
+
+        function getStaffName(staffId) {
+            // TODO: 从员工数据中获取员工姓名
+            return staffId ? `员工${staffId}` : '-';
+        }
+
+        async function viewOrderDetails(orderId) {
+            try {
+                const order = await API.get(`/orders/${orderId}`);
+                const details = await API.get(`/orders/${orderId}/details`);
+
+                document.getElementById('orderDetailTitle').textContent = `订单详情 - ${orderId}`;
+                
+                const statusInfo = Utils.getStatusInfo(order.orderStatus, 'order');
+                let detailsHTML = `
+                    <div style="margin-bottom: 1.5rem;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                            <div><strong>订单号:</strong> ${order.orderID}</div>
+                            <div><strong>桌台号:</strong> ${order.tableID ? '桌台' + order.tableID : '-'}</div>
+                            <div><strong>下单时间:</strong> ${Utils.formatDateTime(order.orderTime)}</div>
+                            <div><strong>服务员:</strong> ${getStaffName(order.staffID)}</div>
+                            <div><strong>订单状态:</strong> <span class="status-badge ${statusInfo.class}">${statusInfo.text}</span></div>
+                            <div><strong>总金额:</strong> <span style="color: #e74c3c; font-size: 1.2rem; font-weight: bold;">${Utils.formatCurrency(order.totalAmount)}</span></div>
+                        </div>
+                        ${order.notes ? `<div style="margin-top: 1rem;"><strong>备注:</strong> ${order.notes}</div>` : ''}
+                    </div>
+
+                    <h4 style="margin-bottom: 1rem; border-bottom: 1px solid #dee2e6; padding-bottom: 0.5rem;">菜品明细</h4>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>菜品名称</th>
+                                <th>数量</th>
+                                <th>单价</th>
+                                <th>小计</th>
+                                <th>特殊要求</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${details.map(d => `
+                                <tr>
+                                    <td>${d.dishName}</td>
+                                    <td>${d.quantity}</td>
+                                    <td>${Utils.formatCurrency(d.unitPrice)}</td>
+                                    <td>${Utils.formatCurrency(d.subtotal)}</td>
+                                    <td>${d.specialRequests || '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                        <tfoot>
+                            <tr style="font-weight: bold; background-color: #f8f9fa;">
+                                <td colspan="3" style="text-align: right;">总计:</td>
+                                <td>${Utils.formatCurrency(order.totalAmount)}</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                `;
+
+                document.getElementById('orderDetailBody').innerHTML = detailsHTML;
+                Utils.showModal('orderDetailModal');
+            } catch (error) {
+                console.error('获取订单详情失败:', error);
+                Utils.showNotification('获取订单详情失败', 'error');
+            }
+        }
+
+        function showAddDishModal(orderId) {
+            currentOrderId = orderId;
+            document.getElementById('dishQuantity').value = 1;
+            document.getElementById('specialRequests').value = '';
+            document.getElementById('dishSelect').value = '';
+            Utils.showModal('addDishModal');
+        }
+
+        async function confirmAddDish() {
+            const dishId = document.getElementById('dishSelect').value;
+            const quantity = parseInt(document.getElementById('dishQuantity').value);
+            const specialRequests = document.getElementById('specialRequests').value;
+
+            if (!dishId || !quantity) {
+                Utils.showNotification('请选择菜品并输入数量', 'warning');
+                return;
+            }
+
+            try {
+                const selectedOption = document.querySelector(`#dishSelect option[value="${dishId}"]`);
+                const unitPrice = parseFloat(selectedOption.dataset.price);
+
+                const orderDetail = {
+                    dishID: parseInt(dishId),
+                    quantity: quantity,
+                    unitPrice: unitPrice,
+                    specialRequests: specialRequests || null
+                };
+
+                await API.post(`/orders/${currentOrderId}/details`, orderDetail);
+                
+                Utils.showNotification('加菜成功', 'success');
+                Utils.hideModal('addDishModal');
+                
+                // 刷新订单列表
+                await loadOrders();
+
+            } catch (error) {
+                console.error('加菜失败:', error);
+                Utils.showNotification('加菜失败', 'error');
+            }
+        }
+
+        async function checkoutOrder(orderId) {
+            if (!Utils.showConfirm('确认要为此订单结账吗？')) {
+                return;
+            }
+
+            try {
+                await API.put(`/orders/${orderId}/checkout`);
+                Utils.showNotification('结账成功', 'success');
+                await loadOrders();
+            } catch (error) {
+                console.error('结账失败:', error);
+                Utils.showNotification('结账失败', 'error');
+            }
+        }
+
+        async function cancelOrder(orderId) {
+            if (!Utils.showConfirm('确认要取消此订单吗？')) {
+                return;
+            }
+
+            try {
+                await API.put(`/orders/${orderId}/cancel`);
+                Utils.showNotification('订单已取消', 'success');
+                await loadOrders();
+            } catch (error) {
+                console.error('取消订单失败:', error);
+                Utils.showNotification('取消订单失败', 'error');
+            }
+        }
+
+        function printOrder() {
+            const printContent = document.getElementById('orderDetailBody').innerHTML;
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>订单小票</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; font-size: 12px; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                        th { background-color: #f2f2f2; }
+                        .status-badge { padding: 2px 6px; border-radius: 3px; }
+                    </style>
+                </head>
+                <body>
+                    <h2 style="text-align: center;">餐厅订单小票</h2>
+                    ${printContent}
+                    <div style="text-align: center; margin-top: 20px;">
+                        <p>感谢您的光临！</p>
+                        <p>打印时间: ${new Date().toLocaleString('zh-CN')}</p>
+                    </div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        async function refreshOrders() {
+            Utils.showNotification('正在刷新...', 'info');
+            await loadOrders();
+            Utils.showNotification('刷新完成', 'success');
+        }
+
+        function exportOrders() {
+            Utils.showNotification('导出功能待实现', 'info');
+        }
+    </script>
+</body>
+</html>

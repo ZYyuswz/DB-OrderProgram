@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 餐饮管理系统</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 3rem;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-logo {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .login-title {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .login-subtitle {
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .login-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .demo-accounts {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+
+        .demo-accounts h4 {
+            margin: 0 0 1rem 0;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        .demo-account {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .demo-account:hover {
+            background-color: #e9ecef;
+        }
+
+        .demo-account:last-child {
+            margin-bottom: 0;
+        }
+
+        .account-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .account-name {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .account-role {
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        .use-account-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .use-account-btn:hover {
+            background: #5a6fd8;
+        }
+
+        .error-message {
+            color: #dc3545;
+            background: #f8d7da;
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            margin: 0 auto;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer-info {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e1e5e9;
+            color: #666;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-logo">🍽️</div>
+            <h1 class="login-title">餐饮管理系统</h1>
+            <p class="login-subtitle">请使用管理员账号登录</p>
+
+            <div id="errorMessage" class="error-message"></div>
+
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label for="username">用户名</label>
+                    <input type="text" id="username" name="username" required autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <input type="password" id="password" name="password" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="login-btn" id="loginBtn">
+                    <span id="loginBtnText">登录</span>
+                    <div id="loginLoading" class="loading"></div>
+                </button>
+            </form>
+
+            <!-- 演示账号 -->
+            <div class="demo-accounts">
+                <h4>💡 演示账号（点击快速填入）</h4>
+                
+                <div class="demo-account" onclick="fillAccount('admin', 'admin123')">
+                    <div class="account-info">
+                        <div class="account-name">admin</div>
+                        <div class="account-role">超级管理员</div>
+                    </div>
+                    <button type="button" class="use-account-btn">使用</button>
+                </div>
+
+                <div class="demo-account" onclick="fillAccount('manager', 'manager123')">
+                    <div class="account-info">
+                        <div class="account-name">manager</div>
+                        <div class="account-role">店长</div>
+                    </div>
+                    <button type="button" class="use-account-btn">使用</button>
+                </div>
+
+                <div class="demo-account" onclick="fillAccount('cashier', 'cashier123')">
+                    <div class="account-info">
+                        <div class="account-name">cashier</div>
+                        <div class="account-role">收银员</div>
+                    </div>
+                    <button type="button" class="use-account-btn">使用</button>
+                </div>
+            </div>
+
+            <div class="footer-info">
+                <p>🔒 系统采用安全登录验证</p>
+                <p>如需帮助，请联系系统管理员</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 预定义的管理员账号
+        const adminAccounts = {
+            'admin': {
+                password: 'admin123',
+                role: '超级管理员',
+                permissions: ['all']
+            },
+            'manager': {
+                password: 'manager123',
+                role: '店长',
+                permissions: ['staff', 'inventory', 'menu', 'tables', 'orders', 'reports']
+            },
+            'cashier': {
+                password: 'cashier123',
+                role: '收银员',
+                permissions: ['tables', 'orders', 'basic-reports']
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查是否已经登录
+            checkLoginStatus();
+
+            // 绑定登录表单提交事件
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+
+            // 焦点到用户名输入框
+            document.getElementById('username').focus();
+        });
+
+        function checkLoginStatus() {
+            const currentUser = sessionStorage.getItem('currentUser');
+            if (currentUser) {
+                // 已登录，直接跳转到主页
+                window.location.href = 'index.html';
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                showError('请输入用户名和密码');
+                return;
+            }
+
+            // 显示加载状态
+            setLoading(true);
+            hideError();
+
+            // 模拟网络延迟
+            await new Promise(resolve => setTimeout(resolve, 800));
+
+            // 验证账号密码
+            if (validateCredentials(username, password)) {
+                // 登录成功
+                const userInfo = {
+                    username: username,
+                    role: adminAccounts[username].role,
+                    permissions: adminAccounts[username].permissions,
+                    loginTime: new Date().toISOString()
+                };
+
+                // 保存登录状态
+                sessionStorage.setItem('currentUser', JSON.stringify(userInfo));
+                sessionStorage.setItem('loginTime', new Date().toISOString());
+
+                // 显示成功消息并跳转
+                showSuccess('登录成功，正在跳转...');
+                
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+
+            } else {
+                // 登录失败
+                showError('用户名或密码错误');
+                setLoading(false);
+            }
+        }
+
+        function validateCredentials(username, password) {
+            const account = adminAccounts[username];
+            return account && account.password === password;
+        }
+
+        function fillAccount(username, password) {
+            document.getElementById('username').value = username;
+            document.getElementById('password').value = password;
+            hideError();
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            errorElement.style.color = '#155724';
+            errorElement.style.backgroundColor = '#d4edda';
+        }
+
+        function setLoading(isLoading) {
+            const loginBtn = document.getElementById('loginBtn');
+            const loginBtnText = document.getElementById('loginBtnText');
+            const loginLoading = document.getElementById('loginLoading');
+
+            if (isLoading) {
+                loginBtn.disabled = true;
+                loginBtnText.style.display = 'none';
+                loginLoading.style.display = 'block';
+            } else {
+                loginBtn.disabled = false;
+                loginBtnText.style.display = 'inline';
+                loginLoading.style.display = 'none';
+            }
+        }
+
+        // 监听Enter键快速登录
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && !document.getElementById('loginBtn').disabled) {
+                document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html>

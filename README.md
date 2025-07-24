@@ -1,3 +1,122 @@
+# 餐饮门店智能管理系统
+
+## 项目概述
+
+这是一个完整的餐饮门店智能管理系统，包含数据库设计和商家端管理系统的实现。
+
+## 项目结构
+
+```
+DB-OrderProgram/
+├── Details/                     # 项目文档和设计资料
+│   ├── 分工.md                  # 开发分工文档
+│   ├── 表.md                    # 数据库表结构说明
+│   ├── 功能点.md                # 功能需求说明
+│   └── *.xlsx                   # 数据库设计文档
+├── RestaurantManagement/        # 商家端管理系统
+│   ├── Controllers/             # API控制器
+│   ├── Models/                  # 数据模型
+│   ├── Services/                # 业务服务层
+│   ├── wwwroot/                 # 前端静态文件
+│   │   ├── css/
+│   │   ├── js/
+│   │   ├── index.html           # 主页
+│   │   ├── tables.html          # 桌台管理页面
+│   │   └── 其他管理页面...
+│   ├── appsettings.json         # 应用配置
+│   ├── Program.cs               # 应用入口
+│   └── README.md                # 系统部署说明
+└── README.md                    # 项目总览（本文件）
+```
+
+## 功能模块
+
+根据分工文档，系统分为三个主要模块：
+
+### 成员A：订单与桌台管理
+- 桌台状态实时监控
+- 开台、清台操作管理
+- 订单详情查看和处理
+- 加菜、结账功能
+
+### 成员B：员工与考勤管理
+- 员工信息管理
+- 排班管理
+- 考勤打卡和记录查询
+
+### 成员C：库存与菜单管理
+- 菜单分类和菜品管理
+- 原材料库存监控
+- 采购管理和入库操作
+- 供应商信息维护
+
+## 技术栈
+
+- **后端**: ASP.NET Core 8.0 + C#
+- **数据库**: SQL Server + Dapper ORM
+- **前端**: 原生HTML + CSS + JavaScript
+- **架构**: 三层架构（表示层、业务层、数据访问层）
+
+## 快速开始
+
+1. **配置数据库**
+   ```bash
+   # 修改 RestaurantManagement/appsettings.json 中的连接字符串
+   "DefaultConnection": "Server=YOUR_SERVER_IP;Database=RestaurantDB;User Id=YOUR_USERNAME;Password=YOUR_PASSWORD;TrustServerCertificate=true;"
+   ```
+
+2. **安装依赖并运行**
+   ```bash
+   cd RestaurantManagement
+   dotnet restore
+   dotnet build
+   dotnet run
+   ```
+
+3. **访问系统**
+   - 浏览器打开: http://localhost:5000
+   - 或: https://localhost:5001
+
+详细的部署说明请参考 `RestaurantManagement/README.md`
+
+## 开发进度
+
+- [x] 数据库设计和表结构
+- [x] 项目架构搭建
+- [x] 后端API开发（完整）
+- [x] 前端主页和桌台管理页面
+- [ ] 其他前端管理页面
+- [ ] 促销活动功能
+- [ ] 数据报表功能
+- [ ] 用户权限管理
+
+## API接口
+
+系统提供完整的RESTful API接口，主要包括：
+
+- `/api/tables` - 桌台管理API
+- `/api/orders` - 订单管理API  
+- `/api/menu` - 菜单管理API
+- `/api/staff` - 员工管理API
+- `/api/inventory` - 库存管理API
+
+详细的API文档请参考各Controller文件的注释。
+
+## 贡献指南
+
+1. 查看 `Details/分工.md` 了解模块分工
+2. 根据分工认领相应的功能模块
+3. 遵循现有的代码结构和命名规范
+4. 提交前确保代码通过编译和基本测试
+
+## 许可证
+
+本项目仅用于学习和演示目的。
+
+---
+
+## 原始数据库设计文档
+
 # DB-OrderProgram
 同济大学数据库小学期项目
 # 餐饮连锁管理系统数据库设计文档

@@ -1,0 +1,130 @@
+namespace RestaurantManagement.Models
+{
+    // 桌台信息
+    public class TableInfo
+    {
+        public int TableID { get; set; }
+        public string TableNumber { get; set; } = string.Empty;
+        public int Capacity { get; set; }
+        public string Area { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty; // 空闲、占用、预订、清洁中
+        public DateTime? LastCleanTime { get; set; }
+    }
+
+    // 订单
+    public class Order
+    {
+        public int OrderID { get; set; }
+        public int? TableID { get; set; }
+        public int? CustomerID { get; set; }
+        public int? StaffID { get; set; }
+        public DateTime OrderTime { get; set; }
+        public decimal TotalAmount { get; set; }
+        public string OrderStatus { get; set; } = string.Empty; // 进行中、已结账、已取消
+        public string? Notes { get; set; }
+    }
+
+    // 订单详情
+    public class OrderDetail
+    {
+        public int OrderDetailID { get; set; }
+        public int OrderID { get; set; }
+        public int DishID { get; set; }
+        public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+        public decimal Subtotal { get; set; }
+        public string? SpecialRequests { get; set; }
+    }
+
+    // 菜品
+    public class Dish
+    {
+        public int DishID { get; set; }
+        public string DishName { get; set; } = string.Empty;
+        public int CategoryID { get; set; }
+        public decimal Price { get; set; }
+        public string? Description { get; set; }
+        public string? ImageURL { get; set; }
+        public bool IsAvailable { get; set; }
+        public DateTime CreatedTime { get; set; }
+    }
+
+    // 菜品分类
+    public class Category
+    {
+        public int CategoryID { get; set; }
+        public string CategoryName { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public int SortOrder { get; set; }
+    }
+
+    // 员工
+    public class Staff
+    {
+        public int StaffID { get; set; }
+        public string StaffName { get; set; } = string.Empty;
+        public string Position { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public decimal Salary { get; set; }
+        public string Status { get; set; } = string.Empty; // 在职、离职
+        public string? WorkSchedule { get; set; }
+        public DateTime HireDate { get; set; }
+    }
+
+    // 考勤记录
+    public class Attendance
+    {
+        public int AttendanceID { get; set; }
+        public int StaffID { get; set; }
+        public DateTime WorkDate { get; set; }
+        public DateTime? CheckInTime { get; set; }
+        public DateTime? CheckOutTime { get; set; }
+        public decimal? WorkHours { get; set; }
+        public string Status { get; set; } = string.Empty; // 正常、迟到、早退、缺勤
+    }
+
+    // 原材料
+    public class RawMaterial
+    {
+        public int MaterialID { get; set; }
+        public string MaterialName { get; set; } = string.Empty;
+        public string Unit { get; set; } = string.Empty;
+        public decimal CurrentStock { get; set; }
+        public decimal MinStock { get; set; }
+        public decimal UnitPrice { get; set; }
+        public int? SupplierID { get; set; }
+        public DateTime? LastInTime { get; set; }
+        public decimal? LastInQuantity { get; set; }
+    }
+
+    // 供应商
+    public class Supplier
+    {
+        public int SupplierID { get; set; }
+        public string SupplierName { get; set; } = string.Empty;
+        public string ContactPerson { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty;
+        public string? Address { get; set; }
+        public string? Email { get; set; }
+    }
+
+    // 采购记录
+    public class PurchaseRecord
+    {
+        public int PurchaseID { get; set; }
+        public int SupplierID { get; set; }
+        public DateTime PurchaseDate { get; set; }
+        public decimal TotalAmount { get; set; }
+        public string Status { get; set; } = string.Empty; // 待入库、已入库、已取消
+        public string? Notes { get; set; }
+    }
+
+    // 菜谱（菜品与原材料关系）
+    public class Recipe
+    {
+        public int RecipeID { get; set; }
+        public int DishID { get; set; }
+        public int MaterialID { get; set; }
+        public decimal RequiredQuantity { get; set; }
+    }
+}

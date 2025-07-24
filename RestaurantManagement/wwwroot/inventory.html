@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>库存管理 - 餐饮管理系统</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <h1>餐饮管理系统</h1>
+        <div class="nav-links">
+            <a href="index.html">首页</a>
+            <a href="tables.html">桌台管理</a>
+            <a href="orders.html">订单管理</a>
+            <a href="menu.html">菜单管理</a>
+            <a href="staff.html">员工管理</a>
+            <a href="inventory.html" class="active">库存管理</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="main-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2>库存管理</h2>
+                <div>
+                    <button onclick="showAddInventoryModal()" class="btn btn-primary" data-permission="inventory">添加库存</button>
+                    <button onclick="showPurchaseModal()" class="btn btn-secondary" data-permission="inventory">采购管理</button>
+                    <button onclick="showSupplierModal()" class="btn btn-info" data-permission="inventory">供应商管理</button>
+                </div>
+            </div>
+
+            <!-- 统计卡片 -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-items">0</div>
+                    <div class="stat-label">库存种类</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-number" id="low-stock-items">0</div>
+                    <div class="stat-label">库存告警</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-number" id="total-value">¥0</div>
+                    <div class="stat-label">库存价值</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="monthly-purchases">¥0</div>
+                    <div class="stat-label">本月采购</div>
+                </div>
+            </div>
+
+            <!-- 搜索和过滤器 -->
+            <div class="card">
+                <h3>库存筛选</h3>
+                <div class="search-filters">
+                    <div class="form-group">
+                        <label for="categoryFilter">物料类型:</label>
+                        <select id="categoryFilter" class="form-control" onchange="filterInventory()">
+                            <option value="all">全部类型</option>
+                            <option value="蔬菜">蔬菜</option>
+                            <option value="肉类">肉类</option>
+                            <option value="调料">调料</option>
+                            <option value="饮料">饮料</option>
+                            <option value="主食">主食</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="statusFilter">库存状态:</label>
+                        <select id="statusFilter" class="form-control" onchange="filterInventory()">
+                            <option value="all">全部状态</option>
+                            <option value="充足">充足</option>
+                            <option value="不足">不足</option>
+                            <option value="缺货">缺货</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="inventorySearch">物料搜索:</label>
+                        <input type="text" id="inventorySearch" class="form-control" placeholder="输入物料名称" onkeyup="filterInventory()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 库存列表 -->
+            <div class="card">
+                <h3>库存清单</h3>
+                <div style="overflow-x: auto;">
+                    <table class="table" id="inventoryTable">
+                        <thead>
+                            <tr>
+                                <th>物料ID</th>
+                                <th>物料名称</th>
+                                <th>类型</th>
+                                <th>当前库存</th>
+                                <th>单位</th>
+                                <th>最低库存</th>
+                                <th>单价</th>
+                                <th>总价值</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody">
+                            <!-- 库存数据将通过JavaScript动态填充 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 库存预警 -->
+            <div class="card" id="alertCard" style="display: none;">
+                <h3>库存预警</h3>
+                <div id="alertList">
+                    <!-- 预警信息将通过JavaScript动态填充 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加/编辑库存模态框 -->
+    <div id="addInventoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="inventoryModalTitle">添加库存物料</h3>
+                <span class="close">&times;</span>
+            </div>
+            <form id="inventoryForm">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="itemName">物料名称:</label>
+                            <input type="text" id="itemName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="itemCategory">物料类型:</label>
+                            <select id="itemCategory" class="form-control" required>
+                                <option value="">请选择类型</option>
+                                <option value="蔬菜">蔬菜</option>
+                                <option value="肉类">肉类</option>
+                                <option value="调料">调料</option>
+                                <option value="饮料">饮料</option>
+                                <option value="主食">主食</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="currentStock">当前库存:</label>
+                            <input type="number" id="currentStock" class="form-control" min="0" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="itemUnit">单位:</label>
+                            <input type="text" id="itemUnit" class="form-control" placeholder="如：公斤、包、瓶" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="minStock">最低库存:</label>
+                            <input type="number" id="minStock" class="form-control" min="0" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="unitPrice">单价(元):</label>
+                            <input type="number" id="unitPrice" class="form-control" min="0" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="supplierID">供应商:</label>
+                        <select id="supplierID" class="form-control">
+                            <option value="">请选择供应商</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" onclick="Utils.hideModal('addInventoryModal')" class="btn btn-secondary">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 采购管理模态框 -->
+    <div id="purchaseModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3>采购管理</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- 采购记录查询 -->
+                <div class="search-filters" style="margin-bottom: 1rem;">
+                    <div class="form-group">
+                        <label for="purchaseDateStart">开始日期:</label>
+                        <input type="date" id="purchaseDateStart" class="form-control" onchange="loadPurchaseRecords()">
+                    </div>
+                    <div class="form-group">
+                        <label for="purchaseDateEnd">结束日期:</label>
+                        <input type="date" id="purchaseDateEnd" class="form-control" onchange="loadPurchaseRecords()">
+                    </div>
+                    <div class="form-group">
+                        <label for="purchaseSupplierFilter">供应商:</label>
+                        <select id="purchaseSupplierFilter" class="form-control" onchange="loadPurchaseRecords()">
+                            <option value="">全部供应商</option>
+                        </select>
+                    </div>
+                    <div style="margin-top: 1.5rem;">
+                        <button onclick="showAddPurchaseModal()" class="btn btn-primary">新建采购单</button>
+                    </div>
+                </div>
+
+                <!-- 采购记录表格 -->
+                <div style="overflow-x: auto;">
+                    <table class="table" id="purchaseTable">
+                        <thead>
+                            <tr>
+                                <th>采购单号</th>
+                                <th>物料名称</th>
+                                <th>数量</th>
+                                <th>单价</th>
+                                <th>总金额</th>
+                                <th>供应商</th>
+                                <th>采购日期</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody id="purchaseTableBody">
+                            <!-- 采购记录将通过JavaScript动态填充 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="Utils.hideModal('purchaseModal')" class="btn btn-secondary">关闭</button>
+                <button onclick="exportPurchaseRecords()" class="btn btn-primary">导出采购记录</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新建采购单模态框 -->
+    <div id="addPurchaseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>新建采购单</h3>
+                <span class="close">&times;</span>
+            </div>
+            <form id="purchaseForm">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="purchaseItemID">物料:</label>
+                            <select id="purchaseItemID" class="form-control" required onchange="updatePurchasePrice()">
+                                <option value="">请选择物料</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="purchaseSupplierID">供应商:</label>
+                            <select id="purchaseSupplierID" class="form-control" required>
+                                <option value="">请选择供应商</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="purchaseQuantity">采购数量:</label>
+                            <input type="number" id="purchaseQuantity" class="form-control" min="0.1" step="0.1" required onchange="calculatePurchaseTotal()">
+                        </div>
+                        <div class="form-group">
+                            <label for="purchaseUnitPrice">单价(元):</label>
+                            <input type="number" id="purchaseUnitPrice" class="form-control" min="0" step="0.01" required onchange="calculatePurchaseTotal()">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="purchaseTotal">总金额(元):</label>
+                        <input type="number" id="purchaseTotal" class="form-control" readonly>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" onclick="Utils.hideModal('addPurchaseModal')" class="btn btn-secondary">取消</button>
+                    <button type="submit" class="btn btn-primary">提交采购单</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 供应商管理模态框 -->
+    <div id="supplierModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>供应商管理</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 1rem;">
+                    <button onclick="showAddSupplierModal()" class="btn btn-primary">添加供应商</button>
+                </div>
+                
+                <!-- 供应商列表 -->
+                <div style="overflow-x: auto;">
+                    <table class="table" id="supplierTable">
+                        <thead>
+                            <tr>
+                                <th>供应商ID</th>
+                                <th>供应商名称</th>
+                                <th>联系人</th>
+                                <th>联系电话</th>
+                                <th>地址</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="supplierTableBody">
+                            <!-- 供应商数据将通过JavaScript动态填充 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="Utils.hideModal('supplierModal')" class="btn btn-secondary">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加供应商模态框 -->
+    <div id="addSupplierModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="supplierModalTitle">添加供应商</h3>
+                <span class="close">&times;</span>
+            </div>
+            <form id="supplierForm">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="supplierName">供应商名称:</label>
+                            <input type="text" id="supplierName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="contactPerson">联系人:</label>
+                            <input type="text" id="contactPerson" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="contactPhone">联系电话:</label>
+                            <input type="tel" id="contactPhone" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="supplierAddress">地址:</label>
+                            <input type="text" id="supplierAddress" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" onclick="Utils.hideModal('addSupplierModal')" class="btn btn-secondary">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/common.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        let allInventory = [];
+        let filteredInventory = [];
+        let suppliers = [];
+        let purchaseRecords = [];
+        let currentInventoryId = null;
+        let currentSupplierId = null;
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadInventory();
+            loadSuppliers();
+            setupEventListeners();
+            setDefaultPurchaseDates();
+        });
+
+        function setupEventListeners() {
+            // 库存表单提交
+            document.getElementById('inventoryForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                handleInventorySubmit();
+            });
+
+            // 采购表单提交
+            document.getElementById('purchaseForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                handlePurchaseSubmit();
+            });
+
+            // 供应商表单提交
+            document.getElementById('supplierForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                handleSupplierSubmit();
+            });
+        }
+
+        function setDefaultPurchaseDates() {
+            const today = new Date();
+            const monthAgo = new Date(today);
+            monthAgo.setMonth(today.getMonth() - 1);
+
+            document.getElementById('purchaseDateStart').value = monthAgo.toISOString().split('T')[0];
+            document.getElementById('purchaseDateEnd').value = today.toISOString().split('T')[0];
+        }
+
+        async function loadInventory() {
+            try {
+                allInventory = await API.get('/inventory');
+                filteredInventory = [...allInventory];
+                renderInventoryTable();
+                updateStatistics();
+                checkLowStock();
+                populateInventorySelects();
+            } catch (error) {
+                console.error('加载库存数据失败:', error);
+                Utils.showNotification('加载库存数据失败', 'error');
+            }
+        }
+
+        async function loadSuppliers() {
+            try {
+                suppliers = await API.get('/inventory/suppliers');
+                populateSupplierSelects();
+                renderSupplierTable();
+            } catch (error) {
+                console.error('加载供应商数据失败:', error);
+                Utils.showNotification('加载供应商数据失败', 'error');
+            }
+        }
+
+        function renderInventoryTable() {
+            const tbody = document.getElementById('inventoryTableBody');
+            tbody.innerHTML = '';
+
+            if (filteredInventory.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #666;">暂无库存数据</td></tr>';
+                return;
+            }
+
+            filteredInventory.forEach(item => {
+                const row = document.createElement('tr');
+                const status = getStockStatus(item.currentStock, item.minStock);
+                const statusInfo = Utils.getStatusInfo(status, 'stock');
+                const totalValue = item.currentStock * item.unitPrice;
+                
+                row.innerHTML = `
+                    <td>${item.itemID}</td>
+                    <td>${item.itemName}</td>
+                    <td>${item.category}</td>
+                    <td>${item.currentStock}</td>
+                    <td>${item.unit}</td>
+                    <td>${item.minStock}</td>
+                    <td>${Utils.formatCurrency(item.unitPrice)}</td>
+                    <td>${Utils.formatCurrency(totalValue)}</td>
+                    <td><span class="status-badge ${statusInfo.class}">${statusInfo.text}</span></td>
+                    <td>
+                        <button onclick="editInventory(${item.itemID})" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 0.25rem;">编辑</button>
+                        <button onclick="adjustStock(${item.itemID})" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">调整库存</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderSupplierTable() {
+            const tbody = document.getElementById('supplierTableBody');
+            tbody.innerHTML = '';
+
+            if (suppliers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666;">暂无供应商数据</td></tr>';
+                return;
+            }
+
+            suppliers.forEach(supplier => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${supplier.supplierID}</td>
+                    <td>${supplier.supplierName}</td>
+                    <td>${supplier.contactPerson}</td>
+                    <td>${supplier.contactPhone}</td>
+                    <td>${supplier.address || '-'}</td>
+                    <td>
+                        <button onclick="editSupplier(${supplier.supplierID})" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 0.25rem;">编辑</button>
+                        <button onclick="deleteSupplier(${supplier.supplierID})" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">删除</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function populateInventorySelects() {
+            const purchaseItemSelect = document.getElementById('purchaseItemID');
+            purchaseItemSelect.innerHTML = '<option value="">请选择物料</option>';
+            
+            allInventory.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.itemID;
+                option.textContent = `${item.itemName} (${item.unit})`;
+                option.dataset.unitPrice = item.unitPrice;
+                purchaseItemSelect.appendChild(option);
+            });
+        }
+
+        function populateSupplierSelects() {
+            const selects = [
+                document.getElementById('supplierID'),
+                document.getElementById('purchaseSupplierID'),
+                document.getElementById('purchaseSupplierFilter')
+            ];
+
+            selects.forEach(select => {
+                const currentValue = select.value;
+                select.innerHTML = select.id === 'purchaseSupplierFilter' ? 
+                    '<option value="">全部供应商</option>' : 
+                    '<option value="">请选择供应商</option>';
+
+                suppliers.forEach(supplier => {
+                    const option = document.createElement('option');
+                    option.value = supplier.supplierID;
+                    option.textContent = supplier.supplierName;
+                    select.appendChild(option);
+                });
+
+                if (currentValue) select.value = currentValue;
+            });
+        }
+
+        function getStockStatus(current, min) {
+            if (current <= 0) return '缺货';
+            if (current <= min) return '不足';
+            return '充足';
+        }
+
+        function filterInventory() {
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const inventorySearch = document.getElementById('inventorySearch').value.trim().toLowerCase();
+
+            filteredInventory = allInventory.filter(item => {
+                const categoryMatch = categoryFilter === 'all' || item.category === categoryFilter;
+                const status = getStockStatus(item.currentStock, item.minStock);
+                const statusMatch = statusFilter === 'all' || status === statusFilter;
+                const nameMatch = !inventorySearch || item.itemName.toLowerCase().includes(inventorySearch);
+
+                return categoryMatch && statusMatch && nameMatch;
+            });
+
+            renderInventoryTable();
+        }
+
+        async function updateStatistics() {
+            const totalItems = allInventory.length;
+            const lowStockItems = allInventory.filter(item => getStockStatus(item.currentStock, item.minStock) !== '充足').length;
+            const totalValue = allInventory.reduce((sum, item) => sum + (item.currentStock * item.unitPrice), 0);
+
+            document.getElementById('total-items').textContent = totalItems;
+            document.getElementById('low-stock-items').textContent = lowStockItems;
+            document.getElementById('total-value').textContent = Utils.formatCurrency(totalValue);
+
+            // 获取本月采购统计
+            try {
+                const today = new Date();
+                const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+                const monthlyPurchases = await API.get(`/inventory/purchases?startDate=${firstDay.toISOString().split('T')[0]}&endDate=${today.toISOString().split('T')[0]}`);
+                const monthlyTotal = monthlyPurchases.reduce((sum, p) => sum + p.totalAmount, 0);
+                document.getElementById('monthly-purchases').textContent = Utils.formatCurrency(monthlyTotal);
+            } catch (error) {
+                console.error('获取本月采购统计失败:', error);
+                document.getElementById('monthly-purchases').textContent = '-';
+            }
+        }
+
+        function checkLowStock() {
+            const lowStockItems = allInventory.filter(item => getStockStatus(item.currentStock, item.minStock) !== '充足');
+            
+            if (lowStockItems.length > 0) {
+                const alertCard = document.getElementById('alertCard');
+                const alertList = document.getElementById('alertList');
+                
+                alertList.innerHTML = lowStockItems.map(item => {
+                    const status = getStockStatus(item.currentStock, item.minStock);
+                    const statusInfo = Utils.getStatusInfo(status, 'stock');
+                    return `
+                        <div class="alert-item" style="display: flex; justify-content: between; align-items: center; padding: 0.75rem; background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; margin-bottom: 0.5rem;">
+                            <span><strong>${item.itemName}</strong> - 当前库存: ${item.currentStock}${item.unit}, 最低库存: ${item.minStock}${item.unit}</span>
+                            <span class="status-badge ${statusInfo.class}">${statusInfo.text}</span>
+                        </div>
+                    `;
+                }).join('');
+                
+                alertCard.style.display = 'block';
+            } else {
+                document.getElementById('alertCard').style.display = 'none';
+            }
+        }
+
+        function showAddInventoryModal() {
+            currentInventoryId = null;
+            document.getElementById('inventoryModalTitle').textContent = '添加库存物料';
+            Utils.resetForm(document.getElementById('inventoryForm'));
+            Utils.showModal('addInventoryModal');
+        }
+
+        async function handleInventorySubmit() {
+            if (!Utils.validateForm(document.getElementById('inventoryForm'))) {
+                Utils.showNotification('请填写完整信息', 'warning');
+                return;
+            }
+
+            try {
+                const inventoryData = {
+                    itemName: document.getElementById('itemName').value,
+                    category: document.getElementById('itemCategory').value,
+                    currentStock: parseFloat(document.getElementById('currentStock').value),
+                    unit: document.getElementById('itemUnit').value,
+                    minStock: parseFloat(document.getElementById('minStock').value),
+                    unitPrice: parseFloat(document.getElementById('unitPrice').value),
+                    supplierID: document.getElementById('supplierID').value || null
+                };
+
+                if (currentInventoryId) {
+                    inventoryData.itemID = currentInventoryId;
+                    await API.put(`/inventory/${currentInventoryId}`, inventoryData);
+                    Utils.showNotification('库存信息更新成功', 'success');
+                } else {
+                    await API.post('/inventory', inventoryData);
+                    Utils.showNotification('库存物料添加成功', 'success');
+                }
+
+                Utils.hideModal('addInventoryModal');
+                await loadInventory();
+
+            } catch (error) {
+                console.error('保存库存信息失败:', error);
+                Utils.showNotification('保存库存信息失败', 'error');
+            }
+        }
+
+        function editInventory(itemId) {
+            const item = allInventory.find(i => i.itemID === itemId);
+            if (!item) return;
+
+            currentInventoryId = itemId;
+            document.getElementById('inventoryModalTitle').textContent = '编辑库存物料';
+            document.getElementById('itemName').value = item.itemName;
+            document.getElementById('itemCategory').value = item.category;
+            document.getElementById('currentStock').value = item.currentStock;
+            document.getElementById('itemUnit').value = item.unit;
+            document.getElementById('minStock').value = item.minStock;
+            document.getElementById('unitPrice').value = item.unitPrice;
+            document.getElementById('supplierID').value = item.supplierID || '';
+            
+            Utils.showModal('addInventoryModal');
+        }
+
+        async function adjustStock(itemId) {
+            const item = allInventory.find(i => i.itemID === itemId);
+            if (!item) return;
+
+            const newStock = prompt(`调整库存数量\n当前库存: ${item.currentStock}${item.unit}\n请输入新的库存数量:`, item.currentStock);
+            if (newStock === null || newStock === '') return;
+
+            const stockValue = parseFloat(newStock);
+            if (isNaN(stockValue) || stockValue < 0) {
+                Utils.showNotification('请输入有效的库存数量', 'warning');
+                return;
+            }
+
+            try {
+                await API.put(`/inventory/${itemId}/stock`, { currentStock: stockValue });
+                Utils.showNotification('库存调整成功', 'success');
+                await loadInventory();
+            } catch (error) {
+                console.error('库存调整失败:', error);
+                Utils.showNotification('库存调整失败', 'error');
+            }
+        }
+
+        // 采购管理相关函数
+        async function showPurchaseModal() {
+            Utils.showModal('purchaseModal');
+            await loadPurchaseRecords();
+        }
+
+        async function loadPurchaseRecords() {
+            try {
+                const startDate = document.getElementById('purchaseDateStart').value;
+                const endDate = document.getElementById('purchaseDateEnd').value;
+                const supplierId = document.getElementById('purchaseSupplierFilter').value;
+
+                let url = '/inventory/purchases?';
+                if (startDate) url += `startDate=${startDate}&`;
+                if (endDate) url += `endDate=${endDate}&`;
+                if (supplierId) url += `supplierId=${supplierId}&`;
+
+                purchaseRecords = await API.get(url);
+                renderPurchaseTable();
+
+            } catch (error) {
+                console.error('加载采购记录失败:', error);
+                Utils.showNotification('加载采购记录失败', 'error');
+            }
+        }
+
+        function renderPurchaseTable() {
+            const tbody = document.getElementById('purchaseTableBody');
+            tbody.innerHTML = '';
+
+            if (purchaseRecords.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #666;">暂无采购记录</td></tr>';
+                return;
+            }
+
+            purchaseRecords.forEach(record => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${record.purchaseID}</td>
+                    <td>${record.itemName}</td>
+                    <td>${record.quantity}${record.unit}</td>
+                    <td>${Utils.formatCurrency(record.unitPrice)}</td>
+                    <td>${Utils.formatCurrency(record.totalAmount)}</td>
+                    <td>${record.supplierName}</td>
+                    <td>${Utils.formatDate(record.purchaseDate)}</td>
+                    <td><span class="status-badge success">已完成</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function showAddPurchaseModal() {
+            Utils.resetForm(document.getElementById('purchaseForm'));
+            Utils.showModal('addPurchaseModal');
+        }
+
+        function updatePurchasePrice() {
+            const itemSelect = document.getElementById('purchaseItemID');
+            const selectedOption = itemSelect.options[itemSelect.selectedIndex];
+            if (selectedOption && selectedOption.dataset.unitPrice) {
+                document.getElementById('purchaseUnitPrice').value = selectedOption.dataset.unitPrice;
+                calculatePurchaseTotal();
+            }
+        }
+
+        function calculatePurchaseTotal() {
+            const quantity = parseFloat(document.getElementById('purchaseQuantity').value) || 0;
+            const unitPrice = parseFloat(document.getElementById('purchaseUnitPrice').value) || 0;
+            const total = quantity * unitPrice;
+            document.getElementById('purchaseTotal').value = total.toFixed(2);
+        }
+
+        async function handlePurchaseSubmit() {
+            if (!Utils.validateForm(document.getElementById('purchaseForm'))) {
+                Utils.showNotification('请填写完整信息', 'warning');
+                return;
+            }
+
+            try {
+                const purchaseData = {
+                    itemID: parseInt(document.getElementById('purchaseItemID').value),
+                    supplierID: parseInt(document.getElementById('purchaseSupplierID').value),
+                    quantity: parseFloat(document.getElementById('purchaseQuantity').value),
+                    unitPrice: parseFloat(document.getElementById('purchaseUnitPrice').value)
+                };
+
+                await API.post('/inventory/purchases', purchaseData);
+                Utils.showNotification('采购单提交成功', 'success');
+                Utils.hideModal('addPurchaseModal');
+                await loadPurchaseRecords();
+                await loadInventory(); // 更新库存
+
+            } catch (error) {
+                console.error('提交采购单失败:', error);
+                Utils.showNotification('提交采购单失败', 'error');
+            }
+        }
+
+        // 供应商管理相关函数
+        async function showSupplierModal() {
+            Utils.showModal('supplierModal');
+            renderSupplierTable();
+        }
+
+        function showAddSupplierModal() {
+            currentSupplierId = null;
+            document.getElementById('supplierModalTitle').textContent = '添加供应商';
+            Utils.resetForm(document.getElementById('supplierForm'));
+            Utils.showModal('addSupplierModal');
+        }
+
+        async function handleSupplierSubmit() {
+            if (!Utils.validateForm(document.getElementById('supplierForm'))) {
+                Utils.showNotification('请填写完整信息', 'warning');
+                return;
+            }
+
+            try {
+                const supplierData = {
+                    supplierName: document.getElementById('supplierName').value,
+                    contactPerson: document.getElementById('contactPerson').value,
+                    contactPhone: document.getElementById('contactPhone').value,
+                    address: document.getElementById('supplierAddress').value || null
+                };
+
+                if (currentSupplierId) {
+                    supplierData.supplierID = currentSupplierId;
+                    await API.put(`/inventory/suppliers/${currentSupplierId}`, supplierData);
+                    Utils.showNotification('供应商信息更新成功', 'success');
+                } else {
+                    await API.post('/inventory/suppliers', supplierData);
+                    Utils.showNotification('供应商添加成功', 'success');
+                }
+
+                Utils.hideModal('addSupplierModal');
+                await loadSuppliers();
+
+            } catch (error) {
+                console.error('保存供应商信息失败:', error);
+                Utils.showNotification('保存供应商信息失败', 'error');
+            }
+        }
+
+        function editSupplier(supplierId) {
+            const supplier = suppliers.find(s => s.supplierID === supplierId);
+            if (!supplier) return;
+
+            currentSupplierId = supplierId;
+            document.getElementById('supplierModalTitle').textContent = '编辑供应商';
+            document.getElementById('supplierName').value = supplier.supplierName;
+            document.getElementById('contactPerson').value = supplier.contactPerson;
+            document.getElementById('contactPhone').value = supplier.contactPhone;
+            document.getElementById('supplierAddress').value = supplier.address || '';
+            
+            Utils.showModal('addSupplierModal');
+        }
+
+        async function deleteSupplier(supplierId) {
+            if (!Utils.showConfirm('确认要删除该供应商吗？')) {
+                return;
+            }
+
+            try {
+                await API.delete(`/inventory/suppliers/${supplierId}`);
+                Utils.showNotification('供应商删除成功', 'success');
+                await loadSuppliers();
+            } catch (error) {
+                console.error('删除供应商失败:', error);
+                Utils.showNotification('删除供应商失败', 'error');
+            }
+        }
+
+        function exportPurchaseRecords() {
+            Utils.showNotification('导出采购记录功能待实现', 'info');
+        }
+    </script>
+</body>
+</html>
