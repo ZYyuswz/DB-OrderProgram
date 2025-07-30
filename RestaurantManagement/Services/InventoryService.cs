@@ -24,29 +24,7 @@ namespace RestaurantManagement.Services
         public async Task<IEnumerable<dynamic>> GetAllMaterialsAsync()
         {
             using var connection = _dbService.CreateConnection();
-            // var sql = @"
-            //     SELECT rm.MaterialID,
-            //            rm.MaterialName,
-            //            rm.Unit,
-            //            rm.CurrentStock,
-            //            rm.MinStock,
-            //            rm.MaxStock,
-            //            rm.UnitPrice,
-            //            rm.SupplierID,
-            //            rm.StaffID,
-            //            rm.StoreID,
-            //            rm.Status,
-            //            rm.StorageLocation,
-            //            rm.LastInTime,
-            //            rm.LastInQuantity,
-            //            rm.ExpiryDate,
-            //            s.SupplierName,
-            //            CASE WHEN rm.CurrentStock <= rm.MinStock THEN 1 ELSE 0 END as IsLowStock,
-            //            '原材料' as category
-            //     FROM PUB.RawMaterial rm
-            //     LEFT JOIN PUB.Supplier s ON rm.SupplierID = s.SupplierID
-            //     ORDER BY rm.MaterialName";
-            var sql = "SELECT * FROM PUB.RawMaterial LEFT JOIN PUB.Supplier USING(SupplierID)";
+            var sql = "SELECT * FROM PUB.RawMaterial LEFT JOIN PUB.Supplier USING(SUPPLIERID)";
             return await connection.QueryAsync(sql);
         }
 
@@ -64,7 +42,7 @@ namespace RestaurantManagement.Services
             using var connection = _dbService.CreateConnection();
             var sql = @"
                 INSERT INTO PUB.RawMaterial (MaterialName, Unit, CurrentStock, MinStock, UnitPrice, SupplierID)
-                VALUES (@MaterialName, @Unit, @CurrentStock, @MinStock, @UnitPrice, @SupplierID)";
+                VALUES (:itemName, :unit, :currentStock, :minStock, :unitPrice, 1)";
             var result = await connection.ExecuteAsync(sql, material);
             return result > 0;
         }
@@ -119,7 +97,7 @@ namespace RestaurantManagement.Services
         public async Task<IEnumerable<Supplier>> GetAllSuppliersAsync()
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "SELECT * FROM PUB.Supplier ORDER BY SupplierName";
+            var sql = "SELECT * FROM PUB.Supplier ORDER BY SUPPLIERNAME";
             return await connection.QueryAsync<Supplier>(sql);
         }
 
@@ -128,8 +106,8 @@ namespace RestaurantManagement.Services
         {
             using var connection = _dbService.CreateConnection();
             var sql = @"
-                INSERT INTO PUB.Supplier (SupplierName, ContactPerson, Phone, Address, Email)
-                VALUES (@SupplierName, @ContactPerson, @Phone, @Address, @Email)";
+                INSERT INTO PUB.Supplier (SUPPLIERNAME, CONTACTPERSON, PHONE, ADDRESS, EMAIL)
+                VALUES (:SupplierName, :ContactPerson, :Phone, :Address, :Email)";
             var result = await connection.ExecuteAsync(sql, supplier);
             return result > 0;
         }

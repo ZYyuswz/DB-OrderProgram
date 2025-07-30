@@ -16,7 +16,7 @@ namespace RestaurantManagement.Services
         public async Task<IEnumerable<Staff>> GetAllStaffAsync()
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "SELECT * FROM Staff ORDER BY StaffName";
+            var sql = "SELECT * FROM PUB.Staff ORDER BY StaffName";
             return await connection.QueryAsync<Staff>(sql);
         }
 
@@ -24,7 +24,7 @@ namespace RestaurantManagement.Services
         public async Task<Staff?> GetStaffByIdAsync(int staffId)
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "SELECT * FROM Staff WHERE StaffID = @StaffId";
+            var sql = "SELECT * FROM PUB.Staff WHERE StaffID = @StaffId";
             return await connection.QueryFirstOrDefaultAsync<Staff>(sql, new { StaffId = staffId });
         }
 
@@ -33,7 +33,7 @@ namespace RestaurantManagement.Services
         {
             using var connection = _dbService.CreateConnection();
             var sql = @"
-                INSERT INTO Staff (StaffName, Position, Phone, Salary, Status, WorkSchedule, HireDate)
+                INSERT INTO PuB.Staff (StaffName, Position, Phone, Salary, Status, WorkSchedule, HireDate)
                 VALUES (@StaffName, @Position, @Phone, @Salary, @Status, @WorkSchedule, @HireDate)";
             var result = await connection.ExecuteAsync(sql, staff);
             return result > 0;
@@ -44,7 +44,7 @@ namespace RestaurantManagement.Services
         {
             using var connection = _dbService.CreateConnection();
             var sql = @"
-                UPDATE Staff 
+                UPDATE PUB.Staff 
                 SET StaffName = @StaffName, Position = @Position, Phone = @Phone, 
                     Salary = @Salary, Status = @Status, WorkSchedule = @WorkSchedule
                 WHERE StaffID = @StaffID";
@@ -56,7 +56,7 @@ namespace RestaurantManagement.Services
         public async Task<bool> UpdateStaffStatusAsync(int staffId, string status)
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "UPDATE Staff SET Status = @Status WHERE StaffID = @StaffId";
+            var sql = "UPDATE PUB.Staff SET Status = @Status WHERE StaffID = @StaffId";
             var result = await connection.ExecuteAsync(sql, new { Status = status, StaffId = staffId });
             return result > 0;
         }
@@ -88,8 +88,8 @@ namespace RestaurantManagement.Services
 
             var sql = $@"
                 SELECT a.*, s.StaffName 
-                FROM Attendance a
-                INNER JOIN Staff s ON a.StaffID = s.StaffID
+                FROM PUB.Attendance a
+                INNER JOIN PUB.Staff s ON a.StaffID = s.StaffID
                 {whereClause}
                 ORDER BY a.WorkDate DESC, s.StaffName";
 
@@ -104,13 +104,13 @@ namespace RestaurantManagement.Services
             
             // 检查今天是否已经有考勤记录
             var existingRecord = await connection.QueryFirstOrDefaultAsync<Attendance>(
-                "SELECT * FROM Attendance WHERE StaffID = @StaffId AND WorkDate = @WorkDate",
+                "SELECT * FROM PUB.Attendance WHERE StaffID = @StaffId AND WorkDate = @WorkDate",
                 new { StaffId = staffId, WorkDate = today });
 
             if (existingRecord != null)
             {
                 // 更新打卡时间
-                var sql = "UPDATE Attendance SET CheckInTime = @CheckInTime WHERE AttendanceID = @AttendanceId";
+                var sql = "UPDATE PUB.Attendance SET CheckInTime = @CheckInTime WHERE AttendanceID = @AttendanceId";
                 var result = await connection.ExecuteAsync(sql, new { 
                     CheckInTime = DateTime.Now, 
                     AttendanceId = existingRecord.AttendanceID 
@@ -121,7 +121,7 @@ namespace RestaurantManagement.Services
             {
                 // 创建新的考勤记录
                 var sql = @"
-                    INSERT INTO Attendance (StaffID, WorkDate, CheckInTime, Status)
+                    INSERT INTO PUB.Attendance (StaffID, WorkDate, CheckInTime, Status)
                     VALUES (@StaffId, @WorkDate, @CheckInTime, @Status)";
                 var result = await connection.ExecuteAsync(sql, new { 
                     StaffId = staffId, 
@@ -140,7 +140,7 @@ namespace RestaurantManagement.Services
             var today = DateTime.Today;
             
             var sql = @"
-                UPDATE Attendance 
+                UPDATE PUB.Attendance 
                 SET CheckOutTime = @CheckOutTime,
                     WorkHours = DATEDIFF(MINUTE, CheckInTime, @CheckOutTime) / 60.0
                 WHERE StaffID = @StaffId AND WorkDate = @WorkDate";

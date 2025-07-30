@@ -37,7 +37,7 @@ namespace RestaurantManagement.Services
             }
         }
 
-        // 添加一个方法来获取数据库表信息
+        // 获取数据库表信息
         public async Task<List<string>> GetTablesAsync(string owner = "XCY")
         {
             var tables = new List<string>();

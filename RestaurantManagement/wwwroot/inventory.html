@@ -480,14 +480,14 @@
             suppliers.forEach(supplier => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${supplier.SupplierID}</td>
-                    <td>${supplier.SupplierName}</td>
-                    <td>${supplier.ContactPerson}</td>
-                    <td>${supplier.Phone}</td>
-                    <td>${supplier.Address || '-'}</td>
+                    <td>${supplier.SUPPLIERID}</td>
+                    <td>${supplier.SUPPLIERNAME}</td>
+                    <td>${supplier.CONTACTPERSON}</td>
+                    <td>${supplier.PHONE}</td>
+                    <td>${supplier.ADDRESS || '-'}</td>
                     <td>
-                        <button onclick="editSupplier(${supplier.SupplierID})" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 0.25rem;">编辑</button>
-                        <button onclick="deleteSupplier(${supplier.SupplierID})" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">删除</button>
+                        <button onclick="editSupplier(${supplier.SUPPLIERID})" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 0.25rem;">编辑</button>
+                        <button onclick="deleteSupplier(${supplier.SUPPLIERID})" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">删除</button>
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -500,9 +500,9 @@
             
             allInventory.forEach(item => {
                 const option = document.createElement('option');
-                option.value = item.MaterialID;
-                option.textContent = `${item.MaterialName} (${item.Unit})`;
-                option.dataset.unitPrice = item.UnitPrice;
+                option.value = item.MATERIALID;
+                option.textContent = `${item.MATERIALNAME} (${item.UNIT})`;
+                option.dataset.unitPrice = item.UNITPRICE;
                 purchaseItemSelect.appendChild(option);
             });
         }
@@ -522,8 +522,8 @@
 
                 suppliers.forEach(supplier => {
                     const option = document.createElement('option');
-                    option.value = supplier.SupplierID;
-                    option.textContent = supplier.SupplierName;
+                    option.value = supplier.SUPPLIERID;
+                    option.textContent = supplier.SUPPLIERNAME;
                     select.appendChild(option);
                 });
 
@@ -543,10 +543,10 @@
             const inventorySearch = document.getElementById('inventorySearch').value.trim().toLowerCase();
 
             filteredInventory = allInventory.filter(item => {
-                const categoryMatch = categoryFilter === 'all' || item.category === categoryFilter;
-                const status = getStockStatus(item.CurrentStock, item.MinStock);
+                const categoryMatch = categoryFilter === 'all' || item.CATEGORY === categoryFilter;
+                const status = getStockStatus(item.CURRENTSTOCK, item.MINSTOCK);
                 const statusMatch = statusFilter === 'all' || status === statusFilter;
-                const nameMatch = !inventorySearch || item.MaterialName.toLowerCase().includes(inventorySearch);
+                const nameMatch = !inventorySearch || item.MATERIALNAME.toLowerCase().includes(inventorySearch);
 
                 return categoryMatch && statusMatch && nameMatch;
             });
@@ -556,8 +556,8 @@
 
         async function updateStatistics() {
             const totalItems = allInventory.length;
-            const lowStockItems = allInventory.filter(item => getStockStatus(item.CurrentStock, item.MinStock) !== '充足').length;
-            const totalValue = allInventory.reduce((sum, item) => sum + (item.CurrentStock * item.UnitPrice), 0);
+            const lowStockItems = allInventory.filter(item => getStockStatus(item.CURRENTSTOCK, item.MINSTOCK) !== '充足').length;
+            const totalValue = allInventory.reduce((sum, item) => sum + (item.CURRENTSTOCK * item.UNITPRICE), 0);
 
             document.getElementById('total-items').textContent = totalItems;
             document.getElementById('low-stock-items').textContent = lowStockItems;
@@ -584,11 +584,11 @@
                 const alertList = document.getElementById('alertList');
                 
                 alertList.innerHTML = lowStockItems.map(item => {
-                    const status = getStockStatus(item.CurrentStock, item.MinStock);
+                    const status = getStockStatus(item.CURRENTSTOCK, item.MINSTOCK);
                     const statusInfo = Utils.getStatusInfo(status, 'stock');
                     return `
                         <div class="alert-item" style="display: flex; justify-content: between; align-items: center; padding: 0.75rem; background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; margin-bottom: 0.5rem;">
-                            <span><strong>${item.MaterialName}</strong> - 当前库存: ${item.CurrentStock}${item.Unit}, 最低库存: ${item.MinStock}${item.Unit}</span>
+                            <span><strong>${item.MATERIALNAME}</strong> - 当前库存: ${item.CURRENTSTOCK}${item.UNIT}, 最低库存: ${item.MINSTOCK}${item.UNIT}</span>
                             <span class="status-badge ${statusInfo.class}">${statusInfo.text}</span>
                         </div>
                     `;
@@ -626,10 +626,11 @@
 
                 if (currentInventoryId) {
                     inventoryData.itemID = currentInventoryId;
-                    await API.put(`/inventory/${currentInventoryId}`, inventoryData);
+                    console.log(currentInventoryId);
+                    await API.put(`/inventory/materials/${currentInventoryId}`, inventoryData);
                     Utils.showNotification('库存信息更新成功', 'success');
                 } else {
-                    await API.post('/inventory', inventoryData);
+                    await API.post('/inventory/materials', inventoryData);
                     Utils.showNotification('库存物料添加成功', 'success');
                 }
 
@@ -643,27 +644,27 @@
         }
 
         function editInventory(itemId) {
-            const item = allInventory.find(i => i.MaterialID === itemId);
+            const item = allInventory.find(i => i.MATERIALID === itemId);
             if (!item) return;
 
             currentInventoryId = itemId;
             document.getElementById('inventoryModalTitle').textContent = '编辑库存物料';
-            document.getElementById('itemName').value = item.MaterialName;
-            document.getElementById('itemCategory').value = item.category;
-            document.getElementById('currentStock').value = item.CurrentStock;
-            document.getElementById('itemUnit').value = item.Unit;
-            document.getElementById('minStock').value = item.MinStock;
-            document.getElementById('unitPrice').value = item.UnitPrice;
-            document.getElementById('supplierID').value = item.SupplierID || '';
+            document.getElementById('itemName').value = item.MATERIALNAME;
+            document.getElementById('itemCategory').value = item.CATEGORY;
+            document.getElementById('currentStock').value = item.CURRENTSTOCK;
+            document.getElementById('itemUnit').value = item.UNIT;
+            document.getElementById('minStock').value = item.MINSTOCK;
+            document.getElementById('unitPrice').value = item.UNITPRICE;
+            document.getElementById('supplierID').value = item.SUPPLIERID || '';
             
             Utils.showModal('addInventoryModal');
         }
 
         async function adjustStock(itemId) {
-            const item = allInventory.find(i => i.MaterialID === itemId);
+            const item = allInventory.find(i => i.MATERIALID === itemId);
             if (!item) return;
 
-            const newStock = prompt(`调整库存数量\n当前库存: ${item.CurrentStock}${item.Unit}\n请输入新的库存数量:`, item.CurrentStock);
+            const newStock = prompt(`调整库存数量\n当前库存: ${item.CURRENTSTOCK}${item.UNIT}\n请输入新的库存数量:`, item.CURRENTSTOCK);
             if (newStock === null || newStock === '') return;
 
             const stockValue = parseFloat(newStock);
@@ -720,13 +721,13 @@
             purchaseRecords.forEach(record => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${record.purchaseID}</td>
-                    <td>${record.itemName}</td>
-                    <td>${record.quantity}${record.unit}</td>
-                    <td>${Utils.formatCurrency(record.unitPrice)}</td>
-                    <td>${Utils.formatCurrency(record.totalAmount)}</td>
-                    <td>${record.supplierName}</td>
-                    <td>${Utils.formatDate(record.purchaseDate)}</td>
+                    <td>${record.PURCHASEID}</td>
+                    <td>${record.ITEMNAME}</td>
+                    <td>${record.QUANTITY}${record.UNIT}</td>
+                    <td>${Utils.formatCurrency(record.UNITPRICE)}</td>
+                    <td>${Utils.formatCurrency(record.TOTALAMOUNT)}</td>
+                    <td>${record.SUPPLIERNAME}</td>
+                    <td>${Utils.formatDate(record.PURCHASEDATE)}</td>
                     <td><span class="status-badge success">已完成</span></td>
                 `;
                 tbody.appendChild(row);
@@ -826,7 +827,7 @@
         }
 
         function editSupplier(supplierId) {
-            const supplier = suppliers.find(s => s.SupplierID === supplierId);
+            const supplier = suppliers.find(s => s.SUPPLIERID === supplierId);
             if (!supplier) return;
 
             currentSupplierId = supplierId;

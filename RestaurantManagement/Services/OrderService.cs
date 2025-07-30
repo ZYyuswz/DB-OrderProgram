@@ -16,7 +16,7 @@ namespace RestaurantManagement.Services
         public async Task<IEnumerable<Order>> GetAllOrdersAsync()
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "SELECT * FROM Orders ORDER BY OrderTime DESC";
+            var sql = "SELECT * FROM PUB.Orders ORDER BY OrderTime DESC";
             return await connection.QueryAsync<Order>(sql);
         }
 
@@ -24,7 +24,7 @@ namespace RestaurantManagement.Services
         public async Task<Order?> GetOrderByIdAsync(int orderId)
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "SELECT * FROM Orders WHERE OrderID = @OrderId";
+            var sql = "SELECT * FROM PUB.Orders WHERE OrderID = @OrderId";
             return await connection.QueryFirstOrDefaultAsync<Order>(sql, new { OrderId = orderId });
         }
 
@@ -34,8 +34,8 @@ namespace RestaurantManagement.Services
             using var connection = _dbService.CreateConnection();
             var sql = @"
                 SELECT od.*, d.DishName 
-                FROM OrderDetail od
-                INNER JOIN Dish d ON od.DishID = d.DishID
+                FROM PUB.OrderDetail od
+                INNER JOIN PUB.Dish d ON od.DishID = d.DishID
                 WHERE od.OrderID = @OrderId";
             return await connection.QueryAsync(sql, new { OrderId = orderId });
         }
@@ -44,7 +44,7 @@ namespace RestaurantManagement.Services
         public async Task<Order?> GetCurrentOrderByTableAsync(int tableId)
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "SELECT * FROM Orders WHERE TableID = @TableId AND OrderStatus = '进行中'";
+            var sql = "SELECT * FROM PUB.Orders WHERE TableID = @TableId AND OrderStatus = '进行中'";
             return await connection.QueryFirstOrDefaultAsync<Order>(sql, new { TableId = tableId });
         }
 
@@ -53,7 +53,7 @@ namespace RestaurantManagement.Services
         {
             using var connection = _dbService.CreateConnection();
             var sql = @"
-                INSERT INTO Orders (TableID, CustomerID, StaffID, OrderTime, TotalAmount, OrderStatus, Notes)
+                INSERT INTO PUB.Orders (TableID, CustomerID, StaffID, OrderTime, TotalAmount, OrderStatus, Notes)
                 OUTPUT INSERTED.OrderID
                 VALUES (@TableID, @CustomerID, @StaffID, @OrderTime, @TotalAmount, @OrderStatus, @Notes)";
             return await connection.QuerySingleAsync<int>(sql, order);
@@ -64,7 +64,7 @@ namespace RestaurantManagement.Services
         {
             using var connection = _dbService.CreateConnection();
             var sql = @"
-                INSERT INTO OrderDetail (OrderID, DishID, Quantity, UnitPrice, Subtotal, SpecialRequests)
+                INSERT INTO PUB.OrderDetail (OrderID, DishID, Quantity, UnitPrice, Subtotal, SpecialRequests)
                 VALUES (@OrderID, @DishID, @Quantity, @UnitPrice, @Subtotal, @SpecialRequests)";
             var result = await connection.ExecuteAsync(sql, detail);
             return result > 0;
@@ -74,7 +74,7 @@ namespace RestaurantManagement.Services
         public async Task<bool> UpdateOrderStatusAsync(int orderId, string status)
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "UPDATE Orders SET OrderStatus = @Status WHERE OrderID = @OrderId";
+            var sql = "UPDATE PUB.Orders SET OrderStatus = @Status WHERE OrderID = @OrderId";
             var result = await connection.ExecuteAsync(sql, new { Status = status, OrderId = orderId });
             return result > 0;
         }
@@ -96,7 +96,7 @@ namespace RestaurantManagement.Services
         {
             using var connection = _dbService.CreateConnection();
             var sql = @"
-                UPDATE Orders 
+                UPDATE PUB.Orders 
                 SET TotalAmount = (
                     SELECT ISNULL(SUM(Subtotal), 0) 
                     FROM OrderDetail 

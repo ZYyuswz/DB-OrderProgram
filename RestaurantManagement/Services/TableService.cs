@@ -16,7 +16,7 @@ namespace RestaurantManagement.Services
         public async Task<IEnumerable<TableInfo>> GetAllTablesAsync()
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "SELECT * FROM TableInfo ORDER BY TableNumber";
+            var sql = "SELECT * FROM PUB.TableInfo ORDER BY TableNumber";
             return await connection.QueryAsync<TableInfo>(sql);
         }
 
@@ -24,7 +24,7 @@ namespace RestaurantManagement.Services
         public async Task<TableInfo?> GetTableByIdAsync(int tableId)
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "SELECT * FROM TableInfo WHERE TableID = @TableId";
+            var sql = "SELECT * FROM PUB.TableInfo WHERE TableID = @TableId";
             return await connection.QueryFirstOrDefaultAsync<TableInfo>(sql, new { TableId = tableId });
         }
 
@@ -32,7 +32,7 @@ namespace RestaurantManagement.Services
         public async Task<bool> UpdateTableStatusAsync(int tableId, string status)
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "UPDATE TableInfo SET Status = @Status WHERE TableID = @TableId";
+            var sql = "UPDATE PUB.TableInfo SET Status = @Status WHERE TableID = @TableId";
             var result = await connection.ExecuteAsync(sql, new { Status = status, TableId = tableId });
             return result > 0;
         }
@@ -47,7 +47,7 @@ namespace RestaurantManagement.Services
         public async Task<bool> CleanTableAsync(int tableId)
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "UPDATE TableInfo SET Status = @Status, LastCleanTime = @CleanTime WHERE TableID = @TableId";
+            var sql = "UPDATE PUB.TableInfo SET Status = @Status, LastCleanTime = @CleanTime WHERE TableID = @TableId";
             var result = await connection.ExecuteAsync(sql, new { 
                 Status = "清洁中", 
                 CleanTime = DateTime.Now, 
