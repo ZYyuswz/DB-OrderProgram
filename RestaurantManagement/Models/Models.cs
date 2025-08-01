@@ -19,9 +19,19 @@ namespace RestaurantManagement.Models
         public int? CustomerID { get; set; }
         public int? StaffID { get; set; }
         public DateTime OrderTime { get; set; }
-        public decimal TotalAmount { get; set; }
-        public string OrderStatus { get; set; } = string.Empty; // 进行中、已结账、已取消
+        public decimal? TotalPrice { get; set; }
+        public string OrderStatus { get; set; } = string.Empty; // 待处理、制作中、已完成、已结账、已取消
+        public int? StoreID { get; set; }
+        public DateTime? CreateTime { get; set; }
+        public DateTime? UpdateTime { get; set; }
         public string? Notes { get; set; }
+        
+        // 兼容性属性（前端可能使用）
+        public decimal TotalAmount 
+        { 
+            get => TotalPrice ?? 0; 
+            set => TotalPrice = value; 
+        }
     }
 
     // 订单详情

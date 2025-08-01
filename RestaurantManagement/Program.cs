@@ -3,7 +3,11 @@ using RestaurantManagement.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // 添加服务
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
 builder.Services.AddScoped<DatabaseService>();
 builder.Services.AddScoped<TableService>();
 builder.Services.AddScoped<OrderService>();

@@ -25,14 +25,14 @@ namespace RestaurantManagement.Services
                 using var connection = new OracleConnection(_connectionString);
                 await connection.OpenAsync();
                 
-                // 测试查询以确保连接正常工作
+                // 测试查询以确保连接正常工�?
                 using var command = new OracleCommand("SELECT 'Connection Test' FROM DUAL", connection);
                 var result = await command.ExecuteScalarAsync();
                 return result != null;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"数据库连接测试失败: {ex.Message}");
+                Console.WriteLine($"数据库连接测试失�? {ex.Message}");
                 return false;
             }
         }
@@ -58,7 +58,7 @@ namespace RestaurantManagement.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"获取表信息失败: {ex.Message}");
+                Console.WriteLine($"获取表信息失�? {ex.Message}");
             }
             return tables;
         }

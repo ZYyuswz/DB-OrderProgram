@@ -12,7 +12,7 @@ namespace RestaurantManagement.Services
             _dbService = dbService;
         }
 
-        // 获取所有员工
+        // 获取所有员�?
         public async Task<IEnumerable<Staff>> GetAllStaffAsync()
         {
             using var connection = _dbService.CreateConnection();
@@ -24,7 +24,7 @@ namespace RestaurantManagement.Services
         public async Task<Staff?> GetStaffByIdAsync(int staffId)
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "SELECT * FROM PUB.Staff WHERE StaffID = @StaffId";
+            var sql = "SELECT * FROM PUB.Staff WHERE StaffID = :StaffId";
             return await connection.QueryFirstOrDefaultAsync<Staff>(sql, new { StaffId = staffId });
         }
 
@@ -34,7 +34,7 @@ namespace RestaurantManagement.Services
             using var connection = _dbService.CreateConnection();
             var sql = @"
                 INSERT INTO PuB.Staff (StaffName, Position, Phone, Salary, Status, WorkSchedule, HireDate)
-                VALUES (@StaffName, @Position, @Phone, @Salary, @Status, @WorkSchedule, @HireDate)";
+                VALUES (:StaffName, :Position, :Phone, :Salary, :Status, :WorkSchedule, :HireDate)";
             var result = await connection.ExecuteAsync(sql, staff);
             return result > 0;
         }
@@ -45,18 +45,18 @@ namespace RestaurantManagement.Services
             using var connection = _dbService.CreateConnection();
             var sql = @"
                 UPDATE PUB.Staff 
-                SET StaffName = @StaffName, Position = @Position, Phone = @Phone, 
-                    Salary = @Salary, Status = @Status, WorkSchedule = @WorkSchedule
-                WHERE StaffID = @StaffID";
+                SET StaffName = :StaffName, Position = :Position, Phone = :Phone, 
+                    Salary = :Salary, Status = :Status, WorkSchedule = :WorkSchedule
+                WHERE StaffID = :StaffID";
             var result = await connection.ExecuteAsync(sql, staff);
             return result > 0;
         }
 
-        // 更新员工状态
+        // 更新员工状�?
         public async Task<bool> UpdateStaffStatusAsync(int staffId, string status)
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "UPDATE PUB.Staff SET Status = @Status WHERE StaffID = @StaffId";
+            var sql = "UPDATE PUB.Staff SET Status = :Status WHERE StaffID = :StaffId";
             var result = await connection.ExecuteAsync(sql, new { Status = status, StaffId = staffId });
             return result > 0;
         }
@@ -70,19 +70,19 @@ namespace RestaurantManagement.Services
 
             if (startDate.HasValue)
             {
-                whereClause += " AND a.WorkDate >= @StartDate";
+                whereClause += " AND a.WorkDate >= :StartDate";
                 parameters.Add("StartDate", startDate.Value);
             }
 
             if (endDate.HasValue)
             {
-                whereClause += " AND a.WorkDate <= @EndDate";
+                whereClause += " AND a.WorkDate <= :EndDate";
                 parameters.Add("EndDate", endDate.Value);
             }
 
             if (staffId.HasValue)
             {
-                whereClause += " AND a.StaffID = @StaffId";
+                whereClause += " AND a.StaffID = :StaffId";
                 parameters.Add("StaffId", staffId.Value);
             }
 
@@ -104,13 +104,13 @@ namespace RestaurantManagement.Services
             
             // 检查今天是否已经有考勤记录
             var existingRecord = await connection.QueryFirstOrDefaultAsync<Attendance>(
-                "SELECT * FROM PUB.Attendance WHERE StaffID = @StaffId AND WorkDate = @WorkDate",
+                "SELECT * FROM PUB.Attendance WHERE StaffID = :StaffId AND WorkDate = :WorkDate",
                 new { StaffId = staffId, WorkDate = today });
 
             if (existingRecord != null)
             {
                 // 更新打卡时间
-                var sql = "UPDATE PUB.Attendance SET CheckInTime = @CheckInTime WHERE AttendanceID = @AttendanceId";
+                var sql = "UPDATE PUB.Attendance SET CheckInTime = :CheckInTime WHERE AttendanceID = :AttendanceId";
                 var result = await connection.ExecuteAsync(sql, new { 
                     CheckInTime = DateTime.Now, 
                     AttendanceId = existingRecord.AttendanceID 
@@ -122,7 +122,7 @@ namespace RestaurantManagement.Services
                 // 创建新的考勤记录
                 var sql = @"
                     INSERT INTO PUB.Attendance (StaffID, WorkDate, CheckInTime, Status)
-                    VALUES (@StaffId, @WorkDate, @CheckInTime, @Status)";
+                    VALUES (:StaffId, :WorkDate, :CheckInTime, :Status)";
                 var result = await connection.ExecuteAsync(sql, new { 
                     StaffId = staffId, 
                     WorkDate = today, 
@@ -141,9 +141,9 @@ namespace RestaurantManagement.Services
             
             var sql = @"
                 UPDATE PUB.Attendance 
-                SET CheckOutTime = @CheckOutTime,
-                    WorkHours = DATEDIFF(MINUTE, CheckInTime, @CheckOutTime) / 60.0
-                WHERE StaffID = @StaffId AND WorkDate = @WorkDate";
+                SET CheckOutTime = :CheckOutTime,
+                    WorkHours = DATEDIFF(MINUTE, CheckInTime, :CheckOutTime) / 60.0
+                WHERE StaffID = :StaffId AND WorkDate = :WorkDate";
             
             var result = await connection.ExecuteAsync(sql, new { 
                 CheckOutTime = DateTime.Now, 

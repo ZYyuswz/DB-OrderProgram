@@ -5,6 +5,133 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>桌台管理 - 餐饮管理系统</title>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* 桌台详情样式增强 */
+        .table-details-container {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .table-basic-info {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .info-value {
+            color: #212529;
+        }
+        
+        .order-info-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .info-grid p {
+            margin: 0.5rem 0;
+            padding: 0.25rem 0;
+        }
+        
+        .dishes-section {
+            margin-bottom: 1rem;
+        }
+        
+        .table-responsive {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+        
+        .total-row {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        
+        .empty-state {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .no-order-section {
+            margin: 1rem 0;
+        }
+        
+        .action-buttons .btn {
+            margin: 0.25rem;
+        }
+        
+        .error-state {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            color: #721c24;
+        }
+        
+        /* 订单状态样式 */
+        .status-active { background-color: #28a745; color: white; }
+        .status-success { background-color: #17a2b8; color: white; }
+        .status-cancelled { background-color: #dc3545; color: white; }
+        .status-finished { background-color: #6c757d; color: white; }
+        .status-default { background-color: #ffc107; color: black; }
+        
+        /* 加载动画 */
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .action-buttons {
+                text-align: center;
+            }
+            
+            .action-buttons .btn {
+                display: block;
+                width: 100%;
+                margin: 0.25rem 0;
+            }
+            
+            .info-row {
+                flex-direction: column;
+                align-items: flex-start;
+                text-align: left;
+            }
+            
+            .table-responsive {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar">
@@ -79,10 +206,6 @@
             </div>
             <form id="openTableForm">
                 <div class="form-group">
-                    <label for="customerCount">客人数量:</label>
-                    <input type="number" id="customerCount" class="form-control" min="1" required>
-                </div>
-                <div class="form-group">
                     <label for="staffSelect">服务员:</label>
                     <select id="staffSelect" class="form-control" required>
                         <option value="">请选择服务员</option>
@@ -97,6 +220,29 @@
                     <button type="submit" class="btn btn-primary">确认开台</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- 结账确认模态框 -->
+    <div id="checkoutConfirmModal" class="modal">
+        <div class="modal-content" style="max-width: 400px; margin: 10% auto;">
+            <div class="modal-header">
+                <h3>确认结账</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div style="text-align: center; padding: 1rem;">
+                    <div style="font-size: 3rem; color: #28a745; margin-bottom: 1rem;">💳</div>
+                    <h4 style="color: #333; margin-bottom: 1rem;">确认要为此订单结账吗？</h4>
+                    <p id="checkout-order-info" style="color: #666; margin-bottom: 1.5rem;">
+                        <!-- 订单信息将动态填充 -->
+                    </p>
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <button onclick="Utils.hideModal('checkoutConfirmModal')" class="btn btn-secondary">取消</button>
+                        <button id="confirmCheckoutBtn" onclick="confirmCheckout()" class="btn btn-success">确认结账</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -160,14 +306,17 @@
 
             tables.forEach(table => {
                 const tableItem = document.createElement('div');
-                tableItem.className = `table-item ${getTableStatusClass(table.status)}`;
+                // 获取桌台项的状态类（不带 status- 前缀）
+                const statusInfo = Utils.getStatusInfo(table.status, 'table');
+                const tableStatusClass = statusInfo.class.replace('status-', ''); // 移除 status- 前缀
+                tableItem.className = `table-item ${tableStatusClass}`;
                 tableItem.onclick = () => handleTableClick(table);
 
                 tableItem.innerHTML = `
                     <div class="table-number">桌台 ${table.tableNumber}</div>
                     <div class="table-capacity">容量: ${table.capacity}人</div>
-                    <div class="status-badge ${Utils.getStatusInfo(table.status, 'table').class}">
-                        ${Utils.getStatusInfo(table.status, 'table').text}
+                    <div class="status-badge ${statusInfo.class}">
+                        ${statusInfo.text}
                     </div>
                     <div style="font-size: 0.8rem; color: #666; margin-top: 0.5rem;">
                         区域: ${table.area}
@@ -176,16 +325,6 @@
 
                 grid.appendChild(tableItem);
             });
-        }
-
-        function getTableStatusClass(status) {
-            const statusMap = {
-                '空闲': 'available',
-                '占用': 'occupied',
-                '预订': 'reserved',
-                '清洁中': 'cleaning'
-            };
-            return statusMap[status] || 'available';
         }
 
         function updateStatusCounts() {
@@ -221,55 +360,169 @@
 
         async function showTableDetails(table) {
             try {
-                // 获取当前订单信息
-                const currentOrder = await API.get(`/tables/${table.tableID}/current-order`);
+                // 显示加载状态
+                document.getElementById('modal-title').textContent = `桌台${table.tableNumber} - 加载中...`;
+                document.getElementById('modal-body').innerHTML = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <div class="loading-spinner"></div>
+                        <p>正在加载订单信息...</p>
+                    </div>
+                `;
+                Utils.showModal('tableModal');
+
+                // 获取当前订单信息，增加错误处理
+                let currentOrder = null;
+                try {
+                    const response = await fetch(`/api/tables/${table.tableID}/current-order`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        currentOrder = await response.json();
+                        console.log('获取到的订单数据:', currentOrder);
+                    } else if (response.status === 404) {
+                        // 404表示没有订单，这是正常情况
+                        currentOrder = null;
+                    } else {
+                        throw new Error(`API调用失败: ${response.status} ${response.statusText}`);
+                    }
+                } catch (apiError) {
+                    console.warn('获取订单API调用失败:', apiError);
+                    // 如果是网络错误或服务器错误，继续显示无订单状态
+                    currentOrder = null;
+                }
                 
                 let orderDetails = '';
+                let staffInfo = '';
+                
                 if (currentOrder) {
-                    const details = await API.get(`/orders/${currentOrder.orderID}/details`);
+                    // 获取订单详情和服务员信息
+                    const [details, orderStaff] = await Promise.all([
+                        API.get(`/orders/${currentOrder.orderID}/details`).catch(() => []),
+                        currentOrder.staffID ? API.get(`/staff/${currentOrder.staffID}`).catch(() => null) : null
+                    ]);
+
+                    // 调试：打印详情数据结构
+                    console.log('订单详情数据:', details);
+                    if (details.length > 0) {
+                        console.log('第一条详情记录的字段:', Object.keys(details[0]));
+                        console.log('第一条详情记录的值:', details[0]);
+                    }
+
+                    staffInfo = orderStaff ? `
+                        <p><strong>负责服务员:</strong> ${orderStaff.staffName}</p>
+                    ` : '';
+
+                    const totalAmount = details.reduce((sum, d) => {
+                        const subtotal = d.Subtotal || d.subtotal || d.SUBTOTAL || 0;
+                        console.log(`处理详情记录，小计: ${subtotal}`);
+                        return sum + subtotal;
+                    }, 0);
+                    
+                    console.log(`计算总金额: ${totalAmount}`);
+                    
                     orderDetails = `
-                        <h4>当前订单信息</h4>
-                        <p><strong>订单号:</strong> ${currentOrder.orderID}</p>
-                        <p><strong>下单时间:</strong> ${Utils.formatDateTime(currentOrder.orderTime)}</p>
-                        <p><strong>总金额:</strong> ${Utils.formatCurrency(currentOrder.totalAmount)}</p>
+                        <div class="order-info-section">
+                            <h4 style="color: #28a745; margin-bottom: 1rem;">
+                                <i class="icon-order"></i> 当前订单信息
+                            </h4>
+                            <div class="info-grid">
+                                <p><strong>订单号:</strong> #${currentOrder.orderID}</p>
+                                <p><strong>下单时间:</strong> ${Utils.formatDateTime(currentOrder.orderTime)}</p>
+                                ${staffInfo}
+                                <p><strong>订单状态:</strong> <span class="status-badge ${getOrderStatusClass(currentOrder.orderStatus)}">${currentOrder.orderStatus}</span></p>
+                                <p><strong>备注:</strong> ${currentOrder.notes || '无'}</p>
+                            </div>
+                        </div>
                         
-                        <h5>菜品列表:</h5>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>菜品名称</th>
-                                    <th>数量</th>
-                                    <th>单价</th>
-                                    <th>小计</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${details.map(d => `
-                                    <tr>
-                                        <td>${d.dishName}</td>
-                                        <td>${d.quantity}</td>
-                                        <td>${Utils.formatCurrency(d.unitPrice)}</td>
-                                        <td>${Utils.formatCurrency(d.subtotal)}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                        <div class="dishes-section">
+                            <h5 style="margin: 1.5rem 0 1rem 0;">
+                                <i class="icon-dish"></i> 菜品列表 (${details.length}项)
+                            </h5>
+                            ${details.length > 0 ? `
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>菜品名称</th>
+                                                <th>数量</th>
+                                                <th>单价</th>
+                                                <th>小计</th>
+                                                <th>特殊要求</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${details.map(d => `
+                                                <tr>
+                                                    <td><strong>${d.DishName || d.dishname || d.DISHNAME || '未知菜品'}</strong></td>
+                                                    <td class="text-center">${d.Quantity || d.quantity || d.QUANTITY || 0}</td>
+                                                    <td class="text-right">${Utils.formatCurrency(d.UnitPrice || d.unitprice || d.UNITPRICE || 0)}</td>
+                                                    <td class="text-right"><strong>${Utils.formatCurrency(d.Subtotal || d.subtotal || d.SUBTOTAL || 0)}</strong></td>
+                                                    <td class="text-muted">${d.SpecialRequests || d.specialrequests || d.SPECIALREQUESTS || '-'}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="total-row">
+                                                <td colspan="3"><strong>总计</strong></td>
+                                                <td class="text-right"><strong style="color: #28a745; font-size: 1.1em;">${Utils.formatCurrency(totalAmount)}</strong></td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            ` : `
+                                <div class="empty-state">
+                                    <p style="color: #6c757d; text-align: center; padding: 2rem;">
+                                        <i class="icon-empty"></i><br>
+                                        暂无点菜记录
+                                    </p>
+                                </div>
+                            `}
+                        </div>
                         
-                        <div style="margin-top: 1rem;">
-                            <button onclick="addDish(${currentOrder.orderID})" class="btn btn-primary">加菜</button>
-                            <button onclick="checkoutOrder(${currentOrder.orderID})" class="btn btn-success">结账</button>
-                            <button onclick="Utils.hideModal('tableModal')" class="btn btn-secondary">关闭</button>
+                        <div class="action-buttons" style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #dee2e6;">
+                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                <button onclick="addDish(${currentOrder.orderID})" class="btn btn-primary">
+                                    <i class="icon-add"></i> 加菜
+                                </button>
+                                <button onclick="printOrder(${currentOrder.orderID})" class="btn btn-secondary">
+                                    <i class="icon-print"></i> 打印
+                                </button>
+                                <button onclick="checkoutOrder(${currentOrder.orderID})" class="btn btn-success">
+                                    <i class="icon-checkout"></i> 结账 (${Utils.formatCurrency(totalAmount)})
+                                </button>
+                            </div>
+                            <div style="margin-top: 1rem;">
+                                <button onclick="Utils.hideModal('tableModal')" class="btn btn-light" style="width: 100%;">关闭</button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // 没有订单时显示创建订单界面
+                    orderDetails = `
+                        <div class="no-order-section">
+                            <div style="text-align: center; padding: 2rem; background-color: #f8f9fa; border-radius: 8px; margin: 1rem 0;">
+                                <div style="font-size: 3rem; color: #6c757d; margin-bottom: 1rem;">🍽️</div>
+                                <h4 style="color: #6c757d; margin-bottom: 1rem;">该桌台暂无订单</h4>
+                                <p style="color: #868e96; margin-bottom: 2rem;">客人已入座，可以开始点餐了</p>
+                                
+                                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                                    <button onclick="createNewOrder(${table.tableID})" class="btn btn-primary btn-lg">
+                                        <i class="icon-add"></i> 创建订单
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     `;
                 }
 
-                document.getElementById('modal-title').textContent = `桌台${table.tableNumber} - 详情`;
+                document.getElementById('modal-title').textContent = `桌台${table.tableNumber}`;
                 document.getElementById('modal-body').innerHTML = `
-                    <div>
-                        <p><strong>桌台号:</strong> ${table.tableNumber}</p>
-                        <p><strong>容量:</strong> ${table.capacity}人</p>
-                        <p><strong>区域:</strong> ${table.area}</p>
-                        <p><strong>状态:</strong> <span class="status-badge ${Utils.getStatusInfo(table.status, 'table').class}">${table.status}</span></p>
+                    <div class="table-details-container">
                         ${orderDetails}
                     </div>
                 `;
@@ -277,8 +530,37 @@
                 Utils.showModal('tableModal');
             } catch (error) {
                 console.error('获取桌台详情失败:', error);
+                document.getElementById('modal-title').textContent = `桌台${table.tableNumber} - 错误`;
+                document.getElementById('modal-body').innerHTML = `
+                    <div class="error-state" style="text-align: center; padding: 2rem;">
+                        <div style="font-size: 3rem; color: #dc3545; margin-bottom: 1rem;">⚠️</div>
+                        <h4 style="color: #dc3545;">加载失败</h4>
+                        <p style="color: #6c757d; margin: 1rem 0;">无法获取桌台详情信息</p>
+                        <div>
+                            <button onclick="showTableDetails({tableID: ${table.tableID}, tableNumber: '${table.tableNumber}', capacity: ${table.capacity}, area: '${table.area}', status: '${table.status}'})" class="btn btn-primary">重试</button>
+                            <button onclick="Utils.hideModal('tableModal')" class="btn btn-secondary">关闭</button>
+                        </div>
+                    </div>
+                `;
                 Utils.showNotification('获取桌台详情失败', 'error');
             }
+        }
+
+        // 获取订单状态对应的CSS类
+        function getOrderStatusClass(status) {
+            const statusMap = {
+                '待处理': 'status-default',
+                '制作中': 'status-active',
+                '已完成': 'status-success',
+                '已结账': 'status-finished'
+            };
+            return statusMap[status] || 'status-default';
+        }
+
+        // 打印订单
+        function printOrder(orderId) {
+            // TODO: 实现打印功能
+            Utils.showNotification('打印功能待实现', 'info');
         }
 
         function showTableCleaningOptions(table) {
@@ -305,23 +587,16 @@
             }
 
             try {
-                const customerCount = document.getElementById('customerCount').value;
                 const staffId = document.getElementById('staffSelect').value;
                 const notes = document.getElementById('orderNotes').value;
 
-                // 创建订单
-                const orderData = {
-                    tableID: currentTableId,
-                    customerID: null, // 现场客户
-                    staffID: parseInt(staffId),
-                    totalAmount: 0,
-                    notes: notes
-                };
+                console.log(`开台：准备将桌台 ${currentTableId} 状态更新为占用`);
+                console.log('开台URL:', `/api/tables/${currentTableId}/status`);
+                console.log('开台参数:', { status: "占用" });
 
-                const result = await API.post('/orders', orderData);
-                
-                // 更新桌台状态为占用
-                await API.put(`/tables/${currentTableId}/status`, '占用');
+                // 只更新桌台状态为占用，不创建订单
+                const openTableResult = await API.put(`/tables/${currentTableId}/status`, { status: "占用" });
+                console.log('开台API返回结果:', openTableResult);
 
                 Utils.showNotification('开台成功', 'success');
                 Utils.hideModal('openTableModal');
@@ -332,41 +607,150 @@
 
             } catch (error) {
                 console.error('开台失败:', error);
+                console.error('开台错误详情:', error.response || error.message);
+                console.error('开台错误状态码:', error.status);
+                console.error('开台完整错误对象:', error);
                 Utils.showNotification('开台失败', 'error');
             }
         }
 
+        let currentCheckoutOrderId = null;
+
         async function checkoutOrder(orderId) {
-            if (!Utils.showConfirm('确认要为此订单结账吗？')) {
+            try {
+                // 先获取订单信息用于显示
+                const order = await API.get(`/orders/${orderId}`);
+                if (!order) {
+                    Utils.showNotification('订单不存在', 'error');
+                    return;
+                }
+
+                // 获取订单详情计算总金额
+                const details = await API.get(`/orders/${orderId}/details`).catch(() => []);
+                const totalAmount = details.reduce((sum, d) => {
+                    const subtotal = d.Subtotal || d.subtotal || d.SUBTOTAL || 0;
+                    return sum + subtotal;
+                }, 0);
+
+                // 设置当前要结账的订单ID
+                currentCheckoutOrderId = orderId;
+
+                // 填充确认信息
+                document.getElementById('checkout-order-info').innerHTML = `
+                    <strong>订单号:</strong> #${orderId}<br>
+                    <strong>总金额:</strong> <span style="color: #28a745; font-size: 1.2em;">${Utils.formatCurrency(totalAmount)}</span>
+                `;
+
+                // 显示确认模态框
+                Utils.showModal('checkoutConfirmModal');
+
+            } catch (error) {
+                console.error('获取订单信息失败:', error);
+                Utils.showNotification('获取订单信息失败', 'error');
+            }
+        }
+
+        async function confirmCheckout() {
+            if (!currentCheckoutOrderId) {
+                Utils.showNotification('订单信息异常', 'error');
                 return;
             }
 
             try {
-                await API.put(`/orders/${orderId}/checkout`);
+                Utils.showNotification('正在处理结账...', 'info');
                 
-                // 获取订单信息以确定桌台ID
-                const order = await API.get(`/orders/${orderId}`);
-                if (order && order.tableID) {
-                    // 设置桌台为清洁中状态
-                    await API.post(`/tables/${order.tableID}/clean`);
+                // 隐藏确认模态框
+                Utils.hideModal('checkoutConfirmModal');
+
+                // 先获取订单信息
+                const order = await API.get(`/orders/${currentCheckoutOrderId}`);
+                if (!order) {
+                    throw new Error('订单不存在');
                 }
 
-                Utils.showNotification('结账成功', 'success');
+                console.log('结账前订单状态:', order.orderStatus);
+
+                // 执行结账操作
+                const checkoutResult = await API.put(`/orders/${currentCheckoutOrderId}/checkout`);
+                console.log('结账API返回结果:', checkoutResult);
+
+                // 验证订单状态是否已更新为"已结账"
+                const updatedOrder = await API.get(`/orders/${currentCheckoutOrderId}`);
+                console.log('结账后订单状态:', updatedOrder?.orderStatus);
+
+                if (updatedOrder && updatedOrder.orderStatus !== '已结账') {
+                    console.warn(`订单状态更新异常: 期望"已结账"，实际"${updatedOrder.orderStatus}"`);
+                    // 手动更新订单状态（备用方案）
+                    try {
+                        await API.put(`/orders/${currentCheckoutOrderId}/status`, { status: '已结账' });
+                        console.log('手动更新订单状态为"已结账"');
+                    } catch (statusUpdateError) {
+                        console.error('手动更新订单状态失败:', statusUpdateError);
+                    }
+                }
+                
+                // 设置桌台为清洁中状态
+                if (order.tableID) {
+                    try {
+                        console.log(`准备将桌台 ${order.tableID} 状态更新为清洁中`);
+                        console.log('桌台状态更新URL:', `/api/tables/${order.tableID}/status`);
+                        console.log('桌台状态更新参数:', { status: "清洁中" });
+                        
+                        const tableUpdateResult = await API.put(`/tables/${order.tableID}/status`, { status: "清洁中" });
+                        console.log('桌台状态更新API返回结果:', tableUpdateResult);
+                        console.log('桌台状态已更新为清洁中');
+                    } catch (tableError) {
+                        console.error('更新桌台状态失败:', tableError);
+                        console.error('错误详情:', tableError.response || tableError.message);
+                        console.error('错误状态码:', tableError.status);
+                        console.error('完整错误对象:', tableError);
+                        Utils.showNotification(`桌台状态更新失败: ${tableError.message || '未知错误'}`, 'warning');
+                        // 不影响结账流程，继续执行
+                    }
+                } else {
+                    console.warn('订单没有关联的桌台ID，无法更新桌台状态');
+                }
+
+                Utils.showNotification(`订单 #${currentCheckoutOrderId} 结账成功！`, 'success');
                 Utils.hideModal('tableModal');
+                
+                // 重置当前结账订单ID
+                currentCheckoutOrderId = null;
                 
                 // 刷新桌台状态
                 await loadTables();
 
             } catch (error) {
                 console.error('结账失败:', error);
-                Utils.showNotification('结账失败', 'error');
+                let errorMessage = '结账失败';
+                
+                if (error.response) {
+                    console.error('API错误详情:', error.response);
+                    if (error.response.status === 404) {
+                        errorMessage = '订单不存在或已被删除';
+                    } else if (error.response.status === 400) {
+                        errorMessage = '订单状态异常，无法结账';
+                    } else {
+                        errorMessage = `结账失败 (错误码: ${error.response.status})`;
+                    }
+                } else if (error.message) {
+                    errorMessage = `结账失败: ${error.message}`;
+                }
+                
+                Utils.showNotification(errorMessage, 'error');
+                
+                // 重置当前结账订单ID
+                currentCheckoutOrderId = null;
             }
         }
 
         async function finishCleaning(tableId) {
             try {
-                await API.post(`/tables/${tableId}/finish-cleaning`);
-                Utils.showNotification('清洁完成', 'success');
+                Utils.showNotification('正在完成清洁...', 'info');
+                
+                await API.put(`/tables/${tableId}/status`, { status: "空闲" });
+                
+                Utils.showNotification('清洁完成，桌台已设为空闲', 'success');
                 Utils.hideModal('tableModal');
                 
                 // 刷新桌台状态
@@ -374,13 +758,105 @@
 
             } catch (error) {
                 console.error('操作失败:', error);
-                Utils.showNotification('操作失败', 'error');
+                Utils.showNotification('操作失败，请重试', 'error');
             }
         }
 
         function addDish(orderId) {
-            // TODO: 实现加菜功能，可以跳转到菜单页面或打开加菜模态框
-            Utils.showNotification('加菜功能待实现', 'info');
+            // 跳转到菜单页面，传递订单ID
+            const currentTable = tables.find(t => t.tableID === currentTableId);
+            const tableNumber = currentTable ? currentTable.tableNumber : '';
+            
+            // 构建跳转URL，包含订单ID和桌台信息
+            const menuUrl = `menu.html?orderId=${orderId}&tableId=${currentTableId}&tableNumber=${tableNumber}&action=addDish`;
+            
+            // 在新标签页打开或当前页面跳转
+            if (confirm('是否在新标签页打开点菜页面？\n点击"确定"在新标签页打开，点击"取消"在当前页面跳转。')) {
+                window.open(menuUrl, '_blank');
+            } else {
+                window.location.href = menuUrl;
+            }
+        }
+
+        async function createNewOrder(tableId) {
+            try {
+                // 显示创建中状态
+                Utils.showNotification('正在创建订单...', 'info');
+
+                // 获取员工列表用于创建订单
+                if (staff.length === 0) {
+                    await loadStaff();
+                }
+
+                // 获取当前用户信息或使用默认员工
+                const currentUser = Auth.getCurrentUser();
+                let selectedStaffId = null;
+
+                if (currentUser && currentUser.staffID) {
+                    selectedStaffId = currentUser.staffID;
+                } else {
+                    const availableStaff = staff.find(s => s.status === '在职');
+                    if (availableStaff) {
+                        selectedStaffId = availableStaff.staffID;
+                    }
+                }
+
+                if (!selectedStaffId) {
+                    Utils.showNotification('没有可用的服务员，请先添加员工', 'warning');
+                    return;
+                }
+
+                // 创建订单数据
+                const orderData = {
+                    tableID: tableId,
+                    customerID: null, // 现场客户，无需客户ID
+                    staffID: selectedStaffId,
+                    orderTime: new Date().toISOString(),
+                    totalAmount: 0, // 初始金额为0，后续通过点菜增加
+                    orderStatus: '待处理', // 根据表设计文档，新订单状态为"待处理"
+                    notes: `桌台${tables.find(t => t.tableID === tableId)?.tableNumber || tableId}开台`
+                };
+
+                console.log('创建订单数据:', orderData);
+
+                // 调用API创建订单
+                const result = await API.post('/orders', orderData);
+                
+                if (result && (result.orderID || result.id)) {
+                    const orderId = result.orderID || result.id;
+                    Utils.showNotification(`订单创建成功！订单号: #${orderId}`, 'success');
+                    
+                    // 关闭模态框
+                    Utils.hideModal('tableModal');
+                    
+                    // 刷新桌台状态以更新订单信息
+                    await loadTables();
+                    
+                    // 可选：自动跳转到点菜页面
+                    // window.location.href = `menu.html?orderId=${orderId}&tableId=${tableId}`;
+                } else {
+                    throw new Error('创建订单返回数据格式异常');
+                }
+
+            } catch (error) {
+                console.error('创建订单失败:', error);
+                let errorMessage = '创建订单失败';
+                
+                if (error.response) {
+                    // API返回的错误
+                    if (error.response.status === 400) {
+                        errorMessage = '订单数据格式错误，请检查输入';
+                    } else if (error.response.status === 500) {
+                        errorMessage = '服务器内部错误，请联系管理员';
+                    } else {
+                        errorMessage = `创建订单失败 (错误码: ${error.response.status})`;
+                    }
+                } else if (error.message) {
+                    errorMessage = `创建订单失败: ${error.message}`;
+                }
+                
+                Utils.showNotification(errorMessage, 'error');
+            }
         }
 
         async function refreshTables() {

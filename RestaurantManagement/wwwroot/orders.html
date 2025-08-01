@@ -373,63 +373,151 @@
 
         async function viewOrderDetails(orderId) {
             try {
-                const order = await API.get(`/orders/${orderId}`);
-                const details = await API.get(`/orders/${orderId}/details`);
-
-                document.getElementById('orderDetailTitle').textContent = `订单详情 - ${orderId}`;
+                console.log(`[Frontend] 获取订单详情: OrderID=${orderId}`);
                 
-                const statusInfo = Utils.getStatusInfo(order.orderStatus, 'order');
+                // 使用增强的订单详情API
+                const response = await API.get(`/orders/${orderId}/enhanced-details`);
+                
+                if (!response) {
+                    Utils.showNotification('订单不存在', 'error');
+                    return;
+                }
+                
+                const { Order: order, Details: details, Summary: summary, CategoryStats: categoryStats } = response;
+                
+                document.getElementById('orderDetailTitle').textContent = `订单详情 - #${orderId}`;
+                
+                const statusInfo = Utils.getStatusInfo(order.OrderStatus, 'order');
+                const canModify = ['待处理', '制作中'].includes(order.OrderStatus);
+                const canCheckout = ['待处理', '制作中', '已完成'].includes(order.OrderStatus);
+                
                 let detailsHTML = `
-                    <div style="margin-bottom: 1.5rem;">
+                    <!-- 订单基本信息 -->
+                    <div style="margin-bottom: 1.5rem; padding: 1rem; background-color: #f8f9fa; border-radius: 0.5rem;">
+                        <h5 style="margin: 0 0 1rem 0; color: #495057;">
+                            <i class="fas fa-receipt"></i> 订单基本信息
+                        </h5>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                            <div><strong>订单号:</strong> ${order.orderID}</div>
-                            <div><strong>桌台号:</strong> ${order.tableID ? '桌台' + order.tableID : '-'}</div>
-                            <div><strong>下单时间:</strong> ${Utils.formatDateTime(order.orderTime)}</div>
-                            <div><strong>服务员:</strong> ${getStaffName(order.staffID)}</div>
+                            <div><strong>订单号:</strong> #${order.OrderID}</div>
+                            <div><strong>桌台信息:</strong> ${order.TableNumber ? `${order.TableNumber} (${order.TableArea}, ${order.TableCapacity}人桌)` : '外卖'}</div>
+                            <div><strong>下单时间:</strong> ${Utils.formatDateTime(order.OrderTime)}</div>
+                            <div><strong>服务员:</strong> ${order.StaffName ? `${order.StaffName} (${order.StaffPosition})` : '-'}</div>
                             <div><strong>订单状态:</strong> <span class="status-badge ${statusInfo.class}">${statusInfo.text}</span></div>
-                            <div><strong>总金额:</strong> <span style="color: #e74c3c; font-size: 1.2rem; font-weight: bold;">${Utils.formatCurrency(order.totalAmount)}</span></div>
+                            <div><strong>总金额:</strong> <span style="color: #e74c3c; font-size: 1.2rem; font-weight: bold;">${Utils.formatCurrency(order.TotalPrice || 0)}</span></div>
                         </div>
-                        ${order.notes ? `<div style="margin-top: 1rem;"><strong>备注:</strong> ${order.notes}</div>` : ''}
+                        ${order.Notes ? `<div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #dee2e6;"><strong>备注:</strong> ${order.Notes}</div>` : ''}
                     </div>
 
-                    <h4 style="margin-bottom: 1rem; border-bottom: 1px solid #dee2e6; padding-bottom: 0.5rem;">菜品明细</h4>
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>菜品名称</th>
-                                <th>数量</th>
-                                <th>单价</th>
-                                <th>小计</th>
-                                <th>特殊要求</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${details.map(d => `
-                                <tr>
-                                    <td>${d.dishName}</td>
-                                    <td>${d.quantity}</td>
-                                    <td>${Utils.formatCurrency(d.unitPrice)}</td>
-                                    <td>${Utils.formatCurrency(d.subtotal)}</td>
-                                    <td>${d.specialRequests || '-'}</td>
-                                </tr>
+                    <!-- 订单统计信息 -->
+                    <div style="margin-bottom: 1rem; padding: 1rem; background-color: #e7f3ff; border-radius: 0.5rem; border-left: 4px solid #007bff;">
+                        <h6 style="margin: 0 0 0.5rem 0; color: #0056b3;">
+                            <i class="icon">📊</i> 订单统计
+                        </h6>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; font-size: 0.9rem;">
+                            <div><strong>菜品种类:</strong> ${summary.ItemCount} 种</div>
+                            <div><strong>商品总数:</strong> ${summary.TotalItems} 件</div>
+                            <div><strong>分类数量:</strong> ${summary.CategoryCount} 类</div>
+                            <div><strong>平均单价:</strong> ${Utils.formatCurrency(summary.AvgItemPrice)}</div>
+                            ${summary.MostExpensiveItem ? `<div><strong>最贵菜品:</strong> ${summary.MostExpensiveItem.DishName} (${Utils.formatCurrency(summary.MostExpensiveItem.Subtotal)})</div>` : ''}
+                            ${summary.MostOrderedItem ? `<div><strong>最多数量:</strong> ${summary.MostOrderedItem.DishName} (${summary.MostOrderedItem.Quantity}份)</div>` : ''}
+                        </div>
+                    </div>
+
+                    <!-- 分类统计 -->
+                    ${categoryStats && categoryStats.length > 0 ? `
+                    <div style="margin-bottom: 1rem; padding: 1rem; background-color: #fff3cd; border-radius: 0.5rem; border-left: 4px solid #ffc107;">
+                        <h6 style="margin: 0 0 0.5rem 0; color: #856404;">
+                            <i class="icon">📋</i> 分类统计
+                        </h6>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.5rem; font-size: 0.85rem;">
+                            ${categoryStats.map(cat => `
+                                <div style="padding: 0.5rem; background-color: white; border-radius: 0.25rem;">
+                                    <strong>${cat.CategoryName}:</strong> ${cat.ItemCount}种 | ${cat.TotalQuantity}份 | ${Utils.formatCurrency(cat.TotalAmount)}
+                                </div>
                             `).join('')}
-                        </tbody>
-                        <tfoot>
-                            <tr style="font-weight: bold; background-color: #f8f9fa;">
-                                <td colspan="3" style="text-align: right;">总计:</td>
-                                <td>${Utils.formatCurrency(order.totalAmount)}</td>
-                                <td></td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <!-- 操作按钮区域 -->
+                    <div class="order-actions" style="margin-bottom: 1.5rem; text-align: center; padding: 1rem; background-color: #f1f3f4; border-radius: 0.5rem;">
+                        ${canModify ? `<button onclick="showAddDishModal(${orderId})" class="btn btn-primary" style="margin: 0 0.5rem;"><i class="icon">+</i> 加菜</button>` : ''}
+                        ${canCheckout ? `<button onclick="checkoutOrder(${orderId})" class="btn btn-success" style="margin: 0 0.5rem;"><i class="icon">💳</i> 结账</button>` : ''}
+                        <button onclick="printOrderReceipt(${orderId})" class="btn btn-secondary" style="margin: 0 0.5rem;"><i class="icon">🖨️</i> 打印小票</button>
+                        ${canModify ? `<button onclick="updateOrderStatus(${orderId})" class="btn btn-warning" style="margin: 0 0.5rem;"><i class="icon">📝</i> 更新状态</button>` : ''}
+                        <button onclick="refreshOrderDetails(${orderId})" class="btn btn-info" style="margin: 0 0.5rem;"><i class="icon">🔄</i> 刷新</button>
+                    </div>
+
+                    <h4 style="margin-bottom: 1rem; border-bottom: 2px solid #007bff; padding-bottom: 0.5rem; color: #007bff;">
+                        <i class="icon">🍽️</i> 菜品明细 (${summary.ItemCount}种菜品，${summary.TotalItems}件)
+                    </h4>
+                    
+                    <!-- 菜品明细表格 -->
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.25rem;">
+                        <table class="table" style="margin-bottom: 0; font-size: 0.9rem;">
+                            <thead style="position: sticky; top: 0; background-color: #f8f9fa; z-index: 1;">
+                                <tr>
+                                    <th style="border-top: none;">菜品信息</th>
+                                    <th style="width: 80px; border-top: none; text-align: center;">数量</th>
+                                    <th style="width: 100px; border-top: none; text-align: right;">单价</th>
+                                    <th style="width: 100px; border-top: none; text-align: right;">小计</th>
+                                    <th style="border-top: none;">特殊要求</th>
+                                    ${canModify ? '<th style="width: 80px; border-top: none; text-align: center;">操作</th>' : ''}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${details.map(d => `
+                                    <tr>
+                                        <td>
+                                            <div>
+                                                <strong style="color: #495057;">${d.DishName}</strong>
+                                                ${d.CategoryName ? `<br><small style="color: #6c757d;"><i class="icon">🏷️</i> ${d.CategoryName}</small>` : ''}
+                                                ${d.DishDescription ? `<br><small style="color: #6c757d;">${d.DishDescription}</small>` : ''}
+                                            </div>
+                                        </td>
+                                        <td style="text-align: center; font-weight: bold; color: #007bff;">${d.Quantity}</td>
+                                        <td style="text-align: right;">${Utils.formatCurrency(d.UnitPrice)}</td>
+                                        <td style="text-align: right; font-weight: bold; color: #e74c3c;">${Utils.formatCurrency(d.Subtotal)}</td>
+                                        <td>
+                                            ${d.SpecialRequests ? `<span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.2rem; font-size: 0.8rem;">${d.SpecialRequests}</span>` : '<span style="color: #6c757d;">-</span>'}
+                                        </td>
+                                        ${canModify ? `<td style="text-align: center;"><button onclick="removeOrderDetail(${d.OrderDetailID})" class="btn btn-sm btn-danger">删除</button></td>` : ''}
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                            <tfoot>
+                                <tr style="font-weight: bold; background-color: #f8f9fa; font-size: 1.1rem;">
+                                    <td colspan="${canModify ? '5' : '4'}" style="text-align: right; border-top: 2px solid #007bff;">总计:</td>
+                                    <td style="text-align: right; color: #e74c3c; border-top: 2px solid #007bff;">${Utils.formatCurrency(summary.TotalAmount)}</td>
+                                    ${canModify ? '<td></td>' : ''}
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
                 `;
 
                 document.getElementById('orderDetailBody').innerHTML = detailsHTML;
+                
+                // 更新模态框按钮
+                const modalFooter = document.querySelector('#orderDetailModal .modal-footer');
+                modalFooter.innerHTML = `
+                    <button onclick="Utils.hideModal('orderDetailModal')" class="btn btn-secondary">关闭</button>
+                    <button onclick="printOrderReceipt(${orderId})" class="btn btn-primary"><i class="icon">🖨️</i> 打印小票</button>
+                `;
+                
                 Utils.showModal('orderDetailModal');
+                
+                console.log(`[Frontend] 订单详情显示完成: OrderID=${orderId}, 菜品数量=${summary.ItemCount}`);
             } catch (error) {
                 console.error('获取订单详情失败:', error);
                 Utils.showNotification('获取订单详情失败', 'error');
             }
+        }
+
+        // 刷新订单详情
+        async function refreshOrderDetails(orderId) {
+            await viewOrderDetails(orderId);
+            Utils.showNotification('订单详情已刷新', 'success');
         }
 
         function showAddDishModal(orderId) {
@@ -476,28 +564,247 @@
         }
 
         async function checkoutOrder(orderId) {
-            if (!Utils.showConfirm('确认要为此订单结账吗？')) {
+            if (!Utils.showConfirm('确认要为此订单结账吗？\n结账后桌台状态将变为清洁中。')) {
                 return;
             }
 
             try {
-                await API.put(`/orders/${orderId}/checkout`);
-                Utils.showNotification('结账成功', 'success');
+                Utils.showNotification('正在处理结账...', 'info');
+                
+                const response = await API.put(`/orders/${orderId}/checkout`);
+                
+                Utils.showNotification('结账成功！', 'success');
+                Utils.hideModal('orderDetailModal');
                 await loadOrders();
+                
+                // 可选：显示结账成功的详细信息
+                setTimeout(() => {
+                    Utils.showNotification('桌台状态已更新为清洁中', 'info');
+                }, 1500);
+                
             } catch (error) {
                 console.error('结账失败:', error);
-                Utils.showNotification('结账失败', 'error');
+                let errorMessage = '结账失败';
+                if (error.response && error.response.message) {
+                    errorMessage = error.response.message;
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                Utils.showNotification(errorMessage, 'error');
+            }
+        }
+
+        async function printOrderReceipt(orderId) {
+            try {
+                Utils.showNotification('正在生成小票...', 'info');
+                
+                // 获取订单小票数据
+                const receiptData = await API.get(`/orders/${orderId}/receipt`);
+                
+                // 格式化小票内容
+                const printContent = generateReceiptHTML(receiptData);
+                
+                // 打开打印窗口
+                const printWindow = window.open('', '_blank', 'width=400,height=600');
+                printWindow.document.write(printContent);
+                printWindow.document.close();
+                
+                // 自动触发打印对话框
+                printWindow.focus();
+                setTimeout(() => {
+                    printWindow.print();
+                }, 500);
+                
+                // 调用后端打印API
+                await API.post(`/orders/${orderId}/print`);
+                
+                Utils.showNotification('小票已生成', 'success');
+                
+            } catch (error) {
+                console.error('打印失败:', error);
+                Utils.showNotification('打印失败', 'error');
+            }
+        }
+
+        function generateReceiptHTML(receiptData) {
+            return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>订单小票 #${receiptData.orderId}</title>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { 
+                            font-family: 'Courier New', monospace; 
+                            font-size: 12px; 
+                            line-height: 1.4;
+                            margin: 0; 
+                            padding: 20px;
+                            width: 350px;
+                        }
+                        .header { 
+                            text-align: center; 
+                            border-bottom: 2px solid #000; 
+                            padding-bottom: 10px; 
+                            margin-bottom: 15px; 
+                        }
+                        .title { 
+                            font-size: 18px; 
+                            font-weight: bold; 
+                            margin-bottom: 5px; 
+                        }
+                        .order-info { 
+                            margin-bottom: 15px; 
+                        }
+                        .order-info div { 
+                            margin-bottom: 3px; 
+                        }
+                        .items-table { 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                            margin-bottom: 15px; 
+                        }
+                        .items-table th, .items-table td { 
+                            padding: 3px; 
+                            text-align: left; 
+                            font-size: 11px;
+                        }
+                        .items-table th { 
+                            border-bottom: 1px solid #000; 
+                            font-weight: bold; 
+                        }
+                        .total-section { 
+                            border-top: 2px solid #000; 
+                            padding-top: 10px; 
+                            text-align: right; 
+                        }
+                        .total-amount { 
+                            font-size: 16px; 
+                            font-weight: bold; 
+                        }
+                        .footer { 
+                            text-align: center; 
+                            margin-top: 20px; 
+                            border-top: 1px solid #000; 
+                            padding-top: 10px; 
+                            font-size: 10px; 
+                        }
+                        @media print {
+                            body { margin: 0; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="title">餐厅小票</div>
+                        <div>Restaurant Receipt</div>
+                    </div>
+                    
+                    <div class="order-info">
+                        <div><strong>订单号:</strong> #${receiptData.orderId}</div>
+                        <div><strong>桌台号:</strong> ${receiptData.tableId ? '桌台' + receiptData.tableId : '-'}</div>
+                        <div><strong>下单时间:</strong> ${new Date(receiptData.orderTime).toLocaleString('zh-CN')}</div>
+                        <div><strong>打印时间:</strong> ${new Date(receiptData.printTime).toLocaleString('zh-CN')}</div>
+                    </div>
+                    
+                    <table class="items-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50%;">菜品</th>
+                                <th style="width: 15%; text-align: center;">数量</th>
+                                <th style="width: 20%; text-align: right;">单价</th>
+                                <th style="width: 15%; text-align: right;">小计</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${receiptData.items.map(item => `
+                                <tr>
+                                    <td>${item.dishName}</td>
+                                    <td style="text-align: center;">${item.quantity}</td>
+                                    <td style="text-align: right;">¥${item.unitPrice.toFixed(2)}</td>
+                                    <td style="text-align: right;">¥${item.subtotal.toFixed(2)}</td>
+                                </tr>
+                                ${item.specialRequests ? `<tr><td colspan="4" style="font-size: 9px; color: #666;">备注: ${item.specialRequests}</td></tr>` : ''}
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    
+                    <div class="total-section">
+                        <div>共 ${receiptData.items.length} 项商品</div>
+                        <div class="total-amount">合计: ¥${receiptData.totalAmount.toFixed(2)}</div>
+                    </div>
+                    
+                    <div class="footer">
+                        <div>谢谢惠顾，欢迎再次光临！</div>
+                        <div>Thank you for your visit!</div>
+                    </div>
+                </body>
+                </html>
+            `;
+        }
+
+        async function updateOrderStatus(orderId) {
+            const statusOptions = [
+                { value: '待处理', text: '待处理' },
+                { value: '制作中', text: '制作中' },
+                { value: '已完成', text: '已完成' },
+                { value: '已结账', text: '已结账' },
+                { value: '已取消', text: '已取消' }
+            ];
+
+            let selectHTML = statusOptions.map(option => 
+                `<option value="${option.value}">${option.text}</option>`
+            ).join('');
+
+            const newStatus = prompt(`请选择新的订单状态：\n\n${statusOptions.map((opt, idx) => `${idx + 1}. ${opt.text}`).join('\n')}\n\n请输入对应的数字或直接输入状态名:`);
+            
+            if (!newStatus) return;
+
+            let actualStatus = newStatus;
+            const numericChoice = parseInt(newStatus);
+            if (numericChoice >= 1 && numericChoice <= statusOptions.length) {
+                actualStatus = statusOptions[numericChoice - 1].value;
+            }
+
+            try {
+                await API.put(`/orders/${orderId}/status`, { status: actualStatus });
+                Utils.showNotification(`订单状态已更新为：${actualStatus}`, 'success');
+                Utils.hideModal('orderDetailModal');
+                await loadOrders();
+            } catch (error) {
+                console.error('更新订单状态失败:', error);
+                Utils.showNotification('更新订单状态失败', 'error');
+            }
+        }
+
+        async function removeOrderDetail(detailId) {
+            if (!Utils.showConfirm('确认要删除这个菜品吗？')) {
+                return;
+            }
+
+            try {
+                await API.delete(`/orders/details/${detailId}`);
+                Utils.showNotification('菜品已删除', 'success');
+                // 重新加载订单详情
+                const currentOrderId = document.getElementById('orderDetailTitle').textContent.match(/#(\d+)/)?.[1];
+                if (currentOrderId) {
+                    await viewOrderDetails(parseInt(currentOrderId));
+                }
+            } catch (error) {
+                console.error('删除菜品失败:', error);
+                Utils.showNotification('删除菜品失败', 'error');
             }
         }
 
         async function cancelOrder(orderId) {
-            if (!Utils.showConfirm('确认要取消此订单吗？')) {
+            if (!Utils.showConfirm('确认要取消此订单吗？\n取消后无法恢复！')) {
                 return;
             }
 
             try {
                 await API.put(`/orders/${orderId}/cancel`);
                 Utils.showNotification('订单已取消', 'success');
+                Utils.hideModal('orderDetailModal');
                 await loadOrders();
             } catch (error) {
                 console.error('取消订单失败:', error);
@@ -511,28 +818,48 @@
             printWindow.document.write(`
                 <html>
                 <head>
-                    <title>订单小票</title>
+                    <title>订单详情</title>
                     <style>
                         body { font-family: Arial, sans-serif; font-size: 12px; }
                         table { width: 100%; border-collapse: collapse; }
                         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
                         th { background-color: #f2f2f2; }
                         .status-badge { padding: 2px 6px; border-radius: 3px; }
+                        .btn { display: none; } /* 隐藏按钮 */
+                        .order-actions { display: none; } /* 隐藏操作区域 */
                     </style>
                 </head>
                 <body>
-                    <h2 style="text-align: center;">餐厅订单小票</h2>
+                    <h2 style="text-align: center;">订单详情</h2>
                     ${printContent}
                     <div style="text-align: center; margin-top: 20px;">
-                        <p>感谢您的光临！</p>
                         <p>打印时间: ${new Date().toLocaleString('zh-CN')}</p>
                     </div>
                 </body>
                 </html>
             `);
             printWindow.document.close();
-            printWindow.print();
+            printWindow.focus();
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 500);
         }
+
+        // 刷新订单数据
+        async function refreshOrders() {
+            Utils.showNotification('正在刷新...', 'info');
+            await loadOrders();
+            Utils.showNotification('数据已刷新', 'success');
+        }
+
+        // 导出订单报表
+        function exportOrders() {
+            Utils.showNotification('导出功能开发中...', 'info');
+        }
+    </script>
+</body>
+</html>
 
         async function refreshOrders() {
             Utils.showNotification('正在刷新...', 'info');

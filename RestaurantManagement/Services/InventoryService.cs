@@ -36,7 +36,7 @@ namespace RestaurantManagement.Services
             return await connection.QueryAsync<RawMaterial>(sql);
         }
 
-        // 添加原材料
+        // 添加原材�?
         public async Task<bool> AddMaterialAsync(RawMaterial material)
         {
             using var connection = _dbService.CreateConnection();
@@ -47,15 +47,15 @@ namespace RestaurantManagement.Services
             return result > 0;
         }
 
-        // 更新原材料信息
+        // 更新原材料信�?
         public async Task<bool> UpdateMaterialAsync(RawMaterial material)
         {
             using var connection = _dbService.CreateConnection();
             var sql = @"
                 UPDATE PUB.RawMaterial 
-                SET MaterialName = @MaterialName, Unit = @Unit, CurrentStock = @CurrentStock, 
-                    MinStock = @MinStock, UnitPrice = @UnitPrice, SupplierID = @SupplierID
-                WHERE MaterialID = @MaterialID";
+                SET MaterialName = :MaterialName, Unit = :Unit, CurrentStock = :CurrentStock, 
+                    MinStock = :MinStock, UnitPrice = :UnitPrice, SupplierID = :SupplierID
+                WHERE MaterialID = :MaterialID";
             var result = await connection.ExecuteAsync(sql, material);
             return result > 0;
         }
@@ -66,10 +66,10 @@ namespace RestaurantManagement.Services
             using var connection = _dbService.CreateConnection();
             var sql = @"
                 UPDATE PUB.RawMaterial 
-                SET CurrentStock = CurrentStock + @Quantity,
-                    LastInTime = @InTime,
-                    LastInQuantity = @Quantity
-                WHERE MaterialID = @MaterialId";
+                SET CurrentStock = CurrentStock + :Quantity,
+                    LastInTime = :InTime,
+                    LastInQuantity = :Quantity
+                WHERE MaterialID = :MaterialId";
             var result = await connection.ExecuteAsync(sql, new { 
                 Quantity = quantity, 
                 InTime = DateTime.Now, 
@@ -84,8 +84,8 @@ namespace RestaurantManagement.Services
             using var connection = _dbService.CreateConnection();
             var sql = @"
                 UPDATE PUB.RawMaterial 
-                SET CurrentStock = CurrentStock - @Quantity
-                WHERE MaterialID = @MaterialId AND CurrentStock >= @Quantity";
+                SET CurrentStock = CurrentStock - :Quantity
+                WHERE MaterialID = :MaterialId AND CurrentStock >= :Quantity";
             var result = await connection.ExecuteAsync(sql, new { 
                 Quantity = quantity, 
                 MaterialId = materialId 
@@ -101,7 +101,7 @@ namespace RestaurantManagement.Services
             return await connection.QueryAsync<Supplier>(sql);
         }
 
-        // 添加供应商
+        // 添加供应�?
         public async Task<bool> AddSupplierAsync(Supplier supplier)
         {
             using var connection = _dbService.CreateConnection();
@@ -112,15 +112,15 @@ namespace RestaurantManagement.Services
             return result > 0;
         }
 
-        // 更新供应商
+        // 更新供应�?
         public async Task<bool> UpdateSupplierAsync(Supplier supplier)
         {
             using var connection = _dbService.CreateConnection();
             var sql = @"
                 UPDATE PUB.Supplier 
-                SET SupplierName = @SupplierName, ContactPerson = @ContactPerson, 
-                    Phone = @Phone, Address = @Address, Email = @Email
-                WHERE SupplierID = @SupplierID";
+                SET SupplierName = :SupplierName, ContactPerson = :ContactPerson, 
+                    Phone = :Phone, Address = :Address, Email = :Email
+                WHERE SupplierID = :SupplierID";
             var result = await connection.ExecuteAsync(sql, supplier);
             return result > 0;
         }
@@ -143,7 +143,7 @@ namespace RestaurantManagement.Services
             using var connection = _dbService.CreateConnection();
             var sql = @"
                 INSERT INTO PUB.PurchaseRecord (SupplierID, PurchaseDate, TotalAmount, Status, Notes)
-                VALUES (@SupplierID, @PurchaseDate, @TotalAmount, @Status, @Notes)
+                VALUES (:SupplierID, :PurchaseDate, :TotalAmount, :Status, :Notes)
                 RETURNING PurchaseID INTO :PurchaseID";
             
             var parameters = new 
@@ -164,12 +164,12 @@ namespace RestaurantManagement.Services
         {
             using var connection = _dbService.CreateConnection();
             
-            // 更新采购记录状态
-            var updatePurchase = "UPDATE PUB.PurchaseRecord SET Status = '已入库' WHERE PurchaseID = @PurchaseId";
+            // 更新采购记录状�?
+            var updatePurchase = "UPDATE PUB.PurchaseRecord SET Status = '已入�? WHERE PurchaseID = :PurchaseId";
             await connection.ExecuteAsync(updatePurchase, new { PurchaseId = purchaseId });
 
-            // TODO: 这里需要根据采购详情更新库存
-            // 实际实现中需要从 PurchaseDetail 表获取采购的具体材料和数量
+            // TODO: 这里需要根据采购详情更新库�?
+            // 实际实现中需要从 PurchaseDetail 表获取采购的具体材料和数�?
 
             return true;
         }

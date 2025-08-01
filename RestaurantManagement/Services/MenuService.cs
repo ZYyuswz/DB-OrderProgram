@@ -12,7 +12,7 @@ namespace RestaurantManagement.Services
             _dbService = dbService;
         }
 
-        // 获取所有分类
+        // 获取所有分�?
         public async Task<IEnumerable<Category>> GetAllCategoriesAsync()
         {
             using var connection = _dbService.CreateConnection();
@@ -20,7 +20,7 @@ namespace RestaurantManagement.Services
             return await connection.QueryAsync<Category>(sql);
         }
 
-        // 获取所有菜品
+        // 获取所有菜�?
         public async Task<IEnumerable<dynamic>> GetAllDishesAsync()
         {
             using var connection = _dbService.CreateConnection();
@@ -36,7 +36,7 @@ namespace RestaurantManagement.Services
         public async Task<IEnumerable<Dish>> GetDishesByCategoryAsync(int categoryId)
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "SELECT * FROM PUB.Dish WHERE CategoryID = @CategoryId AND IsAvailable = 1";
+            var sql = "SELECT * FROM PUB.Dish WHERE CategoryID = :CategoryId AND IsAvailable = 1";
             return await connection.QueryAsync<Dish>(sql, new { CategoryId = categoryId });
         }
 
@@ -44,7 +44,7 @@ namespace RestaurantManagement.Services
         public async Task<Dish?> GetDishByIdAsync(int dishId)
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "SELECT * FROM PUB.Dish WHERE DishID = @DishId";
+            var sql = "SELECT * FROM PUB.Dish WHERE DishID = :DishId";
             return await connection.QueryFirstOrDefaultAsync<Dish>(sql, new { DishId = dishId });
         }
 
@@ -54,7 +54,7 @@ namespace RestaurantManagement.Services
             using var connection = _dbService.CreateConnection();
             var sql = @"
                 INSERT INTO PUB.Category (CategoryName, Description, SortOrder)
-                VALUES (@CategoryName, @Description, @SortOrder)";
+                VALUES (:CategoryName, :Description, :SortOrder)";
             var result = await connection.ExecuteAsync(sql, category);
             return result > 0;
         }
@@ -65,7 +65,7 @@ namespace RestaurantManagement.Services
             using var connection = _dbService.CreateConnection();
             var sql = @"
                 INSERT INTO PUB.Dish (DishName, CategoryID, Price, Description, ImageURL, IsAvailable, CreatedTime)
-                VALUES (@DishName, @CategoryID, @Price, @Description, @ImageURL, @IsAvailable, @CreatedTime)";
+                VALUES (:DishName, :CategoryID, :Price, :Description, :ImageURL, :IsAvailable, :CreatedTime)";
             var result = await connection.ExecuteAsync(sql, dish);
             return result > 0;
         }
@@ -76,23 +76,23 @@ namespace RestaurantManagement.Services
             using var connection = _dbService.CreateConnection();
             var sql = @"
                 UPDATE PUB.Dish 
-                SET DishName = @DishName, CategoryID = @CategoryID, Price = @Price, 
-                    Description = @Description, ImageURL = @ImageURL, IsAvailable = @IsAvailable
-                WHERE DishID = @DishID";
+                SET DishName = :DishName, CategoryID = :CategoryID, Price = :Price, 
+                    Description = :Description, ImageURL = :ImageURL, IsAvailable = :IsAvailable
+                WHERE DishID = :DishID";
             var result = await connection.ExecuteAsync(sql, dish);
             return result > 0;
         }
 
-        // 更新菜品可用状态
+        // 更新菜品可用状�?
         public async Task<bool> UpdateDishAvailabilityAsync(int dishId, bool isAvailable)
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "UPDATE PUB.Dish SET IsAvailable = @IsAvailable WHERE DishID = @DishId";
+            var sql = "UPDATE PUB.Dish SET IsAvailable = :IsAvailable WHERE DishID = :DishId";
             var result = await connection.ExecuteAsync(sql, new { IsAvailable = isAvailable, DishId = dishId });
             return result > 0;
         }
 
-        // 删除菜品（软删除 - 设置为不可用）
+        // 删除菜品（软删除 - 设置为不可用�?
         public async Task<bool> DeleteDishAsync(int dishId)
         {
             return await UpdateDishAvailabilityAsync(dishId, false);
@@ -106,7 +106,7 @@ namespace RestaurantManagement.Services
                 SELECT r.*, rm.MaterialName, rm.Unit
                 FROM PUB.Recipe r
                 INNER JOIN PUB.RawMaterial rm ON r.MaterialID = rm.MaterialID
-                WHERE r.DishID = @DishId";
+                WHERE r.DishID = :DishId";
             return await connection.QueryAsync(sql, new { DishId = dishId });
         }
     }
