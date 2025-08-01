@@ -3,6 +3,7 @@
     "pages/login/login",
     "pages/index/index",
     "pages/account/account",
+    "pages/orders/orders",
     "pages/logs/logs"
   ],
   "window": {
