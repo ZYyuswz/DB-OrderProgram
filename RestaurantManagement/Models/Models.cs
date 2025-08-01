@@ -69,16 +69,22 @@ namespace RestaurantManagement.Models
     }
 
     // 员工
-    public class Staff
+  public class Staff
     {
         public int StaffID { get; set; }
         public string StaffName { get; set; } = string.Empty;
-        public string Position { get; set; } = string.Empty;
-        public string Phone { get; set; } = string.Empty;
-        public decimal Salary { get; set; }
-        public string Status { get; set; } = string.Empty; // 在职、离职
-        public string? WorkSchedule { get; set; }
+        public string Gender { get; set; } = string.Empty; // "M" 或 "F"
+        public string? Position { get; set; }
+        public string? Phone { get; set; }
+        public string? Email { get; set; }
         public DateTime HireDate { get; set; }
+        public decimal? Salary { get; set; }
+        public int DepartmentID { get; set; }
+        public int StoreID { get; set; }
+        public string Status { get; set; } = string.Empty; // "在职"/"离职"/"休假"
+        public string? WorkSchedule { get; set; }
+        public DateTime CreateTime { get; set; }
+        public DateTime UpdateTime { get; set; }
     }
 
     // 考勤记录
