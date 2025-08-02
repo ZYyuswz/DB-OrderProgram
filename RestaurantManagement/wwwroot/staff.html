@@ -7,7 +7,118 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <!-- ...existing code... -->
+    <nav class="navbar">
+        <h1>餐饮管理系统</h1>
+        <div class="nav-links">
+            <a href="index.html">首页</a>
+            <a href="tables.html">桌台管理</a>
+            <a href="orders.html">订单管理</a>
+            <a href="menu.html">菜单管理</a>
+            <a href="staff.html" class="active">员工管理</a>
+            <a href="inventory.html">库存管理</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="main-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2>员工管理</h2>
+                <div>
+                    <button onclick="showAddStaffModal()" class="btn btn-primary" data-permission="staff">添加员工</button>
+                    <button onclick="showAttendanceModal()" class="btn btn-secondary">考勤管理</button>
+                </div>
+            </div>
+
+            <!-- 统计卡片 -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-staff">0</div>
+                    <div class="stat-label">员工总数</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="active-staff">0</div>
+                    <div class="stat-label">在职员工</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="today-attendance">0</div>
+                    <div class="stat-label">今日出勤</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avg-salary">¥0</div>
+                    <div class="stat-label">平均薪资</div>
+                </div>
+            </div>
+
+            <!-- 搜索和过滤器 -->
+            <div class="card">
+                <h3>员工筛选</h3>
+                <div class="search-filters">
+                    <div class="form-group">
+                        <label for="positionFilter">职位筛选:</label>
+                        <select id="positionFilter" class="form-control" onchange="filterStaff()">
+                            <option value="all">全部职位</option>
+                            <option value="服务员">服务员</option>
+                            <option value="厨师">厨师</option>
+                            <option value="收银员">收银员</option>
+                            <option value="经理">经理</option>
+                            <option value="清洁员">清洁员</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="statusFilter">在职状态:</label>
+                        <select id="statusFilter" class="form-control" onchange="filterStaff()">
+                            <option value="all">全部状态</option>
+                            <option value="在职">在职</option>
+                            <option value="离职">离职</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="staffSearch">员工搜索:</label>
+                        <input type="text" id="staffSearch" class="form-control" placeholder="输入员工姓名" onkeyup="filterStaff()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 员工列表 -->
+            <div class="card">
+                <h3>员工列表</h3>
+                <div style="overflow-x: auto;">
+                    <table class="table" id="staffTable">
+                        <thead>
+                            <tr>
+                                <th>员工ID</th>
+                                <th>姓名</th>
+                                <th>职位</th>
+                                <th>电话</th>
+                                <th>薪资</th>
+                                <th>状态</th>
+                                <th>入职日期</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="staffTableBody">
+                            <!-- 员工数据将通过JavaScript动态填充 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 快速打卡区域 -->
+            <div class="card">
+                <h3>快速打卡</h3>
+                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="quickCheckStaff">选择员工:</label>
+                        <select id="quickCheckStaff" class="form-control" style="width: 200px;">
+                            <option value="">请选择员工</option>
+                        </select>
+                    </div>
+                    <button onclick="quickCheckIn()" class="btn btn-success">上班打卡</button>
+                    <button onclick="quickCheckOut()" class="btn btn-warning">下班打卡</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- 添加/编辑员工模态框 -->
     <div id="addStaffModal" class="modal">
@@ -58,7 +169,7 @@
                                 <option value="">请选择门店</option>
                             </select>
                         </div>
-                    </div>
+                     </div>
                     <div class="form-group">
                         <label for="workSchedule">工作安排:</label>
                         <textarea id="workSchedule" class="form-control" rows="3" placeholder="如：周一至周五 9:00-18:00"></textarea>
@@ -72,7 +183,74 @@
         </div>
     </div>
 
-    <!-- ...existing code... -->
+    <!-- 考勤管理模态框 -->
+    <div id="attendanceModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3>考勤记录</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- 考勤查询条件 -->
+                <div class="search-filters" style="margin-bottom: 1rem;">
+                    <div class="form-group">
+                        <label for="attendanceStaffFilter">员工筛选:</label>
+                        <select id="attendanceStaffFilter" class="form-control" onchange="loadAttendanceRecords()">
+                            <option value="">全部员工</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="attendanceDateStart">开始日期:</label>
+                        <input type="date" id="attendanceDateStart" class="form-control" onchange="loadAttendanceRecords()">
+                    </div>
+                    <div class="form-group">
+                        <label for="attendanceDateEnd">结束日期:</label>
+                        <input type="date" id="attendanceDateEnd" class="form-control" onchange="loadAttendanceRecords()">
+                    </div>
+                </div>
+
+                <!-- 考勤记录表格 -->
+                <div style="overflow-x: auto;">
+                    <table class="table" id="attendanceTable">
+                        <thead>
+                            <tr>
+                                <th>员工姓名</th>
+                                <th>工作日期</th>
+                                <th>上班时间</th>
+                                <th>下班时间</th>
+                                <th>工作时长</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceTableBody">
+                            <!-- 考勤数据将通过JavaScript动态填充 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="Utils.hideModal('attendanceModal')" class="btn btn-secondary">关闭</button>
+                <button onclick="exportAttendance()" class="btn btn-primary">导出考勤</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 员工详情模态框 -->
+    <div id="staffDetailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="staffDetailTitle">员工详情</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body" id="staffDetailBody">
+                <!-- 员工详情内容将通过JavaScript动态填充 -->
+            </div>
+            <div class="modal-footer">
+                <button onclick="Utils.hideModal('staffDetailModal')" class="btn btn-secondary">关闭</button>
+                <button id="editStaffBtn" onclick="editCurrentStaff()" class="btn btn-primary">编辑</button>
+            </div>
+        </div>
+    </div>
 
     <script src="js/common.js"></script>
     <script src="js/auth.js"></script>
@@ -84,6 +262,7 @@
         let allDepartments = [];
         let allStores = [];
 
+        // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
             loadStaff();
             loadDepartmentsAndStores();
@@ -91,39 +270,138 @@
             setDefaultDates();
         });
 
-        async function loadDepartmentsAndStores() {
-            try {
-                allDepartments = await API.get('/departments');
-                allStores = await API.get('/stores');
-                const deptSelect = document.getElementById('staffDepartment');
-                const storeSelect = document.getElementById('staffStore');
-                deptSelect.innerHTML = '<option value="">请选择部门</option>';
-                storeSelect.innerHTML = '<option value="">请选择门店</option>';
-                allDepartments.forEach(d => {
-                    const opt = document.createElement('option');
-                    opt.value = d.departmentID || d.departmentId || d.id;
-                    opt.textContent = d.departmentName || d.name;
-                    deptSelect.appendChild(opt);
-                });
-                allStores.forEach(s => {
-                    const opt = document.createElement('option');
-                    opt.value = s.storeID || s.storeId || s.id;
-                    opt.textContent = s.storeName || s.name;
-                    storeSelect.appendChild(opt);
-                });
-            } catch (e) {
-                Utils.showNotification('加载部门或门店失败', 'error');
-            }
-        }
-
         function setupEventListeners() {
+            // 员工表单提交
             document.getElementById('staffForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 handleStaffSubmit();
             });
         }
 
-        // ...existing code...
+        function setDefaultDates() {
+            const today = new Date();
+            const weekAgo = new Date(today);
+            weekAgo.setDate(today.getDate() - 7);
+
+            document.getElementById('attendanceDateStart').value = weekAgo.toISOString().split('T')[0];
+            document.getElementById('attendanceDateEnd').value = today.toISOString().split('T')[0];
+        }
+
+        async function loadStaff() {
+            try {
+                allStaff = await API.get('/staff');
+                filteredStaff = [...allStaff];
+                renderStaffTable();
+                populateStaffSelects();
+                updateStatistics();
+            } catch (error) {
+                console.error('加载员工数据失败:', error);
+                Utils.showNotification('加载员工数据失败', 'error');
+            }
+        }
+
+        function renderStaffTable() {
+            const tbody = document.getElementById('staffTableBody');
+            tbody.innerHTML = '';
+
+            if (filteredStaff.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #666;">暂无员工数据</td></tr>';
+                return;
+            }
+
+            filteredStaff.forEach(staff => {
+                const row = document.createElement('tr');
+                const statusInfo = Utils.getStatusInfo(staff.status, 'staff');
+                
+                row.innerHTML = `
+                    <td>${staff.staffID}</td>
+                    <td>${staff.staffName}</td>
+                    <td>${staff.position}</td>
+                    <td>${staff.phone}</td>
+                    <td>${Utils.formatCurrency(staff.salary)}</td>
+                    <td><span class="status-badge ${statusInfo.class}">${statusInfo.text}</span></td>
+                    <td>${Utils.formatDate(staff.hireDate)}</td>
+                    <td>
+                        <button onclick="viewStaffDetails(${staff.staffID})" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 0.25rem;">详情</button>
+                        <button onclick="editStaff(${staff.staffID})" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 0.25rem;">编辑</button>
+                        ${staff.status === '在职' ? `
+                            <button onclick="toggleStaffStatus(${staff.staffID}, '离职')" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">离职</button>
+                        ` : `
+                            <button onclick="toggleStaffStatus(${staff.staffID}, '在职')" class="btn btn-success" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">复职</button>
+                        `}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function populateStaffSelects() {
+            const quickCheckStaff = document.getElementById('quickCheckStaff');
+            const attendanceStaffFilter = document.getElementById('attendanceStaffFilter');
+            
+            // 清空现有选项
+            quickCheckStaff.innerHTML = '<option value="">请选择员工</option>';
+            attendanceStaffFilter.innerHTML = '<option value="">全部员工</option>';
+            
+            const activeStaff = allStaff.filter(s => s.status === '在职');
+            
+            activeStaff.forEach(staff => {
+                const quickOption = document.createElement('option');
+                quickOption.value = staff.staffID;
+                quickOption.textContent = staff.staffName;
+                quickCheckStaff.appendChild(quickOption);
+            });
+
+            allStaff.forEach(staff => {
+                const filterOption = document.createElement('option');
+                filterOption.value = staff.staffID;
+                filterOption.textContent = staff.staffName;
+                attendanceStaffFilter.appendChild(filterOption);
+            });
+        }
+
+        function filterStaff() {
+            const positionFilter = document.getElementById('positionFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const staffSearch = document.getElementById('staffSearch').value.trim().toLowerCase();
+
+            filteredStaff = allStaff.filter(staff => {
+                const positionMatch = positionFilter === 'all' || staff.position === positionFilter;
+                const statusMatch = statusFilter === 'all' || staff.status === statusFilter;
+                const nameMatch = !staffSearch || staff.staffName.toLowerCase().includes(staffSearch);
+
+                return positionMatch && statusMatch && nameMatch;
+            });
+
+            renderStaffTable();
+        }
+
+        async function updateStatistics() {
+            const totalStaff = allStaff.length;
+            const activeStaff = allStaff.filter(s => s.status === '在职').length;
+            const avgSalary = totalStaff > 0 ? allStaff.reduce((sum, s) => sum + s.salary, 0) / totalStaff : 0;
+
+            document.getElementById('total-staff').textContent = totalStaff;
+            document.getElementById('active-staff').textContent = activeStaff;
+            document.getElementById('avg-salary').textContent = Utils.formatCurrency(avgSalary);
+
+            // 获取今日出勤统计
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const todayAttendance = await API.get(`/staff/attendance?startDate=${today}&endDate=${today}`);
+                document.getElementById('today-attendance').textContent = todayAttendance.length;
+            } catch (error) {
+                console.error('获取今日出勤统计失败:', error);
+                document.getElementById('today-attendance').textContent = '-';
+            }
+        }
+
+        function showAddStaffModal() {
+            currentStaffId = null;
+            document.getElementById('staffModalTitle').textContent = '添加员工';
+            Utils.resetForm(document.getElementById('staffForm'));
+            Utils.showModal('addStaffModal');
+        }
 
         async function handleStaffSubmit() {
             if (!Utils.validateForm(document.getElementById('staffForm'))) {
@@ -137,15 +415,8 @@
                     position: document.getElementById('staffPosition').value,
                     phone: document.getElementById('staffPhone').value,
                     salary: parseFloat(document.getElementById('staffSalary').value),
-                    workSchedule: document.getElementById('workSchedule').value || null,
-                    departmentID: parseInt(document.getElementById('staffDepartment').value),
-                    storeID: parseInt(document.getElementById('staffStore').value)
+                    workSchedule: document.getElementById('workSchedule').value || null
                 };
-
-                if (!staffData.departmentID || !staffData.storeID) {
-                    Utils.showNotification('请选择部门和门店', 'warning');
-                    return;
-                }
 
                 if (currentStaffId) {
                     staffData.staffID = currentStaffId;
@@ -176,13 +447,224 @@
             document.getElementById('staffPhone').value = staff.phone;
             document.getElementById('staffSalary').value = staff.salary;
             document.getElementById('workSchedule').value = staff.workSchedule || '';
-            document.getElementById('staffDepartment').value = staff.departmentID;
-            document.getElementById('staffStore').value = staff.storeID;
-
+            
             Utils.showModal('addStaffModal');
         }
 
-        // ...existing code...
+        async function viewStaffDetails(staffId) {
+            const staff = allStaff.find(s => s.staffID === staffId);
+            if (!staff) return;
+
+            document.getElementById('staffDetailTitle').textContent = `员工详情 - ${staff.staffName}`;
+            
+            const statusInfo = Utils.getStatusInfo(staff.status, 'staff');
+            const detailsHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div><strong>员工ID:</strong> ${staff.staffID}</div>
+                    <div><strong>姓名:</strong> ${staff.staffName}</div>
+                    <div><strong>职位:</strong> ${staff.position}</div>
+                    <div><strong>联系电话:</strong> ${staff.phone}</div>
+                    <div><strong>薪资:</strong> ${Utils.formatCurrency(staff.salary)}/月</div>
+                    <div><strong>状态:</strong> <span class="status-badge ${statusInfo.class}">${statusInfo.text}</span></div>
+                    <div><strong>入职日期:</strong> ${Utils.formatDate(staff.hireDate)}</div>
+                </div>
+                ${staff.workSchedule ? `
+                    <div>
+                        <strong>工作安排:</strong>
+                        <p style="margin-top: 0.5rem; padding: 1rem; background-color: #f8f9fa; border-radius: 4px;">${staff.workSchedule}</p>
+                    </div>
+                ` : ''}
+            `;
+
+            document.getElementById('staffDetailBody').innerHTML = detailsHTML;
+            currentStaffId = staffId;
+            Utils.showModal('staffDetailModal');
+        }
+
+        async function loadDepartmentsAndStores() {
+    try {
+        allDepartments = await API.get('api/department');
+        allStores = await API.get('api/store');
+        const deptSelect = document.getElementById('staffDepartment');
+        const storeSelect = document.getElementById('staffStore');
+        deptSelect.innerHTML = '<option value="">请选择部门</option>';
+        storeSelect.innerHTML = '<option value="">请选择门店</option>';
+        allDepartments.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.DEPARTMENTID || d.ID;
+            opt.textContent = d.DEPARTMENTNAME || d.NAME;
+            deptSelect.appendChild(opt);
+        });
+        allStores.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.storeID || s.id;
+            opt.textContent = s.storeName || s.name;
+            storeSelect.appendChild(opt);
+        });
+    } catch (e) {
+        Utils.showNotification('加载部门或门店失败', 'error');
+    }
+}
+
+async function handleStaffSubmit() {
+    if (!Utils.validateForm(document.getElementById('staffForm'))) {
+        Utils.showNotification('请填写完整信息', 'warning');
+        return;
+    }
+    try {
+        const staffData = {
+            staffName: document.getElementById('staffName').value,
+            position: document.getElementById('staffPosition').value,
+            phone: document.getElementById('staffPhone').value,
+            salary: parseFloat(document.getElementById('staffSalary').value),
+            workSchedule: document.getElementById('workSchedule').value || null,
+            departmentID: parseInt(document.getElementById('staffDepartment').value),
+            storeID: parseInt(document.getElementById('staffStore').value)
+        };
+        if (!staffData.departmentID || !staffData.storeID) {
+            Utils.showNotification('请选择部门和门店', 'warning');
+            return;
+        }
+        if (currentStaffId) {
+            staffData.staffID = currentStaffId;
+            await API.put(`/staff/${currentStaffId}`, staffData);
+            Utils.showNotification('员工信息更新成功', 'success');
+        } else {
+            await API.post('/staff', staffData);
+            Utils.showNotification('员工添加成功', 'success');
+        }
+        Utils.hideModal('addStaffModal');
+        await loadStaff();
+    } catch (error) {
+        console.error('保存员工信息失败:', error);
+        Utils.showNotification('保存员工信息失败', 'error');
+    }
+}
+
+function editStaff(staffId) {
+    const staff = allStaff.find(s => s.staffID === staffId);
+    if (!staff) return;
+    currentStaffId = staffId;
+    document.getElementById('staffModalTitle').textContent = '编辑员工信息';
+    document.getElementById('staffName').value = staff.staffName;
+    document.getElementById('staffPosition').value = staff.position;
+    document.getElementById('staffPhone').value = staff.phone;
+    document.getElementById('staffSalary').value = staff.salary;
+    document.getElementById('workSchedule').value = staff.workSchedule || '';
+    document.getElementById('staffDepartment').value = staff.departmentID;
+    document.getElementById('staffStore').value = staff.storeID;
+    Utils.showModal('addStaffModal');
+}
+
+        function editCurrentStaff() {
+            if (!currentStaffId) return;
+            Utils.hideModal('staffDetailModal');
+            editStaff(currentStaffId);
+        }
+
+        async function toggleStaffStatus(staffId, newStatus) {
+            const action = newStatus === '在职' ? '复职' : '离职';
+            if (!Utils.showConfirm(`确认要为该员工办理${action}手续吗？`)) {
+                return;
+            }
+
+            try {
+                await API.put(`/staff/${staffId}/status`, newStatus);
+                Utils.showNotification(`员工${action}成功`, 'success');
+                await loadStaff();
+            } catch (error) {
+                console.error(`员工${action}失败:`, error);
+                Utils.showNotification(`员工${action}失败`, 'error');
+            }
+        }
+
+        async function quickCheckIn() {
+            const staffId = document.getElementById('quickCheckStaff').value;
+            if (!staffId) {
+                Utils.showNotification('请选择员工', 'warning');
+                return;
+            }
+
+            try {
+                await API.post(`/staff/${staffId}/checkin`);
+                Utils.showNotification('上班打卡成功', 'success');
+                updateStatistics();
+            } catch (error) {
+                console.error('上班打卡失败:', error);
+                Utils.showNotification('上班打卡失败', 'error');
+            }
+        }
+
+        async function quickCheckOut() {
+            const staffId = document.getElementById('quickCheckStaff').value;
+            if (!staffId) {
+                Utils.showNotification('请选择员工', 'warning');
+                return;
+            }
+
+            try {
+                await API.post(`/staff/${staffId}/checkout`);
+                Utils.showNotification('下班打卡成功', 'success');
+                updateStatistics();
+            } catch (error) {
+                console.error('下班打卡失败:', error);
+                Utils.showNotification('下班打卡失败', 'error');
+            }
+        }
+
+        async function showAttendanceModal() {
+            Utils.showModal('attendanceModal');
+            await loadAttendanceRecords();
+        }
+
+        async function loadAttendanceRecords() {
+            try {
+                const staffId = document.getElementById('attendanceStaffFilter').value;
+                const startDate = document.getElementById('attendanceDateStart').value;
+                const endDate = document.getElementById('attendanceDateEnd').value;
+
+                let url = '/staff/attendance?';
+                if (startDate) url += `startDate=${startDate}&`;
+                if (endDate) url += `endDate=${endDate}&`;
+                if (staffId) url += `staffId=${staffId}&`;
+
+                attendanceRecords = await API.get(url);
+                renderAttendanceTable();
+
+            } catch (error) {
+                console.error('加载考勤记录失败:', error);
+                Utils.showNotification('加载考勤记录失败', 'error');
+            }
+        }
+
+        function renderAttendanceTable() {
+            const tbody = document.getElementById('attendanceTableBody');
+            tbody.innerHTML = '';
+
+            if (attendanceRecords.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666;">暂无考勤记录</td></tr>';
+                return;
+            }
+
+            attendanceRecords.forEach(record => {
+                const row = document.createElement('tr');
+                const statusInfo = Utils.getStatusInfo(record.status, 'attendance');
+                
+                row.innerHTML = `
+                    <td>${record.staffName}</td>
+                    <td>${Utils.formatDate(record.workDate)}</td>
+                    <td>${record.checkInTime ? Utils.formatDateTime(record.checkInTime).split(' ')[1] : '-'}</td>
+                    <td>${record.checkOutTime ? Utils.formatDateTime(record.checkOutTime).split(' ')[1] : '-'}</td>
+                    <td>${record.workHours ? record.workHours.toFixed(1) + '小时' : '-'}</td>
+                    <td><span class="status-badge ${statusInfo.class}">${statusInfo.text}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function exportAttendance() {
+            Utils.showNotification('导出考勤功能待实现', 'info');
+        }
     </script>
 </body>
 </html>
