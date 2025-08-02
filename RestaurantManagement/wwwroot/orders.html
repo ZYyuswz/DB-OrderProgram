@@ -5,6 +5,127 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>订单管理 - 餐饮管理系统</title>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* 订单详情模态框样式增强 */
+        .table-responsive {
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .table-responsive::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        .table-responsive::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+        
+        /* 确保模态框内容不会被截断 */
+        .modal-content {
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            max-height: calc(90vh - 120px);
+        }
+        
+        /* 粘性表头样式 */
+        .table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa !important;
+            z-index: 10;
+        }
+        
+        /* 搜索建议下拉框样式 */
+        .suggestions-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .suggestion-item {
+            padding: 0.5rem;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f1f1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .suggestion-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+        
+        .suggestion-main {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .suggestion-detail {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        /* 高亮搜索文本 */
+        .highlight {
+            background-color: #fff3cd;
+            font-weight: bold;
+        }
+        
+        /* 搜索统计样式 */
+        #searchStats {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 表格排序样式 */
+        .table th.sortable {
+            position: relative;
+            transition: background-color 0.2s ease;
+        }
+        
+        .table th.sortable:hover {
+            background-color: #e9ecef !important;
+        }
+        
+        .sort-indicator {
+            font-size: 0.8rem;
+            font-weight: normal;
+            margin-left: 5px;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar">
@@ -56,17 +177,20 @@
                     <div class="form-group">
                         <label for="dateRange">日期范围:</label>
                         <select id="dateRange" class="form-control" onchange="filterOrders()">
+                            <option value="all">全部</option>
                             <option value="today">今天</option>
                             <option value="yesterday">昨天</option>
                             <option value="week">本周</option>
                             <option value="month">本月</option>
-                            <option value="all">全部</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="statusFilter">订单状态:</label>
                         <select id="statusFilter" class="form-control" onchange="filterOrders()">
                             <option value="all">全部状态</option>
+                            <option value="待处理">待处理</option>
+                            <option value="制作中">制作中</option>
+                            <option value="已完成">已完成</option>
                             <option value="进行中">进行中</option>
                             <option value="已结账">已结账</option>
                             <option value="已取消">已取消</option>
@@ -74,12 +198,27 @@
                     </div>
                     <div class="form-group">
                         <label for="tableFilter">桌台号:</label>
-                        <input type="text" id="tableFilter" class="form-control" placeholder="输入桌台号" onkeyup="filterOrders()">
+                        <div style="position: relative;">
+                            <input type="text" id="tableFilter" class="form-control" placeholder="输入桌台号 (支持模糊搜索)" onkeyup="filterOrders()" oninput="showTableSuggestions()">
+                            <div id="tableSuggestions" class="suggestions-dropdown" style="display: none;"></div>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="orderSearch">订单号搜索:</label>
-                        <input type="text" id="orderSearch" class="form-control" placeholder="输入订单号" onkeyup="filterOrders()">
+                        <div style="position: relative;">
+                            <input type="text" id="orderSearch" class="form-control" placeholder="输入订单号 (支持模糊搜索)" onkeyup="filterOrders()" oninput="showOrderSuggestions()">
+                            <div id="orderSuggestions" class="suggestions-dropdown" style="display: none;"></div>
+                        </div>
                     </div>
+                    <div class="form-group" style="display: flex; align-items: end; gap: 0.5rem;">
+                        <button onclick="clearAllFilters()" class="btn btn-secondary" style="height: fit-content;">清空筛选</button>
+                        <button onclick="quickSearch()" class="btn btn-primary" style="height: fit-content;">快速搜索</button>
+                    </div>
+                </div>
+                
+                <!-- 搜索结果统计 -->
+                <div id="searchStats" style="margin-top: 1rem; padding: 0.5rem; background-color: #e7f3ff; border-radius: 0.25rem; display: none;">
+                    <small id="searchStatsText" style="color: #0056b3;"></small>
                 </div>
             </div>
 
@@ -90,12 +229,29 @@
                     <table class="table" id="ordersTable">
                         <thead>
                             <tr>
-                                <th>订单号</th>
-                                <th>桌台号</th>
-                                <th>下单时间</th>
+                                <th style="cursor: pointer; user-select: none;" onclick="sortOrders('orderID')" title="点击排序">
+                                    订单号 
+                                    <span id="sort-orderID" style="margin-left: 5px;">
+                                        <span style="color: #007bff;">▼</span>
+                                    </span>
+                                </th>
+                                <th style="cursor: pointer; user-select: none;" onclick="sortOrders('tableID')" title="点击排序">
+                                    桌台号 
+                                    <span id="sort-tableID" style="margin-left: 5px; color: #ccc;">⇅</span>
+                                </th>
+                                <th style="cursor: pointer; user-select: none;" onclick="sortOrders('orderTime')" title="点击排序">
+                                    下单时间 
+                                    <span id="sort-orderTime" style="margin-left: 5px; color: #ccc;">⇅</span>
+                                </th>
                                 <th>服务员</th>
-                                <th>订单状态</th>
-                                <th>总金额</th>
+                                <th style="cursor: pointer; user-select: none;" onclick="sortOrders('orderStatus')" title="点击排序">
+                                    订单状态 
+                                    <span id="sort-orderStatus" style="margin-left: 5px; color: #ccc;">⇅</span>
+                                </th>
+                                <th style="cursor: pointer; user-select: none;" onclick="sortOrders('totalAmount')" title="点击排序">
+                                    总金额 
+                                    <span id="sort-totalAmount" style="margin-left: 5px; color: #ccc;">⇅</span>
+                                </th>
                                 <th>操作</th>
                             </tr>
                         </thead>
@@ -169,12 +325,14 @@
         const pageSize = 10;
         let currentOrderId = null;
         let dishes = [];
+        let sortConfig = { field: 'orderID', direction: 'desc' }; // 默认按订单号降序排序
 
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
             loadOrders();
             loadDishes();
             setupEventListeners();
+            updateSortIndicators(); // 初始化排序指示器
         });
 
         function setupEventListeners() {
@@ -193,6 +351,7 @@
             try {
                 allOrders = await API.get('/orders');
                 filteredOrders = [...allOrders];
+                applySorting(); // 应用排序
                 renderOrdersTable();
                 updateStatistics();
             } catch (error) {
@@ -239,23 +398,23 @@
 
             pageOrders.forEach(order => {
                 const row = document.createElement('tr');
-                const statusInfo = Utils.getStatusInfo(order.orderStatus, 'order');
+                const statusInfo = Utils.getStatusInfo(order.orderStatus || order.OrderStatus, 'order');
                 
                 row.innerHTML = `
-                    <td>${order.orderID}</td>
-                    <td>桌台${order.tableID || '-'}</td>
-                    <td>${Utils.formatDateTime(order.orderTime)}</td>
-                    <td>${getStaffName(order.staffID)}</td>
+                    <td>${order.orderID || order.OrderID}</td>
+                    <td>桌台${order.tableID || order.TableID || '-'}</td>
+                    <td>${Utils.formatDateTime(order.orderTime || order.OrderTime)}</td>
+                    <td>${getStaffName(order.staffID || order.StaffID)}</td>
                     <td><span class="status-badge ${statusInfo.class}">${statusInfo.text}</span></td>
-                    <td>${Utils.formatCurrency(order.totalAmount)}</td>
+                    <td>${Utils.formatCurrency(order.totalAmount || order.TotalAmount || order.totalPrice || order.TotalPrice || 0)}</td>
                     <td>
-                        <button onclick="viewOrderDetails(${order.orderID})" class="btn btn-primary" style="margin-right: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">详情</button>
-                        ${order.orderStatus === '进行中' ? `
-                            <button onclick="showAddDishModal(${order.orderID})" class="btn btn-secondary" style="margin-right: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">加菜</button>
-                            <button onclick="checkoutOrder(${order.orderID})" class="btn btn-success" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">结账</button>
+                        <button onclick="viewOrderDetails(${order.orderID || order.OrderID})" class="btn btn-primary" style="margin-right: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">详情</button>
+                        ${(order.orderStatus === '进行中' || order.OrderStatus === '进行中' || order.orderStatus === '制作中' || order.OrderStatus === '制作中') ? `
+                            <button onclick="showAddDishModal(${order.orderID || order.OrderID})" class="btn btn-secondary" style="margin-right: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">加菜</button>
+                            <button onclick="checkoutOrder(${order.orderID || order.OrderID})" class="btn btn-success" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">结账</button>
                         ` : ''}
-                        ${order.orderStatus === '进行中' ? `
-                            <button onclick="cancelOrder(${order.orderID})" class="btn btn-danger" style="margin-left: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">取消</button>
+                        ${(order.orderStatus === '进行中' || order.OrderStatus === '进行中' || order.orderStatus === '制作中' || order.OrderStatus === '制作中') ? `
+                            <button onclick="cancelOrder(${order.orderID || order.OrderID})" class="btn btn-danger" style="margin-left: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">取消</button>
                         ` : ''}
                     </td>
                 `;
@@ -310,7 +469,7 @@
 
             filteredOrders = allOrders.filter(order => {
                 // 日期过滤
-                const orderDate = new Date(order.orderTime);
+                const orderDate = new Date(order.orderTime || order.OrderTime);
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 
@@ -336,29 +495,381 @@
                 }
 
                 // 状态过滤
-                const statusMatch = statusFilter === 'all' || order.orderStatus === statusFilter;
+                const orderStatus = order.orderStatus || order.OrderStatus;
+                const statusMatch = statusFilter === 'all' || orderStatus === statusFilter;
 
-                // 桌台过滤
-                const tableMatch = !tableFilter || (order.tableID && order.tableID.toString().includes(tableFilter));
+                // 桌台过滤 - 增强模糊搜索
+                const tableId = order.tableID || order.TableID;
+                let tableMatch = true;
+                if (tableFilter) {
+                    const tableStr = tableId ? tableId.toString() : '';
+                    // 支持完全匹配和部分匹配
+                    tableMatch = tableStr.includes(tableFilter) || 
+                               tableStr.toLowerCase().includes(tableFilter.toLowerCase()) ||
+                               `桌台${tableStr}`.includes(tableFilter) ||
+                               `table${tableStr}`.toLowerCase().includes(tableFilter.toLowerCase());
+                }
 
-                // 订单号搜索
-                const orderMatch = !orderSearch || order.orderID.toString().includes(orderSearch);
+                // 订单号搜索 - 增强模糊搜索
+                const orderId = order.orderID || order.OrderID;
+                let orderMatch = true;
+                if (orderSearch) {
+                    const orderStr = orderId.toString();
+                    // 支持完全匹配、部分匹配和带#前缀的搜索
+                    orderMatch = orderStr.includes(orderSearch) ||
+                               orderStr.toLowerCase().includes(orderSearch.toLowerCase()) ||
+                               `#${orderStr}`.includes(orderSearch) ||
+                               orderSearch.replace('#', '') === orderStr;
+                }
 
                 return dateMatch && statusMatch && tableMatch && orderMatch;
             });
 
             currentPage = 1;
+            applySorting(); // 重新应用排序
             renderOrdersTable();
+            updateSearchStats();
+            
+            // 隐藏建议下拉框
+            hideAllSuggestions();
         }
+
+        // 排序功能
+        function sortOrders(field) {
+            // 如果点击的是当前排序字段，则切换排序方向
+            if (sortConfig.field === field) {
+                sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                // 如果点击的是新字段，默认降序排序
+                sortConfig.field = field;
+                sortConfig.direction = 'desc';
+            }
+            
+            applySorting();
+            updateSortIndicators();
+            renderOrdersTable();
+            
+            // 显示排序提示
+            const fieldNames = {
+                'orderID': '订单号',
+                'tableID': '桌台号', 
+                'orderTime': '下单时间',
+                'orderStatus': '订单状态',
+                'totalAmount': '总金额'
+            };
+            const directionText = sortConfig.direction === 'asc' ? '升序' : '降序';
+            Utils.showNotification(`已按${fieldNames[field]}${directionText}排序`, 'info');
+        }
+
+        // 应用排序
+        function applySorting() {
+            filteredOrders.sort((a, b) => {
+                let aValue, bValue;
+                
+                switch (sortConfig.field) {
+                    case 'orderID':
+                        aValue = a.orderID || a.OrderID || 0;
+                        bValue = b.orderID || b.OrderID || 0;
+                        break;
+                    case 'tableID':
+                        aValue = a.tableID || a.TableID || 0;
+                        bValue = b.tableID || b.TableID || 0;
+                        break;
+                    case 'orderTime':
+                        aValue = new Date(a.orderTime || a.OrderTime);
+                        bValue = new Date(b.orderTime || b.OrderTime);
+                        break;
+                    case 'orderStatus':
+                        aValue = a.orderStatus || a.OrderStatus || '';
+                        bValue = b.orderStatus || b.OrderStatus || '';
+                        break;
+                    case 'totalAmount':
+                        aValue = a.totalAmount || a.TotalAmount || a.totalPrice || a.TotalPrice || 0;
+                        bValue = b.totalAmount || b.TotalAmount || b.totalPrice || b.TotalPrice || 0;
+                        break;
+                    default:
+                        return 0;
+                }
+                
+                if (aValue < bValue) {
+                    return sortConfig.direction === 'asc' ? -1 : 1;
+                }
+                if (aValue > bValue) {
+                    return sortConfig.direction === 'asc' ? 1 : -1;
+                }
+                return 0;
+            });
+        }
+
+        // 更新排序指示器
+        function updateSortIndicators() {
+            // 清除所有排序指示器
+            const indicators = ['orderID', 'tableID', 'orderTime', 'orderStatus', 'totalAmount'];
+            indicators.forEach(field => {
+                const indicator = document.getElementById(`sort-${field}`);
+                if (indicator) {
+                    if (field === sortConfig.field) {
+                        // 当前排序字段显示方向
+                        indicator.innerHTML = sortConfig.direction === 'asc' ? 
+                            '<span style="color: #007bff;">▲</span>' : 
+                            '<span style="color: #007bff;">▼</span>';
+                    } else {
+                        // 其他字段显示默认状态
+                        indicator.innerHTML = '<span style="color: #ccc;">⇅</span>';
+                    }
+                }
+            });
+        }
+
+        // 显示桌台号搜索建议
+        function showTableSuggestions() {
+            const input = document.getElementById('tableFilter');
+            const suggestionsDiv = document.getElementById('tableSuggestions');
+            const query = input.value.trim().toLowerCase();
+            
+            if (query.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            // 获取所有唯一的桌台号
+            const uniqueTables = [...new Set(allOrders
+                .map(o => o.tableID || o.TableID)
+                .filter(id => id)
+                .sort((a, b) => a - b)
+            )];
+
+            // 过滤匹配的桌台号
+            const matchingTables = uniqueTables.filter(tableId => {
+                const tableStr = tableId.toString();
+                return tableStr.includes(query) || 
+                       `桌台${tableStr}`.toLowerCase().includes(query) ||
+                       `table${tableStr}`.toLowerCase().includes(query);
+            });
+
+            if (matchingTables.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            // 生成建议项
+            let suggestionsHTML = '';
+            matchingTables.slice(0, 8).forEach(tableId => {
+                const tableOrders = allOrders.filter(o => (o.tableID || o.TableID) === tableId);
+                const recentOrder = tableOrders.sort((a, b) => new Date(b.orderTime || b.OrderTime) - new Date(a.orderTime || a.OrderTime))[0];
+                const statusInfo = Utils.getStatusInfo(recentOrder.orderStatus || recentOrder.OrderStatus, 'order');
+                
+                suggestionsHTML += `
+                    <div class="suggestion-item" onclick="selectTableSuggestion('${tableId}')">
+                        <div class="suggestion-main">桌台${highlightText(tableId.toString(), query)}</div>
+                        <div class="suggestion-detail">
+                            ${tableOrders.length}个订单 | 
+                            <span class="status-badge ${statusInfo.class}" style="font-size: 0.7rem; padding: 0.1rem 0.3rem;">${statusInfo.text}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            suggestionsDiv.innerHTML = suggestionsHTML;
+            suggestionsDiv.style.display = 'block';
+        }
+
+        // 显示订单号搜索建议
+        function showOrderSuggestions() {
+            const input = document.getElementById('orderSearch');
+            const suggestionsDiv = document.getElementById('orderSuggestions');
+            const query = input.value.trim().toLowerCase().replace('#', '');
+            
+            if (query.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            // 过滤匹配的订单
+            const matchingOrders = allOrders.filter(order => {
+                const orderId = (order.orderID || order.OrderID).toString();
+                return orderId.includes(query);
+            }).sort((a, b) => (b.orderID || b.OrderID) - (a.orderID || a.OrderID));
+
+            if (matchingOrders.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            // 生成建议项
+            let suggestionsHTML = '';
+            matchingOrders.slice(0, 8).forEach(order => {
+                const orderId = order.orderID || order.OrderID;
+                const tableId = order.tableID || order.TableID;
+                const orderTime = new Date(order.orderTime || order.OrderTime);
+                const statusInfo = Utils.getStatusInfo(order.orderStatus || order.OrderStatus, 'order');
+                
+                suggestionsHTML += `
+                    <div class="suggestion-item" onclick="selectOrderSuggestion('${orderId}')">
+                        <div class="suggestion-main">#${highlightText(orderId.toString(), query)}</div>
+                        <div class="suggestion-detail">
+                            桌台${tableId || '-'} | ${orderTime.toLocaleDateString()} | 
+                            <span class="status-badge ${statusInfo.class}" style="font-size: 0.7rem; padding: 0.1rem 0.3rem;">${statusInfo.text}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            suggestionsDiv.innerHTML = suggestionsHTML;
+            suggestionsDiv.style.display = 'block';
+        }
+
+        // 选择桌台建议
+        function selectTableSuggestion(tableId) {
+            document.getElementById('tableFilter').value = tableId;
+            document.getElementById('tableSuggestions').style.display = 'none';
+            filterOrders();
+        }
+
+        // 选择订单建议
+        function selectOrderSuggestion(orderId) {
+            document.getElementById('orderSearch').value = orderId;
+            document.getElementById('orderSuggestions').style.display = 'none';
+            filterOrders();
+        }
+
+        // 高亮搜索文本
+        function highlightText(text, query) {
+            if (!query) return text;
+            const regex = new RegExp(`(${query})`, 'gi');
+            return text.replace(regex, '<span class="highlight">$1</span>');
+        }
+
+        // 隐藏所有建议下拉框
+        function hideAllSuggestions() {
+            document.getElementById('tableSuggestions').style.display = 'none';
+            document.getElementById('orderSuggestions').style.display = 'none';
+        }
+
+        // 更新搜索统计
+        function updateSearchStats() {
+            const statsDiv = document.getElementById('searchStats');
+            const statsText = document.getElementById('searchStatsText');
+            
+            const totalCount = allOrders.length;
+            const filteredCount = filteredOrders.length;
+            
+            if (filteredCount === totalCount) {
+                statsDiv.style.display = 'none';
+            } else {
+                const dateRange = document.getElementById('dateRange').value;
+                const statusFilter = document.getElementById('statusFilter').value;
+                const tableFilter = document.getElementById('tableFilter').value.trim();
+                const orderSearch = document.getElementById('orderSearch').value.trim();
+                
+                let filterDesc = [];
+                if (dateRange !== 'all') filterDesc.push(`时间: ${getDateRangeText(dateRange)}`);
+                if (statusFilter !== 'all') filterDesc.push(`状态: ${statusFilter}`);
+                if (tableFilter) filterDesc.push(`桌台: ${tableFilter}`);
+                if (orderSearch) filterDesc.push(`订单号: ${orderSearch}`);
+                
+                statsText.innerHTML = `
+                    <i class="icon">🔍</i> 
+                    筛选结果: 找到 <strong>${filteredCount}</strong> 条订单 (共 ${totalCount} 条)
+                    ${filterDesc.length > 0 ? `<br>筛选条件: ${filterDesc.join(' | ')}` : ''}
+                `;
+                statsDiv.style.display = 'block';
+            }
+        }
+
+        // 获取日期范围文本
+        function getDateRangeText(range) {
+            const rangeMap = {
+                'today': '今天',
+                'yesterday': '昨天', 
+                'week': '本周',
+                'month': '本月',
+                'all': '全部'
+            };
+            return rangeMap[range] || range;
+        }
+
+        // 清空所有筛选条件
+        function clearAllFilters() {
+            document.getElementById('dateRange').value = 'all';
+            document.getElementById('statusFilter').value = 'all';
+            document.getElementById('tableFilter').value = '';
+            document.getElementById('orderSearch').value = '';
+            
+            // 重置排序为默认状态
+            sortConfig = { field: 'orderID', direction: 'desc' };
+            updateSortIndicators();
+            
+            hideAllSuggestions();
+            filterOrders();
+            
+            Utils.showNotification('筛选条件和排序已清空', 'info');
+        }
+
+        // 快速搜索功能
+        function quickSearch() {
+            const query = prompt('请输入搜索内容 (支持订单号、桌台号):');
+            if (!query) return;
+            
+            const cleanQuery = query.trim().replace('#', '');
+            
+            // 先尝试按订单号搜索
+            const orderMatch = allOrders.find(o => 
+                (o.orderID || o.OrderID).toString() === cleanQuery
+            );
+            
+            if (orderMatch) {
+                // 找到订单，直接打开详情
+                viewOrderDetails(orderMatch.orderID || orderMatch.OrderID);
+                return;
+            }
+            
+            // 再尝试按桌台号搜索
+            const tableMatches = allOrders.filter(o => 
+                (o.tableID || o.TableID) && (o.tableID || o.TableID).toString() === cleanQuery
+            );
+            
+            if (tableMatches.length > 0) {
+                // 找到桌台，设置筛选条件
+                document.getElementById('tableFilter').value = cleanQuery;
+                filterOrders();
+                Utils.showNotification(`找到桌台${cleanQuery}的${tableMatches.length}个订单`, 'success');
+                return;
+            }
+            
+            // 模糊搜索
+            document.getElementById('orderSearch').value = query;
+            document.getElementById('tableFilter').value = query;
+            filterOrders();
+            
+            if (filteredOrders.length === 0) {
+                Utils.showNotification('未找到匹配的订单', 'warning');
+            } else {
+                Utils.showNotification(`找到${filteredOrders.length}个匹配的订单`, 'success');
+            }
+        }
+
+        // 点击页面其他地方隐藏建议框
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.form-group')) {
+                hideAllSuggestions();
+            }
+        });
 
         function updateStatistics() {
             const totalOrders = allOrders.length;
             const today = new Date().toDateString();
-            const todayOrders = allOrders.filter(o => new Date(o.orderTime).toDateString() === today);
-            const activeOrders = allOrders.filter(o => o.orderStatus === '进行中');
+            const todayOrders = allOrders.filter(o => new Date(o.orderTime || o.OrderTime).toDateString() === today);
+            const activeOrders = allOrders.filter(o => {
+                const status = o.orderStatus || o.OrderStatus;
+                return status === '进行中' || status === '制作中' || status === '待处理';
+            });
             const todayRevenue = todayOrders
-                .filter(o => o.orderStatus === '已结账')
-                .reduce((sum, o) => sum + o.totalAmount, 0);
+                .filter(o => {
+                    const status = o.orderStatus || o.OrderStatus;
+                    return status === '已结账';
+                })
+                .reduce((sum, o) => sum + (o.totalAmount || o.TotalAmount || o.totalPrice || o.TotalPrice || 0), 0);
 
             document.getElementById('total-orders').textContent = totalOrders;
             document.getElementById('today-orders').textContent = todayOrders.length;
@@ -375,21 +886,30 @@
             try {
                 console.log(`[Frontend] 获取订单详情: OrderID=${orderId}`);
                 
-                // 使用增强的订单详情API
-                const response = await API.get(`/orders/${orderId}/enhanced-details`);
+                // 获取基本订单信息和详情
+                const [orderResponse, detailsResponse] = await Promise.all([
+                    API.get(`/orders/${orderId}`),
+                    API.get(`/orders/${orderId}/details`)
+                ]);
                 
-                if (!response) {
+                if (!orderResponse) {
                     Utils.showNotification('订单不存在', 'error');
                     return;
                 }
                 
-                const { Order: order, Details: details, Summary: summary, CategoryStats: categoryStats } = response;
+                const order = orderResponse;
+                const details = detailsResponse.details || [];
+                const statistics = detailsResponse.statistics || {
+                    itemCount: details.length,
+                    totalItems: details.reduce((sum, d) => sum + (d.quantity || d.Quantity || 0), 0),
+                    totalAmount: details.reduce((sum, d) => sum + (d.subtotal || d.Subtotal || 0), 0)
+                };
                 
                 document.getElementById('orderDetailTitle').textContent = `订单详情 - #${orderId}`;
                 
-                const statusInfo = Utils.getStatusInfo(order.OrderStatus, 'order');
-                const canModify = ['待处理', '制作中'].includes(order.OrderStatus);
-                const canCheckout = ['待处理', '制作中', '已完成'].includes(order.OrderStatus);
+                const statusInfo = Utils.getStatusInfo(order.orderStatus || order.OrderStatus, 'order');
+                const canModify = ['待处理', '制作中'].includes(order.orderStatus || order.OrderStatus);
+                const canCheckout = ['待处理', '制作中', '已完成'].includes(order.orderStatus || order.OrderStatus);
                 
                 let detailsHTML = `
                     <!-- 订单基本信息 -->
@@ -398,14 +918,14 @@
                             <i class="fas fa-receipt"></i> 订单基本信息
                         </h5>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                            <div><strong>订单号:</strong> #${order.OrderID}</div>
-                            <div><strong>桌台信息:</strong> ${order.TableNumber ? `${order.TableNumber} (${order.TableArea}, ${order.TableCapacity}人桌)` : '外卖'}</div>
-                            <div><strong>下单时间:</strong> ${Utils.formatDateTime(order.OrderTime)}</div>
-                            <div><strong>服务员:</strong> ${order.StaffName ? `${order.StaffName} (${order.StaffPosition})` : '-'}</div>
+                            <div><strong>订单号:</strong> #${order.orderID || order.OrderID}</div>
+                            <div><strong>桌台信息:</strong> 桌台${order.tableID || order.TableID || '-'}</div>
+                            <div><strong>下单时间:</strong> ${Utils.formatDateTime(order.orderTime || order.OrderTime)}</div>
+                            <div><strong>服务员:</strong> ${getStaffName(order.staffID || order.StaffID)}</div>
                             <div><strong>订单状态:</strong> <span class="status-badge ${statusInfo.class}">${statusInfo.text}</span></div>
-                            <div><strong>总金额:</strong> <span style="color: #e74c3c; font-size: 1.2rem; font-weight: bold;">${Utils.formatCurrency(order.TotalPrice || 0)}</span></div>
+                            <div><strong>总金额:</strong> <span style="color: #e74c3c; font-size: 1.2rem; font-weight: bold;">${Utils.formatCurrency(order.totalPrice || order.TotalPrice || statistics.totalAmount)}</span></div>
                         </div>
-                        ${order.Notes ? `<div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #dee2e6;"><strong>备注:</strong> ${order.Notes}</div>` : ''}
+                        ${(order.notes || order.Notes) ? `<div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #dee2e6;"><strong>备注:</strong> ${order.notes || order.Notes}</div>` : ''}
                     </div>
 
                     <!-- 订单统计信息 -->
@@ -414,30 +934,12 @@
                             <i class="icon">📊</i> 订单统计
                         </h6>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; font-size: 0.9rem;">
-                            <div><strong>菜品种类:</strong> ${summary.ItemCount} 种</div>
-                            <div><strong>商品总数:</strong> ${summary.TotalItems} 件</div>
-                            <div><strong>分类数量:</strong> ${summary.CategoryCount} 类</div>
-                            <div><strong>平均单价:</strong> ${Utils.formatCurrency(summary.AvgItemPrice)}</div>
-                            ${summary.MostExpensiveItem ? `<div><strong>最贵菜品:</strong> ${summary.MostExpensiveItem.DishName} (${Utils.formatCurrency(summary.MostExpensiveItem.Subtotal)})</div>` : ''}
-                            ${summary.MostOrderedItem ? `<div><strong>最多数量:</strong> ${summary.MostOrderedItem.DishName} (${summary.MostOrderedItem.Quantity}份)</div>` : ''}
+                            <div><strong>菜品种类:</strong> ${statistics.itemCount} 种</div>
+                            <div><strong>商品总数:</strong> ${statistics.totalItems} 件</div>
+                            <div><strong>订单总额:</strong> ${Utils.formatCurrency(statistics.totalAmount)}</div>
+                            <div><strong>平均单价:</strong> ${Utils.formatCurrency(statistics.itemCount > 0 ? statistics.totalAmount / statistics.itemCount : 0)}</div>
                         </div>
                     </div>
-
-                    <!-- 分类统计 -->
-                    ${categoryStats && categoryStats.length > 0 ? `
-                    <div style="margin-bottom: 1rem; padding: 1rem; background-color: #fff3cd; border-radius: 0.5rem; border-left: 4px solid #ffc107;">
-                        <h6 style="margin: 0 0 0.5rem 0; color: #856404;">
-                            <i class="icon">📋</i> 分类统计
-                        </h6>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.5rem; font-size: 0.85rem;">
-                            ${categoryStats.map(cat => `
-                                <div style="padding: 0.5rem; background-color: white; border-radius: 0.25rem;">
-                                    <strong>${cat.CategoryName}:</strong> ${cat.ItemCount}种 | ${cat.TotalQuantity}份 | ${Utils.formatCurrency(cat.TotalAmount)}
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                    ` : ''}
 
                     <!-- 操作按钮区域 -->
                     <div class="order-actions" style="margin-bottom: 1.5rem; text-align: center; padding: 1rem; background-color: #f1f3f4; border-radius: 0.5rem;">
@@ -449,50 +951,56 @@
                     </div>
 
                     <h4 style="margin-bottom: 1rem; border-bottom: 2px solid #007bff; padding-bottom: 0.5rem; color: #007bff;">
-                        <i class="icon">🍽️</i> 菜品明细 (${summary.ItemCount}种菜品，${summary.TotalItems}件)
+                        <i class="icon">🍽️</i> 菜品明细 (${statistics.itemCount}种菜品，${statistics.totalItems}件)
                     </h4>
                     
                     <!-- 菜品明细表格 -->
-                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.25rem;">
+                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.25rem; margin-bottom: 1rem;">
                         <table class="table" style="margin-bottom: 0; font-size: 0.9rem;">
-                            <thead style="position: sticky; top: 0; background-color: #f8f9fa; z-index: 1;">
+                            <thead style="position: sticky; top: 0; background-color: #f8f9fa; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                                 <tr>
-                                    <th style="border-top: none;">菜品信息</th>
-                                    <th style="width: 80px; border-top: none; text-align: center;">数量</th>
-                                    <th style="width: 100px; border-top: none; text-align: right;">单价</th>
-                                    <th style="width: 100px; border-top: none; text-align: right;">小计</th>
-                                    <th style="border-top: none;">特殊要求</th>
-                                    ${canModify ? '<th style="width: 80px; border-top: none; text-align: center;">操作</th>' : ''}
+                                    <th style="border-top: none; padding: 0.75rem 0.5rem;">菜品信息</th>
+                                    <th style="width: 80px; border-top: none; text-align: center; padding: 0.75rem 0.5rem;">数量</th>
+                                    <th style="width: 100px; border-top: none; text-align: right; padding: 0.75rem 0.5rem;">单价</th>
+                                    <th style="width: 100px; border-top: none; text-align: right; padding: 0.75rem 0.5rem;">小计</th>
+                                    <th style="border-top: none; padding: 0.75rem 0.5rem;">特殊要求</th>
+                                    ${canModify ? '<th style="width: 80px; border-top: none; text-align: center; padding: 0.75rem 0.5rem;">操作</th>' : ''}
                                 </tr>
                             </thead>
                             <tbody>
-                                ${details.map(d => `
+                                ${details.length > 0 ? details.map(d => `
                                     <tr>
-                                        <td>
+                                        <td style="padding: 0.75rem 0.5rem;">
                                             <div>
-                                                <strong style="color: #495057;">${d.DishName}</strong>
-                                                ${d.CategoryName ? `<br><small style="color: #6c757d;"><i class="icon">🏷️</i> ${d.CategoryName}</small>` : ''}
-                                                ${d.DishDescription ? `<br><small style="color: #6c757d;">${d.DishDescription}</small>` : ''}
+                                                <strong style="color: #495057;">${d.dishName || d.DishName || '未知菜品'}</strong>
+                                                ${(d.categoryName || d.CategoryName) ? `<br><small style="color: #6c757d;"><i class="icon">🏷️</i> ${d.categoryName || d.CategoryName}</small>` : ''}
+                                                ${(d.dishDescription || d.DishDescription) ? `<br><small style="color: #6c757d;">${d.dishDescription || d.DishDescription}</small>` : ''}
                                             </div>
                                         </td>
-                                        <td style="text-align: center; font-weight: bold; color: #007bff;">${d.Quantity}</td>
-                                        <td style="text-align: right;">${Utils.formatCurrency(d.UnitPrice)}</td>
-                                        <td style="text-align: right; font-weight: bold; color: #e74c3c;">${Utils.formatCurrency(d.Subtotal)}</td>
-                                        <td>
-                                            ${d.SpecialRequests ? `<span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.2rem; font-size: 0.8rem;">${d.SpecialRequests}</span>` : '<span style="color: #6c757d;">-</span>'}
+                                        <td style="text-align: center; font-weight: bold; color: #007bff; padding: 0.75rem 0.5rem;">${d.quantity || d.Quantity || 0}</td>
+                                        <td style="text-align: right; padding: 0.75rem 0.5rem;">${Utils.formatCurrency(d.unitPrice || d.UnitPrice || 0)}</td>
+                                        <td style="text-align: right; font-weight: bold; color: #e74c3c; padding: 0.75rem 0.5rem;">${Utils.formatCurrency(d.subtotal || d.Subtotal || 0)}</td>
+                                        <td style="padding: 0.75rem 0.5rem;">
+                                            ${(d.specialRequests || d.SpecialRequests) ? `<span style="background-color: #fff3cd; padding: 0.2rem 0.4rem; border-radius: 0.2rem; font-size: 0.8rem;">${d.specialRequests || d.SpecialRequests}</span>` : '<span style="color: #6c757d;">-</span>'}
                                         </td>
-                                        ${canModify ? `<td style="text-align: center;"><button onclick="removeOrderDetail(${d.OrderDetailID})" class="btn btn-sm btn-danger">删除</button></td>` : ''}
+                                        ${canModify ? `<td style="text-align: center; padding: 0.75rem 0.5rem;"><button onclick="removeOrderDetail(${d.orderDetailID || d.OrderDetailID})" class="btn btn-sm btn-danger">删除</button></td>` : ''}
                                     </tr>
-                                `).join('')}
+                                `).join('') : `
+                                    <tr>
+                                        <td colspan="${canModify ? '6' : '5'}" style="text-align: center; color: #6c757d; padding: 2rem;">
+                                            暂无菜品记录
+                                        </td>
+                                    </tr>
+                                `}
                             </tbody>
-                            <tfoot>
-                                <tr style="font-weight: bold; background-color: #f8f9fa; font-size: 1.1rem;">
-                                    <td colspan="${canModify ? '5' : '4'}" style="text-align: right; border-top: 2px solid #007bff;">总计:</td>
-                                    <td style="text-align: right; color: #e74c3c; border-top: 2px solid #007bff;">${Utils.formatCurrency(summary.TotalAmount)}</td>
-                                    ${canModify ? '<td></td>' : ''}
-                                </tr>
-                            </tfoot>
                         </table>
+                    </div>
+                    
+                    <!-- 总计信息 -->
+                    <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 0.25rem; padding: 1rem; text-align: right;">
+                        <h5 style="margin: 0; color: #e74c3c; font-size: 1.2rem;">
+                            <strong>订单总计: ${Utils.formatCurrency(statistics.totalAmount)}</strong>
+                        </h5>
                     </div>
                 `;
 
@@ -507,7 +1015,7 @@
                 
                 Utils.showModal('orderDetailModal');
                 
-                console.log(`[Frontend] 订单详情显示完成: OrderID=${orderId}, 菜品数量=${summary.ItemCount}`);
+                console.log(`[Frontend] 订单详情显示完成: OrderID=${orderId}, 菜品数量=${statistics.itemCount}`);
             } catch (error) {
                 console.error('获取订单详情失败:', error);
                 Utils.showNotification('获取订单详情失败', 'error');

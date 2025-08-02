@@ -100,7 +100,7 @@ namespace RestaurantManagement.Models
         public string? Description { get; set; }
         public string? ImageURL { get; set; }
         public bool IsAvailable { get; set; }
-        public DateTime CreatedTime { get; set; }
+        public DateTime CreateTime { get; set; }
     }
 
     // 菜品分类

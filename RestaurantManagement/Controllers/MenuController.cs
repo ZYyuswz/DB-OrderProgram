@@ -25,8 +25,31 @@ namespace RestaurantManagement.Controllers
         [HttpGet("dishes")]
         public async Task<IActionResult> GetAllDishes()
         {
-            var dishes = await _menuService.GetAllDishesAsync();
-            return Ok(dishes);
+            try
+            {
+                Console.WriteLine("[MenuController] 开始获取所有菜品数据...");
+                var dishes = await _menuService.GetAllDishesAsync();
+                Console.WriteLine($"[MenuController] 成功获取到 {dishes?.Count() ?? 0} 个菜品");
+                
+                if (dishes != null && dishes.Any())
+                {
+                    Console.WriteLine($"[MenuController] 第一个菜品示例: {System.Text.Json.JsonSerializer.Serialize(dishes.First())}");
+                }
+                
+                return Ok(dishes);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[MenuController] 获取菜品失败: {ex.Message}");
+                Console.WriteLine($"[MenuController] 完整错误信息: {ex}");
+                
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"[MenuController] 内部异常: {ex.InnerException.Message}");
+                }
+                
+                return StatusCode(500, new { message = "获取菜品数据失败", error = ex.Message });
+            }
         }
 
         [HttpGet("categories/{categoryId}/dishes")]
@@ -57,7 +80,7 @@ namespace RestaurantManagement.Controllers
         [HttpPost("dishes")]
         public async Task<IActionResult> AddDish([FromBody] Dish dish)
         {
-            dish.CreatedTime = DateTime.Now;
+            dish.CreateTime = DateTime.Now;
             dish.IsAvailable = true;
             var result = await _menuService.AddDishAsync(dish);
             if (!result)

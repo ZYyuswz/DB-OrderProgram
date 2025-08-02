@@ -233,31 +233,50 @@ namespace RestaurantManagement.Controllers
         {
             try
             {
+                Console.WriteLine($"[OrdersController] 收到添加订单详情请求:");
+                Console.WriteLine($"  - 订单ID: {id}");
+                Console.WriteLine($"  - 请求数据: {System.Text.Json.JsonSerializer.Serialize(detail)}");
+                
                 if (detail == null)
+                {
+                    Console.WriteLine($"[OrdersController] 错误: 订单详情数据为空");
                     return BadRequest(new { message = "订单详情数据不能为空" });
+                }
 
                 // 验证订单是否存在
                 var order = await _orderService.GetOrderByIdAsync(id);
                 if (order == null)
+                {
+                    Console.WriteLine($"[OrdersController] 错误: 订单 {id} 不存在");
                     return NotFound(new { message = "订单不存在" });
+                }
+
+                Console.WriteLine($"[OrdersController] 找到订单: {order.OrderID}, 状态: {order.OrderStatus}");
 
                 detail.OrderID = id;
                 detail.Subtotal = detail.Quantity * detail.UnitPrice;
                 
+                Console.WriteLine($"[OrdersController] 计算小计: {detail.Quantity} × {detail.UnitPrice} = {detail.Subtotal}");
+                
                 var result = await _orderService.AddOrderDetailAsync(detail);
                 if (result)
                 {
+                    Console.WriteLine($"[OrdersController] 订单详情添加成功，准备更新订单总金额");
                     // 更新订单总金额
                     await _orderService.UpdateOrderTotalAsync(id);
+                    Console.WriteLine($"[OrdersController] 订单总金额更新完成");
                     return Ok(new { success = true, message = "添加菜品成功" });
                 }
                 else
                 {
+                    Console.WriteLine($"[OrdersController] 订单详情添加失败");
                     return BadRequest(new { message = "添加菜品失败" });
                 }
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[OrdersController] 添加订单详情异常: {ex.Message}");
+                Console.WriteLine($"[OrdersController] 完整异常信息: {ex}");
                 return StatusCode(500, new { message = "添加菜品失败", error = ex.Message });
             }
         }

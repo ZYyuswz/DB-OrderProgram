@@ -54,29 +54,49 @@ namespace RestaurantManagement.Services
             using var connection = _dbService.CreateConnection();
             var sql = @"
                 SELECT 
-                    od.OrderDetailID,
-                    od.OrderID,
-                    od.DishID,
-                    od.Quantity,
-                    od.UnitPrice,
-                    od.Subtotal,
-                    od.SpecialRequests,
-                    d.DishName,
-                    d.Description as DishDescription,
-                    d.ImageURL as DishImageURL,
-                    c.CategoryName,
-                    c.CategoryID
-                FROM PUB.OrderDetail od
-                INNER JOIN PUB.Dish d ON od.DishID = d.DishID
-                LEFT JOIN PUB.Category c ON d.CategoryID = c.CategoryID
-                WHERE od.OrderID = :OrderId
-                ORDER BY od.OrderDetailID";
+                    od.ORDERDETAILID as OrderDetailID,
+                    od.ORDERID as OrderID,
+                    od.DISHID as DishID,
+                    od.QUANTITY as Quantity,
+                    od.UNITPRICE as UnitPrice,
+                    od.SUBTOTAL as Subtotal,
+                    od.SPECIALREQUESTS as SpecialRequests,
+                    d.DISHNAME as DishName,
+                    d.DESCRIPTION as DishDescription,
+                    d.IMAGEURL as DishImageURL,
+                    c.CATEGORYNAME as CategoryName,
+                    c.CATEGORYID as CategoryID
+                FROM PUB.ORDERDETAIL od
+                INNER JOIN PUB.DISH d ON od.DISHID = d.DISHID
+                LEFT JOIN PUB.CATEGORY c ON d.CATEGORYID = c.CATEGORYID
+                WHERE od.ORDERID = :OrderId
+                ORDER BY od.ORDERDETAILID";
             
             Console.WriteLine($"[OrderService] 获取订单详情: 订单ID={orderId}");
-            var result = await connection.QueryAsync<OrderDetailDto>(sql, new { OrderId = orderId });
-            Console.WriteLine($"[OrderService] 订单详情查询结果: 找到{result.Count()}条菜品记录");
+            Console.WriteLine($"[OrderService] 执行SQL: {sql}");
             
-            return result;
+            try
+            {
+                var result = await connection.QueryAsync<OrderDetailDto>(sql, new { OrderId = orderId });
+                var resultList = result.ToList();
+                
+                Console.WriteLine($"[OrderService] 订单详情查询结果: 找到{resultList.Count}条菜品记录");
+                
+                // 输出每条记录的详细信息用于调试
+                for (int i = 0; i < Math.Min(3, resultList.Count); i++) // 只输出前3条避免日志过长
+                {
+                    var detail = resultList[i];
+                    Console.WriteLine($"[OrderService] 详情[{i}]: DishName='{detail.DishName}', Quantity={detail.Quantity}, UnitPrice={detail.UnitPrice}, Subtotal={detail.Subtotal}");
+                }
+                
+                return resultList;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[OrderService] 获取订单详情时发生错误: {ex.Message}");
+                Console.WriteLine($"[OrderService] 错误堆栈: {ex.StackTrace}");
+                throw;
+            }
         }
 
         // 根据桌台ID获取当前订单
@@ -142,11 +162,89 @@ namespace RestaurantManagement.Services
         public async Task<bool> AddOrderDetailAsync(OrderDetail detail)
         {
             using var connection = _dbService.CreateConnection();
+            
+            Console.WriteLine($"[OrderService] 准备添加订单详情:");
+            Console.WriteLine($"  - OrderID: {detail.OrderID}");
+            Console.WriteLine($"  - DishID: {detail.DishID}");
+            Console.WriteLine($"  - Quantity: {detail.Quantity}");
+            Console.WriteLine($"  - UnitPrice: {detail.UnitPrice}");
+            Console.WriteLine($"  - Subtotal: {detail.Subtotal}");
+            Console.WriteLine($"  - SpecialRequests: {detail.SpecialRequests ?? "null"}");
+            
+            // 首先验证菜品是否存在
+            var dishCheckSql = "SELECT COUNT(*) FROM PUB.Dish WHERE DishID = :DishID";
+            var dishExists = await connection.QuerySingleAsync<int>(dishCheckSql, new { DishID = detail.DishID });
+            Console.WriteLine($"[OrderService] 菜品 {detail.DishID} 存在性检查: {(dishExists > 0 ? "存在" : "不存在")}");
+            
+            if (dishExists == 0)
+            {
+                Console.WriteLine($"[OrderService] 错误: 菜品 {detail.DishID} 不存在");
+                throw new ArgumentException($"菜品 {detail.DishID} 不存在");
+            }
+            
+            // 生成新的OrderDetailID（如果序列不存在，使用最大值+1的方式）
+            var getMaxIdSql = "SELECT NVL(MAX(ORDERDETAILID), 0) + 1 FROM PUB.OrderDetail";
+            var newOrderDetailId = await connection.QuerySingleAsync<int>(getMaxIdSql);
+            Console.WriteLine($"[OrderService] 生成新的OrderDetailID: {newOrderDetailId}");
+            
             var sql = @"
-                INSERT INTO PUB.OrderDetail (OrderID, DishID, Quantity, UnitPrice, Subtotal, SpecialRequests)
-                VALUES (:OrderID, :DishID, :Quantity, :UnitPrice, :Subtotal, :SpecialRequests)";
-            var result = await connection.ExecuteAsync(sql, detail);
-            return result > 0;
+                INSERT INTO PUB.OrderDetail (ORDERDETAILID, OrderID, DishID, Quantity, UnitPrice, Subtotal, SpecialRequests)
+                VALUES (:OrderDetailID, :OrderID, :DishID, :Quantity, :UnitPrice, :Subtotal, :SpecialRequests)";
+                
+            Console.WriteLine($"[OrderService] 执行SQL: {sql}");
+            
+            try
+            {
+                // 验证订单是否存在
+                var orderCheckSql = "SELECT COUNT(*) FROM PUB.Orders WHERE OrderID = :OrderID";
+                var orderExists = await connection.QuerySingleAsync<int>(orderCheckSql, new { OrderID = detail.OrderID });
+                Console.WriteLine($"[OrderService] 订单 {detail.OrderID} 存在性检查: {(orderExists > 0 ? "存在" : "不存在")}");
+                
+                if (orderExists == 0)
+                {
+                    Console.WriteLine($"[OrderService] 错误: 订单 {detail.OrderID} 不存在");
+                    throw new ArgumentException($"订单 {detail.OrderID} 不存在");
+                }
+                
+                // 创建包含新OrderDetailID的参数对象
+                var parameters = new
+                {
+                    OrderDetailID = newOrderDetailId,
+                    OrderID = detail.OrderID,
+                    DishID = detail.DishID,
+                    Quantity = detail.Quantity,
+                    UnitPrice = detail.UnitPrice,
+                    Subtotal = detail.Subtotal,
+                    SpecialRequests = detail.SpecialRequests
+                };
+                
+                Console.WriteLine($"[OrderService] SQL参数: OrderDetailID={newOrderDetailId}, OrderID={detail.OrderID}, DishID={detail.DishID}, Quantity={detail.Quantity}, UnitPrice={detail.UnitPrice}, Subtotal={detail.Subtotal}, SpecialRequests={detail.SpecialRequests}");
+                
+                var result = await connection.ExecuteAsync(sql, parameters);
+                Console.WriteLine($"[OrderService] 订单详情添加结果: {(result > 0 ? "成功" : "失败")}, 影响行数: {result}");
+                return result > 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[OrderService] 添加订单详情失败: {ex.Message}");
+                Console.WriteLine($"[OrderService] 完整错误信息: {ex}");
+                Console.WriteLine($"[OrderService] 异常类型: {ex.GetType().Name}");
+                
+                // 记录具体的Oracle错误信息
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"[OrderService] 内部异常: {ex.InnerException.Message}");
+                    Console.WriteLine($"[OrderService] 内部异常类型: {ex.InnerException.GetType().Name}");
+                }
+                
+                // 特别检查Oracle特定的错误
+                if (ex.Message.Contains("ORA-") || (ex.InnerException?.Message.Contains("ORA-") == true))
+                {
+                    Console.WriteLine($"[OrderService] 检测到Oracle数据库错误");
+                }
+                
+                throw;
+            }
         }
 
         // 更新订单状态
