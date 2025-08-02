@@ -49,7 +49,7 @@ namespace RestaurantManagement.Services
         }
 
         // 获取订单的菜品详情（增强版）
-        public async Task<IEnumerable<dynamic>> GetOrderDetailsAsync(int orderId)
+        public async Task<IEnumerable<OrderDetailDto>> GetOrderDetailsAsync(int orderId)
         {
             using var connection = _dbService.CreateConnection();
             var sql = @"
@@ -73,7 +73,7 @@ namespace RestaurantManagement.Services
                 ORDER BY od.OrderDetailID";
             
             Console.WriteLine($"[OrderService] 获取订单详情: 订单ID={orderId}");
-            var result = await connection.QueryAsync(sql, new { OrderId = orderId });
+            var result = await connection.QueryAsync<OrderDetailDto>(sql, new { OrderId = orderId });
             Console.WriteLine($"[OrderService] 订单详情查询结果: 找到{result.Count()}条菜品记录");
             
             return result;

@@ -405,24 +405,13 @@
                         currentOrder.staffID ? API.get(`/staff/${currentOrder.staffID}`).catch(() => null) : null
                     ]);
 
-                    // 调试：打印详情数据结构
-                    console.log('订单详情数据:', details);
-                    if (details.length > 0) {
-                        console.log('第一条详情记录的字段:', Object.keys(details[0]));
-                        console.log('第一条详情记录的值:', details[0]);
-                    }
-
                     staffInfo = orderStaff ? `
                         <p><strong>负责服务员:</strong> ${orderStaff.staffName}</p>
                     ` : '';
 
                     const totalAmount = details.reduce((sum, d) => {
-                        const subtotal = d.Subtotal || d.subtotal || d.SUBTOTAL || 0;
-                        console.log(`处理详情记录，小计: ${subtotal}`);
-                        return sum + subtotal;
+                        return sum + d.Subtotal; // 使用强类型字段名
                     }, 0);
-                    
-                    console.log(`计算总金额: ${totalAmount}`);
                     
                     orderDetails = `
                         <div class="order-info-section">
@@ -457,11 +446,11 @@
                                         <tbody>
                                             ${details.map(d => `
                                                 <tr>
-                                                    <td><strong>${d.DishName || d.dishname || d.DISHNAME || '未知菜品'}</strong></td>
-                                                    <td class="text-center">${d.Quantity || d.quantity || d.QUANTITY || 0}</td>
-                                                    <td class="text-right">${Utils.formatCurrency(d.UnitPrice || d.unitprice || d.UNITPRICE || 0)}</td>
-                                                    <td class="text-right"><strong>${Utils.formatCurrency(d.Subtotal || d.subtotal || d.SUBTOTAL || 0)}</strong></td>
-                                                    <td class="text-muted">${d.SpecialRequests || d.specialrequests || d.SPECIALREQUESTS || '-'}</td>
+                                                    <td><strong>${d.DishName}</strong></td>
+                                                    <td class="text-center">${d.Quantity}</td>
+                                                    <td class="text-right">${Utils.formatCurrency(d.UnitPrice)}</td>
+                                                    <td class="text-right"><strong>${Utils.formatCurrency(d.Subtotal)}</strong></td>
+                                                    <td class="text-muted">${d.SpecialRequests || '-'}</td>
                                                 </tr>
                                             `).join('')}
                                         </tbody>
@@ -590,12 +579,15 @@
                 const staffId = document.getElementById('staffSelect').value;
                 const notes = document.getElementById('orderNotes').value;
 
-                console.log(`开台：准备将桌台 ${currentTableId} 状态更新为占用`);
-                console.log('开台URL:', `/api/tables/${currentTableId}/status`);
-                console.log('开台参数:', { status: "占用" });
+                console.log(`开台：准备开启桌台 ${currentTableId}`);
+                console.log('开台URL:', `/api/tables/${currentTableId}/open`);
+                console.log('开台参数:', { staffId, notes });
 
-                // 只更新桌台状态为占用，不创建订单
-                const openTableResult = await API.put(`/tables/${currentTableId}/status`, { status: "占用" });
+                // 使用专门的开台API
+                const openTableResult = await API.post(`/tables/${currentTableId}/open`, { 
+                    staffId: staffId,
+                    notes: notes 
+                });
                 console.log('开台API返回结果:', openTableResult);
 
                 Utils.showNotification('开台成功', 'success');
@@ -628,8 +620,7 @@
                 // 获取订单详情计算总金额
                 const details = await API.get(`/orders/${orderId}/details`).catch(() => []);
                 const totalAmount = details.reduce((sum, d) => {
-                    const subtotal = d.Subtotal || d.subtotal || d.SUBTOTAL || 0;
-                    return sum + subtotal;
+                    return sum + d.Subtotal;
                 }, 0);
 
                 // 设置当前要结账的订单ID
@@ -696,7 +687,7 @@
                         console.log('桌台状态更新URL:', `/api/tables/${order.tableID}/status`);
                         console.log('桌台状态更新参数:', { status: "清洁中" });
                         
-                        const tableUpdateResult = await API.put(`/tables/${order.tableID}/status`, { status: "清洁中" });
+                        const tableUpdateResult = await API.put(`/tables/${order.tableID}/status`, { Status: "清洁中" });
                         console.log('桌台状态更新API返回结果:', tableUpdateResult);
                         console.log('桌台状态已更新为清洁中');
                     } catch (tableError) {
@@ -748,7 +739,7 @@
             try {
                 Utils.showNotification('正在完成清洁...', 'info');
                 
-                await API.put(`/tables/${tableId}/status`, { status: "空闲" });
+                await API.put(`/tables/${tableId}/status`, { Status: "空闲" });
                 
                 Utils.showNotification('清洁完成，桌台已设为空闲', 'success');
                 Utils.hideModal('tableModal');

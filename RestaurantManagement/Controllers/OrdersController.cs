@@ -76,9 +76,9 @@ namespace RestaurantManagement.Controllers
                     });
                 }
                 
-                // 安全地计算统计信息
-                var totalItems = detailsList.Sum(d => Convert.ToInt32(d.Quantity));
-                var totalAmount = detailsList.Sum(d => Convert.ToDecimal(d.Subtotal));
+                // 安全地计算统计信息，使用强类型属性
+                var totalItems = detailsList.Sum(d => d.Quantity);
+                var totalAmount = detailsList.Sum(d => d.Subtotal);
                 var itemCount = detailsList.Count;
 
                 Console.WriteLine($"[OrdersController] 订单详情获取成功: OrderID={id}, 详情数量={itemCount}");

@@ -1,13 +1,40 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace RestaurantManagement.Models
 {
+    // 更新状态请求模型
+    public class UpdateStatusRequest
+    {
+        public string Status { get; set; } = string.Empty;
+    }
+
+    // 开台请求模型
+    public class OpenTableRequest
+    {
+        public int? StaffId { get; set; }
+        public string? Notes { get; set; }
+    }
+
     // 桌台信息
+    [Table("TABLEINFO")]
     public class TableInfo
     {
+        [Column("TABLEID")]
         public int TableID { get; set; }
+        
+        [Column("TABLENUMBER")]
         public string TableNumber { get; set; } = string.Empty;
+        
+        [Column("CAPACITY")]
         public int Capacity { get; set; }
+        
+        [Column("AREA")]
         public string Area { get; set; } = string.Empty;
+        
+        [Column("STATUS")]
         public string Status { get; set; } = string.Empty; // 空闲、占用、预订、清洁中
+        
+        [Column("LASTCLEANTIME")]
         public DateTime? LastCleanTime { get; set; }
     }
 
@@ -44,6 +71,23 @@ namespace RestaurantManagement.Models
         public decimal UnitPrice { get; set; }
         public decimal Subtotal { get; set; }
         public string? SpecialRequests { get; set; }
+    }
+
+    // 订单详情DTO（包含菜品信息）
+    public class OrderDetailDto
+    {
+        public int OrderDetailID { get; set; }
+        public int OrderID { get; set; }
+        public int DishID { get; set; }
+        public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
+        public decimal Subtotal { get; set; }
+        public string? SpecialRequests { get; set; }
+        public string DishName { get; set; } = string.Empty;
+        public string? DishDescription { get; set; }
+        public string? DishImageURL { get; set; }
+        public string? CategoryName { get; set; }
+        public int? CategoryID { get; set; }
     }
 
     // 菜品
