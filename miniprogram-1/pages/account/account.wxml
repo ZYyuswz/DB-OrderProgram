@@ -13,12 +13,7 @@
       </view>
     </view>
     
-    <view class="points-section">
-      <view class="points-item">
-        <text class="points-number">{{userInfo.points}}</text>
-        <text class="points-label">积分余额</text>
-      </view>
-    </view>
+
   </view>
 
   <!-- 功能菜单 -->

@@ -2,8 +2,8 @@
 class APIManager {
   constructor() {
     // 后端API基础URL - 根据实际部署情况修改
-    // this.baseURL = 'http://192.168.2.21:5000/api'; // 开发环境（使用本机IP）
-    this.baseURL = 'http://localhost:5000/api'; // 本地环境（需要开发者工具允许localhost）
+    // this.baseURL = 'http://192.168.2.21:5001/api'; // 开发环境（使用本机IP）
+    this.baseURL = 'http://localhost:5001/api'; // 本地环境（需要开发者工具允许localhost）
     // this.baseURL = 'https://your-api-domain.com/api'; // 生产环境
   }
 
@@ -53,8 +53,8 @@ class APIManager {
       });
       return orders;
     } catch (error) {
-      // 如果API调用失败，返回模拟数据
-      return this.getMockOrders();
+      console.error('获取订单列表失败:', error);
+      throw error;
     }
   }
 
@@ -64,64 +64,12 @@ class APIManager {
       const details = await this.request(`/orders/${orderId}/details`);
       return details;
     } catch (error) {
-      return this.getMockOrderDetails(orderId);
+      console.error('获取订单详情失败:', error);
+      throw error;
     }
   }
 
-  // 模拟订单数据（用于开发和测试）
-  getMockOrders() {
-    return [
-      {
-        orderId: 1,
-        orderTime: '2024-01-20 18:30:00',
-        totalPrice: 168.50,
-        orderStatus: '已完成',
-        storeName: '旗舰店[模拟数据]',
-        tableNumber: 'A-05',
-        customerName: '默认会员[模拟]',
-        details: [
-          { dishName: '宫保鸡丁', quantity: 1, unitPrice: 58.50, subtotal: 58.50, specialRequests: '微辣' },
-          { dishName: '蚂蚁上树', quantity: 2, unitPrice: 45.00, subtotal: 90.00, specialRequests: '' },
-          { dishName: '白米饭', quantity: 2, unitPrice: 8.00, subtotal: 16.00, specialRequests: '' }
-        ]
-      },
-      {
-        orderId: 2,
-        orderTime: '2024-01-19 12:15:00',
-        totalPrice: 89.80,
-        orderStatus: '已完成',
-        storeName: '旗舰店[模拟数据]',
-        tableNumber: 'B-12',
-        customerName: '默认会员[模拟]',
-        details: [
-          { dishName: '红烧肉', quantity: 1, unitPrice: 68.00, subtotal: 68.00, specialRequests: '少油' },
-          { dishName: '紫菜蛋花汤', quantity: 1, unitPrice: 18.00, subtotal: 18.00, specialRequests: '' }
-        ]
-      },
-      {
-        orderId: 3,
-        orderTime: '2024-01-18 19:20:00',
-        totalPrice: 245.60,
-        orderStatus: '制作中',
-        storeName: '旗舰店[模拟数据]',
-        tableNumber: 'C-08',
-        customerName: '默认会员[模拟]',
-        details: [
-          { dishName: '水煮鱼', quantity: 1, unitPrice: 128.00, subtotal: 128.00, specialRequests: '不要香菜' },
-          { dishName: '麻婆豆腐', quantity: 1, unitPrice: 38.00, subtotal: 38.00, specialRequests: '中辣' },
-          { dishName: '酸辣土豆丝', quantity: 1, unitPrice: 28.00, subtotal: 28.00, specialRequests: '' },
-          { dishName: '白米饭', quantity: 3, unitPrice: 8.00, subtotal: 24.00, specialRequests: '' }
-        ]
-      }
-    ];
-  }
 
-  // 模拟订单详情数据
-  getMockOrderDetails(orderId) {
-    const orders = this.getMockOrders();
-    const order = orders.find(o => o.orderId === orderId);
-    return order ? order.details : [];
-  }
 
   // 格式化时间
   formatTime(timeString) {
@@ -159,6 +107,33 @@ class APIManager {
       return timeString; // 发生错误时返回原始字符串
     }
   }
+
+  // 获取客户积分记录
+  async getCustomerPointsRecords(customerId, page = 1, pageSize = 10) {
+    try {
+      const records = await this.request(`/points/customer/${customerId}/records`, {
+        method: 'GET',
+        data: { page, pageSize }
+      });
+      return records;
+    } catch (error) {
+      console.error('获取积分记录失败:', error);
+      throw error;
+    }
+  }
+
+  // 获取客户积分余额
+  async getCustomerPointsBalance(customerId) {
+    try {
+      const balance = await this.request(`/points/customer/${customerId}/balance`);
+      return balance;
+    } catch (error) {
+      console.error('获取积分余额失败:', error);
+      throw error;
+    }
+  }
+
+
 
   // 格式化订单状态
   formatOrderStatus(status) {

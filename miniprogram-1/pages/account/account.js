@@ -63,6 +63,8 @@ Page({
     }
   },
 
+
+
   // 导航到具体页面
   navigateTo(e) {
     const url = e.currentTarget.dataset.url;
@@ -103,5 +105,7 @@ Page({
   onShow() {
     // 页面显示时重新加载用户信息
     this.loadUserInfo();
-  }
+  },
+
+
 }); 

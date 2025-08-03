@@ -165,12 +165,86 @@ namespace ConsoleApp1.Services
                 var newOrderId = oracleDecimal.ToInt32();
                 _logger.LogInformation($"成功创建订单，订单ID: {newOrderId}");
                 
+                // 如果有客户ID，自动添加积分记录
+                if (order.CustomerID.HasValue && order.TotalPrice > 0)
+                {
+                    await AddPointsForOrderAsync(order.CustomerID.Value, newOrderId, order.TotalPrice);
+                }
+                
                 return newOrderId;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "创建订单失败");
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// 为订单添加积分（内部方法）
+        /// </summary>
+        private async Task<bool> AddPointsForOrderAsync(int customerId, int orderId, decimal orderAmount)
+        {
+            try
+            {
+                // 检查是否已有积分记录，避免重复添加
+                using var connection = new OracleConnection(_connectionString);
+                await connection.OpenAsync();
+                
+                var checkSql = @"SELECT COUNT(*) FROM PUB.PointsRecord WHERE OrderID = :orderId";
+                using var checkCommand = new OracleCommand(checkSql, connection);
+                checkCommand.Parameters.Add(":orderId", OracleDbType.Int32).Value = orderId;
+                
+                var existingCount = Convert.ToInt32(await checkCommand.ExecuteScalarAsync());
+                if (existingCount > 0)
+                {
+                    _logger.LogInformation($"订单 {orderId} 已有积分记录，跳过添加");
+                    return true;
+                }
+                
+                // 计算积分（假设1元=1积分）
+                int pointsEarned = (int)Math.Floor(orderAmount);
+                
+                if (pointsEarned <= 0)
+                {
+                    _logger.LogInformation($"订单金额 {orderAmount} 不足以获得积分");
+                    return true;
+                }
+                
+                // 添加积分记录
+                var sql = @"INSERT INTO PUB.PointsRecord (RecordID, CustomerID, OrderID, PointsChange, RecordType, RecordTime, Description)
+                           VALUES (PUB.seq_points_record_id.NEXTVAL, :CustomerID, :OrderID, :PointsChange, :RecordType, :RecordTime, :Description)";
+                
+                using var command = new OracleCommand(sql, connection);
+                command.Parameters.Add(":CustomerID", OracleDbType.Int32).Value = customerId;
+                command.Parameters.Add(":OrderID", OracleDbType.Int32).Value = orderId;
+                command.Parameters.Add(":PointsChange", OracleDbType.Int32).Value = pointsEarned;
+                command.Parameters.Add(":RecordType", OracleDbType.Varchar2).Value = "消费获得";
+                command.Parameters.Add(":RecordTime", OracleDbType.Date).Value = DateTime.Now;
+                command.Parameters.Add(":Description", OracleDbType.Varchar2).Value = $"订单消费获得积分，消费金额: ¥{orderAmount:F2}";
+                
+                int rowsAffected = await command.ExecuteNonQueryAsync();
+                
+                if (rowsAffected > 0)
+                {
+                    // 更新客户积分余额
+                    var updateSql = @"UPDATE PUB.Customer SET VIPPoints = VIPPoints + :pointsChange WHERE CustomerID = :customerId";
+                    using var updateCommand = new OracleCommand(updateSql, connection);
+                    updateCommand.Parameters.Add(":pointsChange", OracleDbType.Int32).Value = pointsEarned;
+                    updateCommand.Parameters.Add(":customerId", OracleDbType.Int32).Value = customerId;
+                    
+                    await updateCommand.ExecuteNonQueryAsync();
+                    
+                    _logger.LogInformation($"订单 {orderId} 消费 {orderAmount} 元，获得 {pointsEarned} 积分");
+                    return true;
+                }
+                
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"为订单 {orderId} 添加积分失败");
+                return false;
             }
         }
 
@@ -360,6 +434,14 @@ namespace ConsoleApp1.Services
         {
             try
             {
+                // 检查是否已有订单，避免重复创建
+                var existingOrders = await GetAllOrdersAsync(1, 1);
+                if (existingOrders.Count > 0)
+                {
+                    _logger.LogInformation("订单已存在，跳过创建");
+                    return true;
+                }
+
                 // 使用随机数避免唯一约束冲突
                 var random = new Random();
                 var randomSuffix = random.Next(1000, 9999);
@@ -401,6 +483,41 @@ namespace ConsoleApp1.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "创建测试订单失败");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 为现有订单批量添加积分记录
+        /// </summary>
+        public async Task<bool> AddPointsForExistingOrdersAsync(int customerId)
+        {
+            try
+            {
+                _logger.LogInformation($"开始为客户 {customerId} 的现有订单添加积分记录");
+                
+                // 获取客户的所有订单
+                var orders = await GetOrdersByCustomerIdAsync(customerId);
+                int addedCount = 0;
+                
+                foreach (var order in orders)
+                {
+                    if (order.TotalPrice > 0)
+                    {
+                        bool success = await AddPointsForOrderAsync(customerId, order.OrderID, order.TotalPrice);
+                        if (success)
+                        {
+                            addedCount++;
+                        }
+                    }
+                }
+                
+                _logger.LogInformation($"为客户 {customerId} 的 {orders.Count} 个订单添加了 {addedCount} 条积分记录");
+                return addedCount > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"为客户 {customerId} 的现有订单添加积分记录失败");
                 return false;
             }
         }
