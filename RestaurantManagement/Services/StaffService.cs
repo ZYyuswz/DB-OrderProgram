@@ -16,7 +16,22 @@ namespace RestaurantManagement.Services
         public async Task<IEnumerable<Staff>> GetAllStaffAsync()
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "SELECT * FROM PUB.Staff ORDER BY StaffName";
+            var sql = @"SELECT 
+                STAFFID as StaffID,
+                STAFFNAME as StaffName, 
+                GENDER as Gender,
+                POSITION as Position,
+                PHONE as Phone,
+                EMAIL as Email,
+                HIREDATE as HireDate,
+                SALARY as Salary,
+                DEPARTMENTID as DepartmentID,
+                STOREID as StoreID,
+                STATUS as Status,
+                WORKSCHEDULE as WorkSchedule,
+                CREATETIME as CreateTime,
+                UPDATETIME as UpdateTime
+                FROM PUB.STAFF ORDER BY STAFFNAME";
             return await connection.QueryAsync<Staff>(sql);
         }
 
@@ -24,27 +39,63 @@ namespace RestaurantManagement.Services
         public async Task<Staff?> GetStaffByIdAsync(int staffId)
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "SELECT * FROM PUB.Staff WHERE StaffID = :StaffId";
+            var sql = @"SELECT 
+                STAFFID as StaffID,
+                STAFFNAME as StaffName, 
+                GENDER as Gender,
+                POSITION as Position,
+                PHONE as Phone,
+                EMAIL as Email,
+                HIREDATE as HireDate,
+                SALARY as Salary,
+                DEPARTMENTID as DepartmentID,
+                STOREID as StoreID,
+                STATUS as Status,
+                WORKSCHEDULE as WorkSchedule,
+                CREATETIME as CreateTime,
+                UPDATETIME as UpdateTime
+                FROM PUB.STAFF WHERE STAFFID = :StaffId";
             return await connection.QueryFirstOrDefaultAsync<Staff>(sql, new { StaffId = staffId });
         }
 
-        // 添加员工（去掉StaffID，确保外键有效）
+        // 添加员工（使用Oracle序列自动生成ID）
         public async Task<bool> AddStaffAsync(Staff staff)
         {
             using var connection = _dbService.CreateConnection();
-            var sql = @"
-                INSERT INTO PUB.Staff 
-                (StaffName, Gender, Position, Phone, Email, HireDate, Salary, DepartmentID, StoreID, Status, WorkSchedule, CreateTime, UpdateTime)
-                VALUES
-                (:StaffName, :Gender, :Position, :Phone, :Email, :HireDate, :Salary, :DepartmentID, :StoreID, :Status, :WorkSchedule, :CreateTime, :UpdateTime)";
+            
+            // 设置默认值
+            staff.HireDate = DateTime.Now;
             staff.CreateTime = DateTime.Now;
             staff.UpdateTime = DateTime.Now;
+            if (string.IsNullOrEmpty(staff.Status))
+                staff.Status = "在职";
 
             // 外键有效性简单校验
             if (staff.DepartmentID == 0 || staff.StoreID == 0)
                 throw new ArgumentException("DepartmentID 和 StoreID 必须有效且存在。");
 
-            var result = await connection.ExecuteAsync(sql, staff);
+            // 使用Oracle序列在INSERT语句中直接获取下一个ID
+            var sql = @"
+                INSERT INTO PUB.STAFF 
+                (STAFFID, STAFFNAME, GENDER, POSITION, PHONE, EMAIL, HIREDATE, SALARY, DEPARTMENTID, STOREID, STATUS, WORKSCHEDULE, CREATETIME, UPDATETIME)
+                VALUES
+                (PUB.STAFF_SEQ.NEXTVAL, :StaffName, :Gender, :Position, :Phone, :Email, :HireDate, :Salary, :DepartmentID, :StoreID, :Status, :WorkSchedule, :CreateTime, :UpdateTime)";
+
+            var result = await connection.ExecuteAsync(sql, new {
+                StaffName = staff.StaffName,
+                Gender = staff.Gender,
+                Position = staff.Position,
+                Phone = staff.Phone,
+                Email = staff.Email,
+                HireDate = staff.HireDate,
+                Salary = staff.Salary,
+                DepartmentID = staff.DepartmentID,
+                StoreID = staff.StoreID,
+                Status = staff.Status,
+                WorkSchedule = staff.WorkSchedule,
+                CreateTime = staff.CreateTime,
+                UpdateTime = staff.UpdateTime
+            });
             return result > 0;
         }
 
@@ -53,11 +104,11 @@ namespace RestaurantManagement.Services
         {
             using var connection = _dbService.CreateConnection();
             var sql = @"
-                UPDATE PUB.Staff 
-                SET StaffName = :StaffName, Gender = :Gender, Position = :Position, Phone = :Phone, 
-                    Email = :Email, HireDate = :HireDate, Salary = :Salary, DepartmentID = :DepartmentID, 
-                    StoreID = :StoreID, Status = :Status, WorkSchedule = :WorkSchedule, UpdateTime = :UpdateTime
-                WHERE StaffID = :StaffID";
+                UPDATE PUB.STAFF 
+                SET STAFFNAME = :StaffName, GENDER = :Gender, POSITION = :Position, PHONE = :Phone, 
+                    EMAIL = :Email, HIREDATE = :HireDate, SALARY = :Salary, DEPARTMENTID = :DepartmentID, 
+                    STOREID = :StoreID, STATUS = :Status, WORKSCHEDULE = :WorkSchedule, UPDATETIME = :UpdateTime
+                WHERE STAFFID = :StaffID";
             staff.UpdateTime = DateTime.Now;
 
             if (staff.DepartmentID == 0 || staff.StoreID == 0)
@@ -71,7 +122,7 @@ namespace RestaurantManagement.Services
         public async Task<bool> DeleteStaffAsync(int staffId)
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "DELETE FROM PUB.Staff WHERE StaffID = :StaffId";
+            var sql = "DELETE FROM PUB.STAFF WHERE STAFFID = :StaffId";
             var result = await connection.ExecuteAsync(sql, new { StaffId = staffId });
             return result > 0;
         }
@@ -80,24 +131,39 @@ namespace RestaurantManagement.Services
         public async Task<IEnumerable<Staff>> SearchStaffAsync(string? name = null, int? departmentId = null, string? position = null)
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "SELECT * FROM PUB.Staff WHERE 1=1";
+            var sql = @"SELECT 
+                STAFFID as StaffID,
+                STAFFNAME as StaffName, 
+                GENDER as Gender,
+                POSITION as Position,
+                PHONE as Phone,
+                EMAIL as Email,
+                HIREDATE as HireDate,
+                SALARY as Salary,
+                DEPARTMENTID as DepartmentID,
+                STOREID as StoreID,
+                STATUS as Status,
+                WORKSCHEDULE as WorkSchedule,
+                CREATETIME as CreateTime,
+                UPDATETIME as UpdateTime
+                FROM PUB.STAFF WHERE 1=1";
             var parameters = new DynamicParameters();
             if (!string.IsNullOrWhiteSpace(name))
             {
-                sql += " AND StaffName LIKE :Name";
+                sql += " AND STAFFNAME LIKE :Name";
                 parameters.Add("Name", $"%{name}%");
             }
             if (departmentId.HasValue)
             {
-                sql += " AND DepartmentID = :DepartmentId";
+                sql += " AND DEPARTMENTID = :DepartmentId";
                 parameters.Add("DepartmentId", departmentId.Value);
             }
             if (!string.IsNullOrWhiteSpace(position))
             {
-                sql += " AND Position LIKE :Position";
+                sql += " AND POSITION LIKE :Position";
                 parameters.Add("Position", $"%{position}%");
             }
-            sql += " ORDER BY StaffName";
+            sql += " ORDER BY STAFFNAME";
             return await connection.QueryAsync<Staff>(sql, parameters);
         }
 
@@ -105,8 +171,12 @@ namespace RestaurantManagement.Services
         public async Task<bool> UpdateStaffStatusAsync(int staffId, string status)
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "UPDATE PUB.Staff SET Status = :Status WHERE StaffID = :StaffId";
-            var result = await connection.ExecuteAsync(sql, new { Status = status, StaffId = staffId });
+            var sql = "UPDATE PUB.STAFF SET STATUS = :Status, UPDATETIME = :UpdateTime WHERE STAFFID = :StaffId";
+            var result = await connection.ExecuteAsync(sql, new { 
+                Status = status, 
+                StaffId = staffId,
+                UpdateTime = DateTime.Now
+            });
             return result > 0;
         }
 

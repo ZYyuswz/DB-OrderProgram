@@ -54,6 +54,18 @@
                 <h3>员工筛选</h3>
                 <div class="search-filters">
                     <div class="form-group">
+                        <label for="departmentFilter">部门筛选:</label>
+                        <select id="departmentFilter" class="form-control" onchange="filterStaff()">
+                            <option value="all">全部部门</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="storeFilter">门店筛选:</label>
+                        <select id="storeFilter" class="form-control" onchange="filterStaff()">
+                            <option value="all">全部门店</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label for="positionFilter">职位筛选:</label>
                         <select id="positionFilter" class="form-control" onchange="filterStaff()">
                             <option value="all">全部职位</option>
@@ -89,6 +101,8 @@
                                 <th>员工ID</th>
                                 <th>姓名</th>
                                 <th>职位</th>
+                                <th>部门</th>
+                                <th>门店</th>
                                 <th>电话</th>
                                 <th>薪资</th>
                                 <th>状态</th>
@@ -135,6 +149,16 @@
                             <input type="text" id="staffName" class="form-control" required>
                         </div>
                         <div class="form-group">
+                            <label for="staffGender">性别:</label>
+                            <select id="staffGender" class="form-control" required>
+                                <option value="">请选择性别</option>
+                                <option value="M">男</option>
+                                <option value="F">女</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
                             <label for="staffPosition">职位:</label>
                             <select id="staffPosition" class="form-control" required>
                                 <option value="">请选择职位</option>
@@ -144,6 +168,10 @@
                                 <option value="经理">经理</option>
                                 <option value="清洁员">清洁员</option>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="staffEmail">邮箱:</label>
+                            <input type="email" id="staffEmail" class="form-control" placeholder="可选">
                         </div>
                     </div>
                     <div class="form-row">
@@ -305,7 +333,7 @@
             tbody.innerHTML = '';
 
             if (filteredStaff.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #666;">暂无员工数据</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; color: #666;">暂无员工数据</td></tr>';
                 return;
             }
 
@@ -313,12 +341,26 @@
                 const row = document.createElement('tr');
                 const statusInfo = Utils.getStatusInfo(staff.status, 'staff');
                 
+                // 获取部门名称
+                const department = allDepartments.find(d => 
+                    (d.DepartmentID || d.departmentID || d.DEPARTMENTID) === staff.departmentID
+                );
+                const departmentName = department ? (department.DepartmentName || department.departmentName || department.DEPARTMENTNAME || '未知部门') : '未知部门';
+                
+                // 获取门店名称
+                const store = allStores.find(s => 
+                    (s.StoreID || s.storeID || s.STOREID) === staff.storeID
+                );
+                const storeName = store ? (store.StoreName || store.storeName || store.STORENAME || '未知门店') : '未知门店';
+                
                 row.innerHTML = `
                     <td>${staff.staffID}</td>
                     <td>${staff.staffName}</td>
-                    <td>${staff.position}</td>
-                    <td>${staff.phone}</td>
-                    <td>${Utils.formatCurrency(staff.salary)}</td>
+                    <td>${staff.position || '未设置'}</td>
+                    <td>${departmentName}</td>
+                    <td>${storeName}</td>
+                    <td>${staff.phone || '未设置'}</td>
+                    <td>${Utils.formatCurrency(staff.salary || 0)}</td>
                     <td><span class="status-badge ${statusInfo.class}">${statusInfo.text}</span></td>
                     <td>${Utils.formatDate(staff.hireDate)}</td>
                     <td>
@@ -361,16 +403,20 @@
         }
 
         function filterStaff() {
+            const departmentFilter = document.getElementById('departmentFilter').value;
+            const storeFilter = document.getElementById('storeFilter').value;
             const positionFilter = document.getElementById('positionFilter').value;
             const statusFilter = document.getElementById('statusFilter').value;
             const staffSearch = document.getElementById('staffSearch').value.trim().toLowerCase();
 
             filteredStaff = allStaff.filter(staff => {
+                const departmentMatch = departmentFilter === 'all' || staff.departmentID == departmentFilter;
+                const storeMatch = storeFilter === 'all' || staff.storeID == storeFilter;
                 const positionMatch = positionFilter === 'all' || staff.position === positionFilter;
                 const statusMatch = statusFilter === 'all' || staff.status === statusFilter;
                 const nameMatch = !staffSearch || staff.staffName.toLowerCase().includes(staffSearch);
 
-                return positionMatch && statusMatch && nameMatch;
+                return departmentMatch && storeMatch && positionMatch && statusMatch && nameMatch;
             });
 
             renderStaffTable();
@@ -412,11 +458,26 @@
             try {
                 const staffData = {
                     staffName: document.getElementById('staffName').value,
+                    gender: document.getElementById('staffGender').value,
                     position: document.getElementById('staffPosition').value,
                     phone: document.getElementById('staffPhone').value,
+                    email: document.getElementById('staffEmail').value || null,
                     salary: parseFloat(document.getElementById('staffSalary').value),
+                    departmentID: parseInt(document.getElementById('staffDepartment').value),
+                    storeID: parseInt(document.getElementById('staffStore').value),
                     workSchedule: document.getElementById('workSchedule').value || null
                 };
+
+                // 验证必填字段
+                if (!staffData.gender) {
+                    Utils.showNotification('请选择性别', 'warning');
+                    return;
+                }
+                
+                if (!staffData.departmentID || !staffData.storeID) {
+                    Utils.showNotification('请选择部门和门店', 'warning');
+                    return;
+                }
 
                 if (currentStaffId) {
                     staffData.staffID = currentStaffId;
@@ -443,9 +504,13 @@
             currentStaffId = staffId;
             document.getElementById('staffModalTitle').textContent = '编辑员工信息';
             document.getElementById('staffName').value = staff.staffName;
-            document.getElementById('staffPosition').value = staff.position;
-            document.getElementById('staffPhone').value = staff.phone;
-            document.getElementById('staffSalary').value = staff.salary;
+            document.getElementById('staffGender').value = staff.gender || '';
+            document.getElementById('staffPosition').value = staff.position || '';
+            document.getElementById('staffPhone').value = staff.phone || '';
+            document.getElementById('staffEmail').value = staff.email || '';
+            document.getElementById('staffSalary').value = staff.salary || '';
+            document.getElementById('staffDepartment').value = staff.departmentID || '';
+            document.getElementById('staffStore').value = staff.storeID || '';
             document.getElementById('workSchedule').value = staff.workSchedule || '';
             
             Utils.showModal('addStaffModal');
@@ -458,13 +523,30 @@
             document.getElementById('staffDetailTitle').textContent = `员工详情 - ${staff.staffName}`;
             
             const statusInfo = Utils.getStatusInfo(staff.status, 'staff');
+            
+            // 获取部门名称
+            const department = allDepartments.find(d => 
+                (d.DepartmentID || d.departmentID || d.DEPARTMENTID) === staff.departmentID
+            );
+            const departmentName = department ? (department.DepartmentName || department.departmentName || department.DEPARTMENTNAME || '未知部门') : '未知部门';
+            
+            // 获取门店名称
+            const store = allStores.find(s => 
+                (s.StoreID || s.storeID || s.STOREID) === staff.storeID
+            );
+            const storeName = store ? (store.StoreName || store.storeName || store.STORENAME || '未知门店') : '未知门店';
+            
             const detailsHTML = `
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
                     <div><strong>员工ID:</strong> ${staff.staffID}</div>
                     <div><strong>姓名:</strong> ${staff.staffName}</div>
-                    <div><strong>职位:</strong> ${staff.position}</div>
-                    <div><strong>联系电话:</strong> ${staff.phone}</div>
-                    <div><strong>薪资:</strong> ${Utils.formatCurrency(staff.salary)}/月</div>
+                    <div><strong>性别:</strong> ${staff.gender === 'M' ? '男' : staff.gender === 'F' ? '女' : '未设置'}</div>
+                    <div><strong>职位:</strong> ${staff.position || '未设置'}</div>
+                    <div><strong>所属部门:</strong> ${departmentName}</div>
+                    <div><strong>所属门店:</strong> ${storeName}</div>
+                    <div><strong>联系电话:</strong> ${staff.phone || '未设置'}</div>
+                    <div><strong>邮箱:</strong> ${staff.email || '未设置'}</div>
+                    <div><strong>薪资:</strong> ${Utils.formatCurrency(staff.salary || 0)}/月</div>
                     <div><strong>状态:</strong> <span class="status-badge ${statusInfo.class}">${statusInfo.text}</span></div>
                     <div><strong>入职日期:</strong> ${Utils.formatDate(staff.hireDate)}</div>
                 </div>
@@ -482,79 +564,74 @@
         }
 
         async function loadDepartmentsAndStores() {
-    try {
-        allDepartments = await API.get('api/department');
-        allStores = await API.get('api/store');
-        const deptSelect = document.getElementById('staffDepartment');
-        const storeSelect = document.getElementById('staffStore');
-        deptSelect.innerHTML = '<option value="">请选择部门</option>';
-        storeSelect.innerHTML = '<option value="">请选择门店</option>';
-        allDepartments.forEach(d => {
-            const opt = document.createElement('option');
-            opt.value = d.DEPARTMENTID || d.ID;
-            opt.textContent = d.DEPARTMENTNAME || d.NAME;
-            deptSelect.appendChild(opt);
-        });
-        allStores.forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s.storeID || s.id;
-            opt.textContent = s.storeName || s.name;
-            storeSelect.appendChild(opt);
-        });
-    } catch (e) {
-        Utils.showNotification('加载部门或门店失败', 'error');
-    }
-}
-
-async function handleStaffSubmit() {
-    if (!Utils.validateForm(document.getElementById('staffForm'))) {
-        Utils.showNotification('请填写完整信息', 'warning');
-        return;
-    }
-    try {
-        const staffData = {
-            staffName: document.getElementById('staffName').value,
-            position: document.getElementById('staffPosition').value,
-            phone: document.getElementById('staffPhone').value,
-            salary: parseFloat(document.getElementById('staffSalary').value),
-            workSchedule: document.getElementById('workSchedule').value || null,
-            departmentID: parseInt(document.getElementById('staffDepartment').value),
-            storeID: parseInt(document.getElementById('staffStore').value)
-        };
-        if (!staffData.departmentID || !staffData.storeID) {
-            Utils.showNotification('请选择部门和门店', 'warning');
-            return;
+            try {
+                // 并行加载部门和门店数据
+                const [departmentsResponse, storesResponse] = await Promise.all([
+                    API.get('/department'),
+                    API.get('/store')
+                ]);
+                
+                allDepartments = departmentsResponse || [];
+                allStores = storesResponse || [];
+                
+                // 填充添加员工表单中的选择器
+                const deptSelect = document.getElementById('staffDepartment');
+                const storeSelect = document.getElementById('staffStore');
+                
+                if (deptSelect) {
+                    deptSelect.innerHTML = '<option value="">请选择部门</option>';
+                    allDepartments.forEach(dept => {
+                        const option = document.createElement('option');
+                        option.value = dept.DepartmentID || dept.departmentID || dept.DEPARTMENTID;
+                        option.textContent = dept.DepartmentName || dept.departmentName || dept.DEPARTMENTNAME || '未知部门';
+                        deptSelect.appendChild(option);
+                    });
+                }
+                
+                if (storeSelect) {
+                    storeSelect.innerHTML = '<option value="">请选择门店</option>';
+                    allStores.forEach(store => {
+                        const option = document.createElement('option');
+                        option.value = store.StoreID || store.storeID || store.STOREID;
+                        option.textContent = store.StoreName || store.storeName || store.STORENAME || '未知门店';
+                        storeSelect.appendChild(option);
+                    });
+                }
+                
+                // 填充筛选器中的选择器
+                populateFilterSelects();
+                
+            } catch (error) {
+                console.error('加载部门或门店数据失败:', error);
+                Utils.showNotification('加载部门或门店数据失败', 'error');
+            }
         }
-        if (currentStaffId) {
-            staffData.staffID = currentStaffId;
-            await API.put(`/staff/${currentStaffId}`, staffData);
-            Utils.showNotification('员工信息更新成功', 'success');
-        } else {
-            await API.post('/staff', staffData);
-            Utils.showNotification('员工添加成功', 'success');
-        }
-        Utils.hideModal('addStaffModal');
-        await loadStaff();
-    } catch (error) {
-        console.error('保存员工信息失败:', error);
-        Utils.showNotification('保存员工信息失败', 'error');
-    }
-}
 
-function editStaff(staffId) {
-    const staff = allStaff.find(s => s.staffID === staffId);
-    if (!staff) return;
-    currentStaffId = staffId;
-    document.getElementById('staffModalTitle').textContent = '编辑员工信息';
-    document.getElementById('staffName').value = staff.staffName;
-    document.getElementById('staffPosition').value = staff.position;
-    document.getElementById('staffPhone').value = staff.phone;
-    document.getElementById('staffSalary').value = staff.salary;
-    document.getElementById('workSchedule').value = staff.workSchedule || '';
-    document.getElementById('staffDepartment').value = staff.departmentID;
-    document.getElementById('staffStore').value = staff.storeID;
-    Utils.showModal('addStaffModal');
-}
+        function populateFilterSelects() {
+            // 填充部门筛选器
+            const departmentFilter = document.getElementById('departmentFilter');
+            if (departmentFilter) {
+                departmentFilter.innerHTML = '<option value="all">全部部门</option>';
+                allDepartments.forEach(dept => {
+                    const option = document.createElement('option');
+                    option.value = dept.DepartmentID || dept.departmentID || dept.DEPARTMENTID;
+                    option.textContent = dept.DepartmentName || dept.departmentName || dept.DEPARTMENTNAME || '未知部门';
+                    departmentFilter.appendChild(option);
+                });
+            }
+            
+            // 填充门店筛选器
+            const storeFilter = document.getElementById('storeFilter');
+            if (storeFilter) {
+                storeFilter.innerHTML = '<option value="all">全部门店</option>';
+                allStores.forEach(store => {
+                    const option = document.createElement('option');
+                    option.value = store.StoreID || store.storeID || store.STOREID;
+                    option.textContent = store.StoreName || store.storeName || store.STORENAME || '未知门店';
+                    storeFilter.appendChild(option);
+                });
+            }
+        }
 
         function editCurrentStaff() {
             if (!currentStaffId) return;

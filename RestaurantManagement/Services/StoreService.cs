@@ -16,7 +16,12 @@ namespace RestaurantManagement.Services
         public async Task<IEnumerable<dynamic>> GetAllStoresAsync()
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "SELECT * FROM PUB.Store ORDER BY StoreID";
+            var sql = @"SELECT 
+                STOREID as StoreID,
+                STORENAME as StoreName,
+                ADDRESS as Address,
+                PHONE as Phone
+                FROM PUB.STORE ORDER BY STOREID";
             return await connection.QueryAsync(sql);
         }
     }
