@@ -82,7 +82,6 @@ Page({
           points: points
         };
         wx.setStorageSync('userInfo', updatedUserInfo);
-        console.log('用户积分信息已更新:', points);
       }
     } catch (error) {
       console.error('更新用户积分信息失败:', error);

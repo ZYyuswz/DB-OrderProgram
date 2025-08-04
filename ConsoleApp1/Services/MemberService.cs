@@ -305,51 +305,6 @@ namespace ConsoleApp1.Services
         }
 
         /// <summary>
-        /// 手动设置客户累计消费金额
-        /// </summary>
-        /// <param name="customerId">客户ID</param>
-        /// <param name="amount">累计消费金额</param>
-        /// <returns>是否设置成功</returns>
-        public async Task<bool> SetCustomerTotalConsumptionAsync(int customerId, decimal amount)
-        {
-            try
-            {
-                using var connection = new OracleConnection(_connectionString);
-                await connection.OpenAsync();
-                
-                // 先检查客户是否存在
-                var checkSql = "SELECT COUNT(*) FROM PUB.Customer WHERE CustomerID = :CustomerID";
-                using var checkCommand = new OracleCommand(checkSql, connection);
-                checkCommand.Parameters.Add(":CustomerID", OracleDbType.Int32).Value = customerId;
-                var customerExists = Convert.ToInt32(await checkCommand.ExecuteScalarAsync()) > 0;
-                
-                if (!customerExists)
-                {
-                    _logger.LogWarning($"客户 {customerId} 不存在，无法设置累计消费金额");
-                    return false;
-                }
-
-                // 手动设置累计消费金额
-                var updateSql = "UPDATE PUB.Customer SET TotalConsumption = :TotalConsumption WHERE CustomerID = :CustomerID";
-                
-                using var updateCommand = new OracleCommand(updateSql, connection);
-                updateCommand.Parameters.Add(":CustomerID", OracleDbType.Int32).Value = customerId;
-                updateCommand.Parameters.Add(":TotalConsumption", OracleDbType.Decimal).Value = amount;
-
-                var rowsAffected = await updateCommand.ExecuteNonQueryAsync();
-                
-                _logger.LogInformation($"客户 {customerId} 累计消费金额已手动设置为: {amount}，影响行数: {rowsAffected}");
-                
-                return rowsAffected > 0;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"手动设置客户 {customerId} 累计消费金额失败");
-                return false;
-            }
-        }
-
-        /// <summary>
         /// 计算并更新客户累计消费金额
         /// </summary>
         /// <param name="customerId">客户ID</param>
@@ -377,54 +332,28 @@ namespace ConsoleApp1.Services
                     calculateCommand.Parameters.Add(":CustomerID", OracleDbType.Int32).Value = customerId;
                     var result = await calculateCommand.ExecuteScalarAsync();
                     totalConsumption = Convert.ToDecimal(result ?? 0);
-                    _logger.LogInformation($"计算得到客户 {customerId} 的累计消费金额: {totalConsumption}");
                 }
 
-                // 检查客户当前的数据
-                var checkSql = "SELECT CustomerID, CustomerName, TotalConsumption FROM PUB.Customer WHERE CustomerID = :CustomerID";
+                var checkSql = "SELECT COUNT(*) FROM PUB.Customer WHERE CustomerID = :CustomerID";
                 using var checkCommand = new OracleCommand(checkSql, connection);
                 checkCommand.Transaction = transaction;
                 checkCommand.Parameters.Add(":CustomerID", OracleDbType.Int32).Value = customerId;
-                using var checkReader = await checkCommand.ExecuteReaderAsync();
+                var customerExists = Convert.ToInt32(await checkCommand.ExecuteScalarAsync()) > 0;
                 
-                if (!await checkReader.ReadAsync())
+                if (!customerExists)
                 {
                     _logger.LogWarning($"客户 {customerId} 不存在，无法更新累计消费金额");
                     return false;
                 }
-                
-                var currentConsumption = checkReader.GetDecimal(checkReader.GetOrdinal("TotalConsumption"));
-                var customerName = checkReader.GetString(checkReader.GetOrdinal("CustomerName"));
-                _logger.LogInformation($"客户 {customerId}({customerName}) 当前累计消费: {currentConsumption}，准备更新为: {totalConsumption}");
-                checkReader.Close();
 
-                // 更新客户的累计消费金额
                 var updateSql = "UPDATE PUB.Customer SET TotalConsumption = :TotalConsumption WHERE CustomerID = :CustomerID";
-                
                 using var updateCommand = new OracleCommand(updateSql, connection);
                 updateCommand.Transaction = transaction;
                 updateCommand.Parameters.Add(":TotalConsumption", OracleDbType.Decimal).Value = totalConsumption;
                 updateCommand.Parameters.Add(":CustomerID", OracleDbType.Int32).Value = customerId;
 
-                _logger.LogInformation($"执行UPDATE语句: {updateSql}");
-                _logger.LogInformation($"参数: CustomerID={customerId}, TotalConsumption={totalConsumption}");
-                
                 var rowsAffected = await updateCommand.ExecuteNonQueryAsync();
-                
-                _logger.LogInformation($"UPDATE语句执行完成，影响行数: {rowsAffected}");
-                
-                // 再次查询确认更新是否成功
-                var verifySql = "SELECT TotalConsumption FROM PUB.Customer WHERE CustomerID = :CustomerID";
-                using var verifyCommand = new OracleCommand(verifySql, connection);
-                verifyCommand.Transaction = transaction;
-                verifyCommand.Parameters.Add(":CustomerID", OracleDbType.Int32).Value = customerId;
-                var updatedConsumption = Convert.ToDecimal(await verifyCommand.ExecuteScalarAsync());
-                
-                _logger.LogInformation($"更新后客户 {customerId} 的累计消费金额: {updatedConsumption}");
-                
-                // 提交事务
                 transaction.Commit();
-                _logger.LogInformation($"事务已提交");
                 
                 return rowsAffected > 0;
             }
@@ -473,86 +402,7 @@ namespace ConsoleApp1.Services
             }
         }
 
-        /// <summary>
-        /// 获取客户的订单数据用于调试
-        /// </summary>
-        /// <param name="customerId">客户ID</param>
-        /// <returns>订单列表</returns>
-        public async Task<List<object>> GetDebugCustomerOrdersAsync(int customerId)
-        {
-            try
-            {
-                using var connection = new OracleConnection(_connectionString);
-                await connection.OpenAsync();
-                
-                var sql = @"
-                    SELECT OrderID, CustomerID, TotalPrice, OrderStatus, OrderTime
-                    FROM PUB.Orders 
-                    WHERE CustomerID = :CustomerID 
-                    ORDER BY OrderTime DESC";
-                
-                using var command = new OracleCommand(sql, connection);
-                command.Parameters.Add(":CustomerID", OracleDbType.Int32).Value = customerId;
-                using var reader = await command.ExecuteReaderAsync();
-                
-                var orders = new List<object>();
-                while (await reader.ReadAsync())
-                {
-                    orders.Add(new {
-                        OrderID = reader.GetInt32(reader.GetOrdinal("OrderID")),
-                        CustomerID = reader.GetInt32(reader.GetOrdinal("CustomerID")),
-                        TotalPrice = reader.GetDecimal(reader.GetOrdinal("TotalPrice")),
-                        OrderStatus = reader.GetString(reader.GetOrdinal("OrderStatus")),
-                        OrderTime = reader.GetDateTime(reader.GetOrdinal("OrderTime")).ToString("yyyy-MM-dd HH:mm:ss")
-                    });
-                }
-                
-                _logger.LogInformation($"客户 {customerId} 有 {orders.Count} 个订单记录");
-                return orders;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"获取客户 {customerId} 订单数据失败");
-                return new List<object>();
-            }
-        }
 
-        /// <summary>
-        /// 获取客户列表用于调试
-        /// </summary>
-        /// <returns>客户列表</returns>
-        public async Task<List<object>> GetDebugCustomerListAsync()
-        {
-            try
-            {
-                using var connection = new OracleConnection(_connectionString);
-                await connection.OpenAsync();
-                
-                var sql = "SELECT CustomerID, CustomerName, TotalConsumption, VIPPoints FROM PUB.Customer ORDER BY CustomerID";
-                
-                using var command = new OracleCommand(sql, connection);
-                using var reader = await command.ExecuteReaderAsync();
-                
-                var customers = new List<object>();
-                while (await reader.ReadAsync())
-                {
-                    customers.Add(new {
-                        CustomerID = reader.GetInt32(reader.GetOrdinal("CustomerID")),
-                        CustomerName = reader.GetString(reader.GetOrdinal("CustomerName")),
-                        TotalConsumption = reader.GetDecimal(reader.GetOrdinal("TotalConsumption")),
-                        VIPPoints = reader.GetInt32(reader.GetOrdinal("VIPPoints"))
-                    });
-                }
-                
-                _logger.LogInformation($"找到 {customers.Count} 个客户记录");
-                return customers;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "获取客户列表失败");
-                return new List<object>();
-            }
-        }
 
         /// <summary>
         /// 获取客户消费统计

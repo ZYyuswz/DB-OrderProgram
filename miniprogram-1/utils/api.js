@@ -1,10 +1,6 @@
-// api.js - API工具类
 class APIManager {
   constructor() {
-    // 后端API基础URL - 根据实际部署情况修改
-    // this.baseURL = 'http://192.168.2.21:5001/api'; // 开发环境（使用本机IP）
-    this.baseURL = 'http://localhost:5002/api'; // 本地环境（需要开发者工具允许localhost）
-    // this.baseURL = 'https://your-api-domain.com/api'; // 生产环境
+    this.baseURL = 'http://localhost:5002/api';
   }
 
   // 通用请求方法
@@ -16,7 +12,6 @@ class APIManager {
         header = {}
       } = options;
 
-      // 获取用户token（如果需要的话）
       const userInfo = wx.getStorageSync('userInfo');
       if (userInfo && userInfo.token) {
         header.Authorization = `Bearer ${userInfo.token}`;
@@ -71,26 +66,20 @@ class APIManager {
 
 
 
-  // 格式化时间
   formatTime(timeString) {
-    // 安全检查
     if (!timeString || typeof timeString !== 'string') {
       return '时间未知';
     }
 
     try {
       const date = new Date(timeString);
-      
-      // 检查日期是否有效
       if (isNaN(date.getTime())) {
-        return timeString; // 返回原始字符串
+        return timeString;
       }
 
       const now = new Date();
       const diffTime = now - date;
       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      
-      // 安全处理时间字符串分割
       const timeParts = timeString.split(' ');
       const timePart = timeParts.length > 1 ? timeParts[1] : '';
       
@@ -101,10 +90,10 @@ class APIManager {
       } else if (diffDays < 7 && diffDays > 0) {
         return diffDays + '天前';
       } else {
-        return timeParts[0] || timeString; // 返回日期部分或原始字符串
+        return timeParts[0] || timeString;
       }
     } catch (error) {
-      return timeString; // 发生错误时返回原始字符串
+      return timeString;
     }
   }
 
@@ -191,8 +180,6 @@ class APIManager {
       throw error;
     }
   }
-
-
 
   // 格式化订单状态
   formatOrderStatus(status) {

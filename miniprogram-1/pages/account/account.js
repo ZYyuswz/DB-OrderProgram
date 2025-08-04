@@ -1,3 +1,5 @@
+import API from '../../utils/api.js';
+
 Page({
   data: {
     userInfo: {
@@ -5,8 +7,11 @@ Page({
       avatar: '/images/default-avatar.png',
       phone: '',
       memberLevel: '普通会员',
-      points: 0
+      memberLevelName: '普通会员',
+      points: 0,
+      totalConsumption: 0
     },
+    loadingMember: false,
     menuItems: [
       {
         icon: '👤',
@@ -55,6 +60,8 @@ Page({
       this.setData({
         userInfo: userInfo
       });
+      // 加载最新的会员信息
+      this.loadMemberInfo();
     } else {
       // 未登录，跳转到登录页面
       wx.redirectTo({
@@ -63,7 +70,59 @@ Page({
     }
   },
 
+  // 加载会员信息
+  async loadMemberInfo() {
+    if (this.data.loadingMember) return; // 防止重复请求
+    
+    try {
+      this.setData({ loadingMember: true });
+      
+      const customerId = this.getCustomerId();
+      
+      // 获取最新的会员信息
+      const memberInfo = await API.getCustomerMemberInfo(customerId);
+      
+      // 更新用户信息，包含最新的会员等级
+      const updatedUserInfo = {
+        ...this.data.userInfo,
+        memberLevel: memberInfo.currentLevelName,
+        memberLevelName: memberInfo.currentLevelName,
+        points: memberInfo.vipPoints,
+        totalConsumption: parseFloat(memberInfo.totalConsumption).toFixed(2)
+      };
+      
+      this.setData({
+        userInfo: updatedUserInfo,
+        loadingMember: false
+      });
+      
+      // 更新本地存储
+      wx.setStorageSync('userInfo', updatedUserInfo);
+      
+    } catch (error) {
+      console.error('获取会员信息失败:', error);
+      this.setData({ loadingMember: false });
+      
+      // 显示错误提示（可选）
+      if (error.message && !error.message.includes('网络')) {
+        wx.showToast({
+          title: '获取会员信息失败',
+          icon: 'none',
+          duration: 2000
+        });
+      }
+    }
+  },
 
+  // 获取客户ID
+  getCustomerId() {
+    const userInfo = this.data.userInfo;
+    if (userInfo && userInfo.customerId) {
+      return userInfo.customerId;
+    }
+    // 如果没有客户ID，使用默认客户ID=1进行测试
+    return 1;
+  },
 
   // 导航到具体页面
   navigateTo(e) {
