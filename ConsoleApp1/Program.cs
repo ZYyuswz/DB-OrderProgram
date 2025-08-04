@@ -3,7 +3,7 @@
 var builder = WebApplication.CreateBuilder(args);
 
 // 配置服务监听所有网络接口
-builder.WebHost.UseUrls("http://0.0.0.0:5001");
+builder.WebHost.UseUrls("http://localhost:5002");
 
 // 添加服务到容器
 builder.Services.AddControllers();
@@ -14,6 +14,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<DatabaseService>();
 builder.Services.AddScoped<OrderService>();
 builder.Services.AddScoped<PointsService>();
+builder.Services.AddScoped<MemberService>();
 
 // 配置CORS以支持小程序跨域请求
 builder.Services.AddCors(options =>
@@ -29,11 +30,9 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // 配置HTTP请求管道
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// 始终启用 Swagger（用于测试）
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseCors("AllowMiniProgram");
 app.UseRouting();
@@ -42,6 +41,6 @@ app.MapControllers();
 // 启动API服务
 app.Logger.LogInformation("=== 餐饮门店智能管理系统 - Web API 启动 ===");
 app.Logger.LogInformation("API服务已启动，支持小程序前端访问");
-app.Logger.LogInformation("API文档地址: http://localhost:5001/swagger");
+app.Logger.LogInformation("API文档地址: http://localhost:5002/swagger");
 
 app.Run();

@@ -5,6 +5,7 @@
     "pages/account/account",
     "pages/orders/orders",
     "pages/points/points",
+    "pages/member/member",
     "pages/logs/logs"
   ],
   "window": {

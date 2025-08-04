@@ -3,7 +3,7 @@ class APIManager {
   constructor() {
     // 后端API基础URL - 根据实际部署情况修改
     // this.baseURL = 'http://192.168.2.21:5001/api'; // 开发环境（使用本机IP）
-    this.baseURL = 'http://localhost:5001/api'; // 本地环境（需要开发者工具允许localhost）
+    this.baseURL = 'http://localhost:5002/api'; // 本地环境（需要开发者工具允许localhost）
     // this.baseURL = 'https://your-api-domain.com/api'; // 生产环境
   }
 
@@ -129,6 +129,65 @@ class APIManager {
       return balance;
     } catch (error) {
       console.error('获取积分余额失败:', error);
+      throw error;
+    }
+  }
+
+  // 获取客户会员信息
+  async getCustomerMemberInfo(customerId) {
+    try {
+      const memberInfo = await this.request(`/member/customer/${customerId}/info`);
+      return memberInfo;
+    } catch (error) {
+      console.error('获取会员信息失败:', error);
+      throw error;
+    }
+  }
+
+  // 获取会员等级规则
+  async getMemberLevels() {
+    try {
+      const levels = await this.request('/member/levels');
+      return levels;
+    } catch (error) {
+      console.error('获取会员等级规则失败:', error);
+      throw error;
+    }
+  }
+
+  // 获取客户消费统计
+  async getCustomerConsumptionStats(customerId) {
+    try {
+      const stats = await this.request(`/member/customer/${customerId}/consumption-stats`);
+      return stats;
+    } catch (error) {
+      console.error('获取消费统计失败:', error);
+      throw error;
+    }
+  }
+
+  // 更新客户累计消费金额
+  async updateCustomerTotalConsumption(customerId) {
+    try {
+      const result = await this.request(`/member/customer/${customerId}/update-consumption`, {
+        method: 'POST'
+      });
+      return result;
+    } catch (error) {
+      console.error('更新累计消费金额失败:', error);
+      throw error;
+    }
+  }
+
+  // 更新客户会员等级
+  async updateCustomerMemberLevel(customerId) {
+    try {
+      const result = await this.request(`/member/customer/${customerId}/update-level`, {
+        method: 'POST'
+      });
+      return result;
+    } catch (error) {
+      console.error('更新会员等级失败:', error);
       throw error;
     }
   }

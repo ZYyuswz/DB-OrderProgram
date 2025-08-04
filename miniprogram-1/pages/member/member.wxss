@@ -1,0 +1,355 @@
+/* member.wxss */
+.container {
+  padding: 20rpx;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+/* 会员卡片样式 */
+.member-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  color: white;
+  box-shadow: 0 8rpx 32rpx rgba(102, 126, 234, 0.3);
+}
+
+.member-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 32rpx;
+}
+
+.member-level-badge {
+  border-radius: 32rpx;
+  padding: 16rpx 24rpx;
+  margin-right: 24rpx;
+  display: flex;
+  align-items: center;
+  backdrop-filter: blur(10rpx);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.level-icon {
+  font-size: 32rpx;
+  margin-right: 12rpx;
+}
+
+.level-name {
+  font-size: 28rpx;
+  font-weight: bold;
+}
+
+.member-info {
+  flex: 1;
+}
+
+.member-name {
+  display: block;
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-bottom: 8rpx;
+}
+
+.member-since {
+  display: block;
+  font-size: 24rpx;
+  opacity: 0.8;
+}
+
+/* 消费信息样式 */
+.consumption-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 32rpx;
+}
+
+.consumption-item {
+  text-align: center;
+  flex: 1;
+}
+
+.consumption-label {
+  display: block;
+  font-size: 24rpx;
+  opacity: 0.8;
+  margin-bottom: 8rpx;
+}
+
+.consumption-value {
+  display: block;
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+/* 升级进度样式 */
+.upgrade-progress {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12rpx;
+  padding: 24rpx;
+  backdrop-filter: blur(10rpx);
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.progress-title {
+  font-size: 28rpx;
+}
+
+.progress-amount {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #FFE066;
+}
+
+.progress-bar {
+  height: 8rpx;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4rpx;
+  margin-bottom: 12rpx;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #FFE066;
+  border-radius: 4rpx;
+  transition: width 0.3s ease;
+}
+
+.progress-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 24rpx;
+  opacity: 0.8;
+}
+
+/* 最高等级提示 */
+.max-level-tip {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12rpx;
+  padding: 24rpx;
+  text-align: center;
+  backdrop-filter: blur(10rpx);
+}
+
+.tip-icon {
+  font-size: 48rpx;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.tip-text {
+  font-size: 28rpx;
+  font-weight: bold;
+}
+
+/* 会员特权样式 */
+.privileges-section,
+.stats-section,
+.levels-section {
+  background: white;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.1);
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 24rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.privileges-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.privilege-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.privilege-item:last-child {
+  border-bottom: none;
+}
+
+.privilege-icon {
+  font-size: 32rpx;
+  margin-right: 20rpx;
+  width: 48rpx;
+  text-align: center;
+}
+
+.privilege-content {
+  flex: 1;
+}
+
+.privilege-name {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 4rpx;
+}
+
+.privilege-desc {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.privilege-value {
+  font-size: 24rpx;
+  color: #FF6B6B;
+  font-weight: bold;
+}
+
+/* 消费统计样式 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24rpx;
+  margin-bottom: 24rpx;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 24rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+}
+
+.stat-number {
+  display: block;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #667eea;
+  margin-bottom: 8rpx;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.favorite-store {
+  text-align: center;
+  padding: 16rpx;
+  background: #f0f8ff;
+  border-radius: 8rpx;
+}
+
+.store-label {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.store-name {
+  font-size: 24rpx;
+  color: #667eea;
+  font-weight: bold;
+}
+
+/* 等级体系样式 */
+.levels-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.level-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+  transition: background-color 0.2s;
+}
+
+.level-item:last-child {
+  border-bottom: none;
+}
+
+.level-item.current {
+  background: linear-gradient(90deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+  border-radius: 8rpx;
+  margin: 4rpx 0;
+  padding: 24rpx 16rpx;
+}
+
+.level-badge {
+  margin-right: 20rpx;
+  width: 48rpx;
+  text-align: center;
+}
+
+.level-icon {
+  font-size: 32rpx;
+}
+
+.level-info {
+  flex: 1;
+}
+
+.level-name {
+  display: block;
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 4rpx;
+}
+
+.level-threshold {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.level-status {
+  text-align: right;
+}
+
+.status-text {
+  font-size: 24rpx;
+  color: #667eea;
+  font-weight: bold;
+}
+
+.status-icon {
+  font-size: 24rpx;
+  color: #4CAF50;
+}
+
+/* 加载状态 */
+.loading-state {
+  text-align: center;
+  padding: 60rpx 20rpx;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 375px) {
+  .container {
+    padding: 16rpx;
+  }
+  
+  .member-card {
+    padding: 24rpx;
+  }
+  
+  .stats-grid {
+    gap: 16rpx;
+  }
+}
