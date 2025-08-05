@@ -33,6 +33,8 @@ namespace RestaurantManagement.Controllers
         public async Task<IActionResult> GetAllMaterials()
         {
             var materials = await _inventoryService.GetAllMaterialsAsync();
+            Console.WriteLine($"[InventoryController] 第一个原材料示例: {System.Text.Json.JsonSerializer.Serialize(materials.First())}");
+            
             return Ok(materials);
         }
 
@@ -84,6 +86,8 @@ namespace RestaurantManagement.Controllers
         public async Task<IActionResult> GetAllSuppliers()
         {
             var suppliers = await _inventoryService.GetAllSuppliersAsync();
+            Console.WriteLine($"[InventoryController] 第一个供应商示例: {System.Text.Json.JsonSerializer.Serialize(suppliers.First())}");
+            Console.WriteLine("Raw suppliers data:", suppliers); // 调试日志
             return Ok(suppliers);
         }
 

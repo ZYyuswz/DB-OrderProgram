@@ -990,19 +990,19 @@
             tables.forEach(table => {
                 const tableItem = document.createElement('div');
                 // 获取桌台项的状态类（不带 status- 前缀）
-                const statusInfo = Utils.getStatusInfo(table.status, 'table');
+                const statusInfo = Utils.getStatusInfo(table.Status, 'table');
                 const tableStatusClass = statusInfo.class.replace('status-', ''); // 移除 status- 前缀
                 tableItem.className = `table-item ${tableStatusClass}`;
                 tableItem.onclick = () => handleTableClick(table);
 
                 tableItem.innerHTML = `
-                    <div class="table-number">桌台 ${table.tableNumber}</div>
-                    <div class="table-capacity">容量: ${table.capacity}人</div>
+                    <div class="table-number">桌台 ${table.TableID}</div>
+                    <div class="table-capacity">容量: ${table.Capacity}人</div>
                     <div class="status-badge ${statusInfo.class}">
                         ${statusInfo.text}
                     </div>
                     <div style="font-size: 0.8rem; color: #666; margin-top: 0.5rem;">
-                        区域: ${table.area}
+                        区域: ${table.Area}
                     </div>
                 `;
 
@@ -1012,10 +1012,10 @@
 
         function updateStatusCounts() {
             const counts = {
-                available: tables.filter(t => t.status === '空闲').length,
-                occupied: tables.filter(t => t.status === '占用').length,
-                reserved: tables.filter(t => t.status === '预订').length,
-                cleaning: tables.filter(t => t.status === '清洁中').length
+                available: tables.filter(t => t.Status === '空闲').length,
+                occupied: tables.filter(t => t.Status === '占用').length,
+                reserved: tables.filter(t => t.Status === '预订').length,
+                cleaning: tables.filter(t => t.Status === '清洁中').length
             };
 
             document.getElementById('available-count').textContent = counts.available;
@@ -1025,23 +1025,23 @@
         }
 
         async function handleTableClick(table) {
-            currentTableId = table.tableID;
+            currentTableId = table.TableID;
             
-            if (table.status === '空闲') {
+            if (table.Status === '空闲') {
                 showOpenTableModal(table);
-            } else if (table.status === '占用') {
+            } else if (table.Status === '占用') {
                 await showTableDetails(table);
-            } else if (table.status === '清洁中') {
+            } else if (table.Status === '清洁中') {
                 showTableCleaningOptions(table);
             }
         }
 
         function showOpenTableModal(table) {
             // 更新模态框标题和桌台信息
-            document.getElementById('openTableTitle').textContent = `开台 - 桌台${table.tableNumber}`;
+            document.getElementById('openTableTitle').textContent = `开台 - 桌台${table.TableNumber}`;
             document.getElementById('tableInfoDisplay').innerHTML = `
-                桌台${table.tableNumber} (${table.capacity}人桌)
-                <br><small style="color: #6c757d; font-size: 0.8rem;">区域: ${table.area}</small>
+                桌台${table.TableNumber} (${table.Capacity}人桌)
+                <br><small style="color: #6c757d; font-size: 0.8rem;">区域: ${table.Area}</small>
             `;
             
             // 重置表单

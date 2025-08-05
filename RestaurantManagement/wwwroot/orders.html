@@ -398,23 +398,23 @@
 
             pageOrders.forEach(order => {
                 const row = document.createElement('tr');
-                const statusInfo = Utils.getStatusInfo(order.orderStatus || order.OrderStatus, 'order');
+                const statusInfo = Utils.getStatusInfo(order.OrderStatus, 'order');
                 
                 row.innerHTML = `
-                    <td>${order.orderID || order.OrderID}</td>
-                    <td>桌台${order.tableID || order.TableID || '-'}</td>
-                    <td>${Utils.formatDateTime(order.orderTime || order.OrderTime)}</td>
-                    <td>${getStaffName(order.staffID || order.StaffID)}</td>
+                    <td>${order.OrderID}</td>
+                    <td>桌台${order.TableID || '-'}</td>
+                    <td>${Utils.formatDateTime(order.OrderTime)}</td>
+                    <td>${getStaffName(order.StaffID)}</td>
                     <td><span class="status-badge ${statusInfo.class}">${statusInfo.text}</span></td>
-                    <td>${Utils.formatCurrency(order.totalAmount || order.TotalAmount || order.totalPrice || order.TotalPrice || 0)}</td>
+                    <td>${Utils.formatCurrency(order.TotalPrice || 0)}</td>
                     <td>
-                        <button onclick="viewOrderDetails(${order.orderID || order.OrderID})" class="btn btn-primary" style="margin-right: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">详情</button>
-                        ${(order.orderStatus === '进行中' || order.OrderStatus === '进行中' || order.orderStatus === '制作中' || order.OrderStatus === '制作中') ? `
-                            <button onclick="showAddDishModal(${order.orderID || order.OrderID})" class="btn btn-secondary" style="margin-right: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">加菜</button>
-                            <button onclick="checkoutOrder(${order.orderID || order.OrderID})" class="btn btn-success" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">结账</button>
+                        <button onclick="viewOrderDetails(${order.OrderID})" class="btn btn-primary" style="margin-right: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">详情</button>
+                        ${(order.OrderStatus === '进行中' || order.OrderStatus === '制作中') ? `
+                            <button onclick="showAddDishModal(${order.OrderID})" class="btn btn-secondary" style="margin-right: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">加菜</button>
+                            <button onclick="checkoutOrder(${order.OrderID})" class="btn btn-success" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">结账</button>
                         ` : ''}
-                        ${(order.orderStatus === '进行中' || order.OrderStatus === '进行中' || order.orderStatus === '制作中' || order.OrderStatus === '制作中') ? `
-                            <button onclick="cancelOrder(${order.orderID || order.OrderID})" class="btn btn-danger" style="margin-left: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">取消</button>
+                        ${(order.OrderStatus === '进行中' || order.OrderStatus === '制作中') ? `
+                            <button onclick="cancelOrder(${order.OrderID})" class="btn btn-danger" style="margin-left: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">取消</button>
                         ` : ''}
                     </td>
                 `;

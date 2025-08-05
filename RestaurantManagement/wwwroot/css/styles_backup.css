@@ -553,7 +553,6 @@ body {
     text-align: center;
     font-weight: bold;
 }
-    }
     
     .stats-grid {
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -574,4 +573,3 @@ body {
         margin: 5% auto;
         padding: 1.5rem;
     }
-}

@@ -2,11 +2,17 @@ using RestaurantManagement.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 配置JSON序列化选项
+// builder.Services.ConfigureHttpJsonOptions(options =>
+// {
+//     options.SerializerOptions.PropertyNamingPolicy = null; // 保持原始命名
+// });
+
 // 添加服务
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
     });
 builder.Services.AddScoped<DatabaseService>();
 builder.Services.AddScoped<TableService>();

@@ -354,22 +354,22 @@
                 const storeName = store ? (store.StoreName || store.storeName || store.STORENAME || '未知门店') : '未知门店';
                 
                 row.innerHTML = `
-                    <td>${staff.staffID}</td>
-                    <td>${staff.staffName}</td>
-                    <td>${staff.position || '未设置'}</td>
+                    <td>${staff.StaffID}</td>
+                    <td>${staff.StaffName}</td>
+                    <td>${staff.Position || '未设置'}</td>
                     <td>${departmentName}</td>
                     <td>${storeName}</td>
-                    <td>${staff.phone || '未设置'}</td>
-                    <td>${Utils.formatCurrency(staff.salary || 0)}</td>
+                    <td>${staff.Phone || '未设置'}</td>
+                    <td>${Utils.formatCurrency(staff.Salary || 0)}</td>
                     <td><span class="status-badge ${statusInfo.class}">${statusInfo.text}</span></td>
-                    <td>${Utils.formatDate(staff.hireDate)}</td>
+                    <td>${Utils.formatDate(staff.HireDate)}</td>
                     <td>
-                        <button onclick="viewStaffDetails(${staff.staffID})" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 0.25rem;">详情</button>
-                        <button onclick="editStaff(${staff.staffID})" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 0.25rem;">编辑</button>
-                        ${staff.status === '在职' ? `
-                            <button onclick="toggleStaffStatus(${staff.staffID}, '离职')" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">离职</button>
+                        <button onclick="viewStaffDetails(${staff.StaffID})" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 0.25rem;">详情</button>
+                        <button onclick="editStaff(${staff.StaffID})" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 0.25rem;">编辑</button>
+                        ${staff.Status === '在职' ? `
+                            <button onclick="toggleStaffStatus(${staff.StaffID}, '离职')" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">离职</button>
                         ` : `
-                            <button onclick="toggleStaffStatus(${staff.staffID}, '在职')" class="btn btn-success" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">复职</button>
+                            <button onclick="toggleStaffStatus(${staff.StaffID}, '在职')" class="btn btn-success" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">复职</button>
                         `}
                     </td>
                 `;
@@ -385,19 +385,19 @@
             quickCheckStaff.innerHTML = '<option value="">请选择员工</option>';
             attendanceStaffFilter.innerHTML = '<option value="">全部员工</option>';
             
-            const activeStaff = allStaff.filter(s => s.status === '在职');
+            const activeStaff = allStaff.filter(s => s.Status === '在职');
             
             activeStaff.forEach(staff => {
                 const quickOption = document.createElement('option');
-                quickOption.value = staff.staffID;
-                quickOption.textContent = staff.staffName;
+                quickOption.value = staff.StaffID;
+                quickOption.textContent = staff.StaffName;
                 quickCheckStaff.appendChild(quickOption);
             });
 
             allStaff.forEach(staff => {
                 const filterOption = document.createElement('option');
-                filterOption.value = staff.staffID;
-                filterOption.textContent = staff.staffName;
+                filterOption.value = staff.StaffID;
+                filterOption.textContent = staff.StaffName;
                 attendanceStaffFilter.appendChild(filterOption);
             });
         }
@@ -410,11 +410,11 @@
             const staffSearch = document.getElementById('staffSearch').value.trim().toLowerCase();
 
             filteredStaff = allStaff.filter(staff => {
-                const departmentMatch = departmentFilter === 'all' || staff.departmentID == departmentFilter;
-                const storeMatch = storeFilter === 'all' || staff.storeID == storeFilter;
-                const positionMatch = positionFilter === 'all' || staff.position === positionFilter;
-                const statusMatch = statusFilter === 'all' || staff.status === statusFilter;
-                const nameMatch = !staffSearch || staff.staffName.toLowerCase().includes(staffSearch);
+                const departmentMatch = departmentFilter === 'all' || staff.DepartmentID == departmentFilter;
+                const storeMatch = storeFilter === 'all' || staff.StoreID == storeFilter;
+                const positionMatch = positionFilter === 'all' || staff.Position === positionFilter;
+                const statusMatch = statusFilter === 'all' || staff.Status === statusFilter;
+                const nameMatch = !staffSearch || staff.StaffName.toLowerCase().includes(staffSearch);
 
                 return departmentMatch && storeMatch && positionMatch && statusMatch && nameMatch;
             });
@@ -498,26 +498,26 @@
         }
 
         function editStaff(staffId) {
-            const staff = allStaff.find(s => s.staffID === staffId);
+            const staff = allStaff.find(s => s.StaffID === staffId);
             if (!staff) return;
 
             currentStaffId = staffId;
             document.getElementById('staffModalTitle').textContent = '编辑员工信息';
-            document.getElementById('staffName').value = staff.staffName;
-            document.getElementById('staffGender').value = staff.gender || '';
-            document.getElementById('staffPosition').value = staff.position || '';
-            document.getElementById('staffPhone').value = staff.phone || '';
-            document.getElementById('staffEmail').value = staff.email || '';
-            document.getElementById('staffSalary').value = staff.salary || '';
-            document.getElementById('staffDepartment').value = staff.departmentID || '';
-            document.getElementById('staffStore').value = staff.storeID || '';
-            document.getElementById('workSchedule').value = staff.workSchedule || '';
+            document.getElementById('staffName').value = staff.StaffName;
+            document.getElementById('staffGender').value = staff.Gender || '';
+            document.getElementById('staffPosition').value = staff.Position || '';
+            document.getElementById('staffPhone').value = staff.Phone || '';
+            document.getElementById('staffEmail').value = staff.Email || '';
+            document.getElementById('staffSalary').value = staff.Salary || '';
+            document.getElementById('staffDepartment').value = staff.DepartmentID || '';
+            document.getElementById('staffStore').value = staff.StoreID || '';
+            document.getElementById('workSchedule').value = staff.WorkSchedule || '';
             
             Utils.showModal('addStaffModal');
         }
 
         async function viewStaffDetails(staffId) {
-            const staff = allStaff.find(s => s.staffID === staffId);
+            const staff = allStaff.find(s => s.StaffID === staffId);
             if (!staff) return;
 
             document.getElementById('staffDetailTitle').textContent = `员工详情 - ${staff.staffName}`;

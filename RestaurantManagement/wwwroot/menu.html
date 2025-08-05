@@ -276,18 +276,18 @@
             }
 
             categories.forEach(category => {
-                const dishCount = dishes.filter(d => d.categoryID === category.categoryID).length;
+                const dishCount = dishes.filter(d => d.CategoryID == category.CategoryID).length;
                 const row = document.createElement('tr');
                 
                 row.innerHTML = `
-                    <td>${category.categoryID}</td>
-                    <td>${category.categoryName}</td>
-                    <td>${category.description || '-'}</td>
-                    <td>${category.sortOrder}</td>
+                    <td>${category.CategoryID}</td>
+                    <td>${category.CategoryName}</td>
+                    <td>${category.Description || '-'}</td>
+                    <td>${category.SortOrder}</td>
                     <td>${dishCount}</td>
                     <td>
-                        <button onclick="editCategory(${category.categoryID})" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">编辑</button>
-                        <button onclick="deleteCategory(${category.categoryID})" class="btn btn-danger" style="margin-left: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">删除</button>
+                        <button onclick="editCategory(${category.CategoryID})" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">编辑</button>
+                        <button onclick="deleteCategory(${category.CategoryID})" class="btn btn-danger" style="margin-left: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">删除</button>
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -305,24 +305,24 @@
 
             filteredDishes.forEach(dish => {
                 const dishItem = document.createElement('div');
-                dishItem.className = `dish-item ${!dish.isAvailable ? 'unavailable' : ''}`;
+                dishItem.className = `dish-item ${!dish.IsAvailable ? 'unavailable' : ''}`;
                 
-                const categoryName = categories.find(c => c.categoryID === dish.categoryID)?.categoryName || '未分类';
+                const categoryName = categories.find(c => c.CategoryID === dish.CategoryID)?.CategoryName || '未分类';
                 
                 dishItem.innerHTML = `
-                    ${dish.imageURL ? `<img src="${dish.imageURL}" alt="${dish.dishName}" class="dish-image" onerror="this.src='images/default-dish.png'">` : '<div class="dish-image" style="background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999;">暂无图片</div>'}
-                    <div class="dish-name">${dish.dishName}</div>
-                    <div class="dish-price">${Utils.formatCurrency(dish.price)}</div>
+                    ${dish.ImageURL ? `<img src="${dish.ImageURL}" alt="${dish.DishName}" class="dish-image" onerror="this.src='images/default-dish.png'">` : '<div class="dish-image" style="background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999;">暂无图片</div>'}
+                    <div class="dish-name">${dish.DishName}</div>
+                    <div class="dish-price">${Utils.formatCurrency(dish.Price)}</div>
                     <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">分类: ${categoryName}</div>
-                    <div class="dish-description">${dish.description || '暂无描述'}</div>
+                    <div class="dish-description">${dish.Description || '暂无描述'}</div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span class="status-badge ${dish.isAvailable ? 'status-available' : 'status-cleaning'}">
-                            ${dish.isAvailable ? '可售' : '停售'}
+                        <span class="status-badge ${dish.IsAvailable ? 'status-available' : 'status-cleaning'}">
+                            ${dish.IsAvailable ? '可售' : '停售'}
                         </span>
                         <div>
-                            <button onclick="viewDishDetails(${dish.dishID})" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 0.25rem;">详情</button>
-                            <button onclick="toggleDishAvailability(${dish.dishID}, ${!dish.isAvailable})" class="btn ${dish.isAvailable ? 'btn-warning' : 'btn-success'}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
-                                ${dish.isAvailable ? '下架' : '上架'}
+                            <button onclick="viewDishDetails(${dish.DishID})" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 0.25rem;">详情</button>
+                            <button onclick="toggleDishAvailability(${dish.DishID}, ${!dish.IsAvailable})" class="btn ${dish.IsAvailable ? 'btn-warning' : 'btn-success'}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                ${dish.IsAvailable ? '下架' : '上架'}
                             </button>
                         </div>
                     </div>
@@ -342,13 +342,13 @@
             
             categories.forEach(category => {
                 const filterOption = document.createElement('option');
-                filterOption.value = category.categoryID;
-                filterOption.textContent = category.categoryName;
+                filterOption.value = category.CategoryID;
+                filterOption.textContent = category.CategoryName;
                 categoryFilter.appendChild(filterOption);
 
                 const dishOption = document.createElement('option');
-                dishOption.value = category.categoryID;
-                dishOption.textContent = category.categoryName;
+                dishOption.value = category.CategoryID;
+                dishOption.textContent = category.CategoryName;
                 dishCategory.appendChild(dishOption);
             });
         }
@@ -361,15 +361,15 @@
 
             filteredDishes = dishes.filter(dish => {
                 // 分类过滤
-                const categoryMatch = categoryFilter === 'all' || dish.categoryID.toString() === categoryFilter;
+                const categoryMatch = categoryFilter === 'all' || dish.CategoryID.toString() === categoryFilter;
 
                 // 可售状态过滤
-                const availabilityMatch = availabilityFilter === 'all' || dish.isAvailable.toString() === availabilityFilter;
+                const availabilityMatch = availabilityFilter === 'all' || dish.IsAvailable.toString() === availabilityFilter;
 
                 // 价格范围过滤
                 let priceMatch = true;
                 if (priceRangeFilter !== 'all') {
-                    const price = dish.price;
+                    const price = dish.Price;
                     if (priceRangeFilter === '0-20') priceMatch = price <= 20;
                     else if (priceRangeFilter === '20-50') priceMatch = price > 20 && price <= 50;
                     else if (priceRangeFilter === '50-100') priceMatch = price > 50 && price <= 100;
@@ -377,7 +377,7 @@
                 }
 
                 // 名称搜索
-                const nameMatch = !dishSearch || dish.dishName.toLowerCase().includes(dishSearch);
+                const nameMatch = !dishSearch || dish.DishName.toLowerCase().includes(dishSearch);
 
                 return categoryMatch && availabilityMatch && priceMatch && nameMatch;
             });
@@ -388,8 +388,8 @@
         function updateStatistics() {
             const totalCategories = categories.length;
             const totalDishes = dishes.length;
-            const availableDishes = dishes.filter(d => d.isAvailable).length;
-            const avgPrice = totalDishes > 0 ? dishes.reduce((sum, d) => sum + d.price, 0) / totalDishes : 0;
+            const availableDishes = dishes.filter(d => d.IsAvailable).length;
+            const avgPrice = totalDishes > 0 ? dishes.reduce((sum, d) => sum + d.Price, 0) / totalDishes : 0;
 
             document.getElementById('total-categories').textContent = totalCategories;
             document.getElementById('total-dishes').textContent = totalDishes;

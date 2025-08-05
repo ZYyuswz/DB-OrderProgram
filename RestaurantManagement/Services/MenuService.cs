@@ -17,7 +17,7 @@ namespace RestaurantManagement.Services
         {
             using var connection = _dbService.CreateConnection();
             var sql = @"
-                SELECT CATEGORYID, CATEGORYNAME, DESCRIPTION, SORTORDER
+                SELECT *
                 FROM PUB.CATEGORY 
                 WHERE ISACTIVE = 'Y'
                 ORDER BY SORTORDER";

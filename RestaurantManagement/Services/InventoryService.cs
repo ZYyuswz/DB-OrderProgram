@@ -24,8 +24,8 @@ namespace RestaurantManagement.Services
         public async Task<IEnumerable<dynamic>> GetAllMaterialsAsync()
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "SELECT * FROM PUB.RawMaterial LEFT JOIN PUB.Supplier USING(SUPPLIERID)";
-            return await connection.QueryAsync(sql);
+            var sql = "SELECT * FROM PUB.RawMaterial LEFT JOIN PUB.Supplier USING(SupplierID)";
+            return await connection.QueryAsync<RawMaterial>(sql);
         }
 
         // 获取库存预警材料
@@ -36,7 +36,7 @@ namespace RestaurantManagement.Services
             return await connection.QueryAsync<RawMaterial>(sql);
         }
 
-        // 添加原材�?
+        // 添加原材�?
         public async Task<bool> AddMaterialAsync(RawMaterial material)
         {
             using var connection = _dbService.CreateConnection();
@@ -47,7 +47,7 @@ namespace RestaurantManagement.Services
             return result > 0;
         }
 
-        // 更新原材料信�?
+        // 更新原材料信�?
         public async Task<bool> UpdateMaterialAsync(RawMaterial material)
         {
             using var connection = _dbService.CreateConnection();
@@ -97,11 +97,11 @@ namespace RestaurantManagement.Services
         public async Task<IEnumerable<Supplier>> GetAllSuppliersAsync()
         {
             using var connection = _dbService.CreateConnection();
-            var sql = "SELECT * FROM PUB.Supplier ORDER BY SUPPLIERNAME";
+            var sql = "SELECT * FROM PUB.SUPPLIER ORDER BY SUPPLIERNAME";
             return await connection.QueryAsync<Supplier>(sql);
         }
 
-        // 添加供应�?
+        // 添加供应�?
         public async Task<bool> AddSupplierAsync(Supplier supplier)
         {
             using var connection = _dbService.CreateConnection();
@@ -112,7 +112,7 @@ namespace RestaurantManagement.Services
             return result > 0;
         }
 
-        // 更新供应�?
+        // 更新供应�?
         public async Task<bool> UpdateSupplierAsync(Supplier supplier)
         {
             using var connection = _dbService.CreateConnection();
@@ -164,12 +164,12 @@ namespace RestaurantManagement.Services
         {
             using var connection = _dbService.CreateConnection();
             
-            // 更新采购记录状�?
-            var updatePurchase = "UPDATE PUB.PurchaseRecord SET Status = '已入�? WHERE PurchaseID = :PurchaseId";
+            // 更新采购记录状�?
+            var updatePurchase = "UPDATE PUB.PurchaseRecord SET Status = '已入�? WHERE PurchaseID = :PurchaseId";
             await connection.ExecuteAsync(updatePurchase, new { PurchaseId = purchaseId });
 
-            // TODO: 这里需要根据采购详情更新库�?
-            // 实际实现中需要从 PurchaseDetail 表获取采购的具体材料和数�?
+            // TODO: 这里需要根据采购详情更新库�?
+            // 实际实现中需要从 PurchaseDetail 表获取采购的具体材料和数�?
 
             return true;
         }
