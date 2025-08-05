@@ -1,5 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using DBManagement.Models;
+﻿using DBManagement.Models;
+using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 // 创建 Web 应用构建器实例，用于配置和构建应用
 var builder = WebApplication.CreateBuilder(args);
@@ -31,10 +32,18 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// 处理循环引用和空值
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles; // 忽略循环引用
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull; // 忽略空值
+    });
+
 // 构建 Web 应用实例
 var app = builder.Build();
 
-// 在开发环境中启用 Swagger UI，方便 API 测试和调试
+// 启用 Swagger UI，方便 API 测试和调试
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();         // 启用 Swagger 中间件
