@@ -1,5 +1,3 @@
-# DB-OrderProgram
-同济大学数据库小学期项目
 # 餐饮连锁管理系统数据库设计文档
 
 ## 系统概述
@@ -23,7 +21,7 @@
 | StoreID | NUMBER(10) | FK | 关联门店表的外键，标识订单所在的门店 |
 | CreateTime | DATE | DEFAULT SYSDATE | 订单记录创建时间，默认为系统当前时间 |
 | UpdateTime | DATE | DEFAULT SYSDATE | 订单记录最后更新时间，默认为系统当前时间 |
-
+| FinalPrice | NUMBER(12,2) | DEFAULT 0 | 使用优惠劵订单总价，保留两位小数，默认为0 | 
 #### OrderDetail（订单详情表）
 | 字段名 | 类型 | 约束 | 描述 |
 |--------|------|------|------|
@@ -51,8 +49,6 @@
 | ReservationID | NUMBER(10) | PK | 预约的唯一标识符，使用序列自动生成 |
 | TableID | NUMBER(10) | FK | 关联桌台表的外键，标识被预约的桌台 |
 | CustomerID | NUMBER(10) | FK | 关联客户表的外键，标识预约的客户 |
-| CustomerName | VARCHAR2(100) | | 预约客户姓名，便于非会员预约 |
-| ContactPhone | VARCHAR2(20) | | 联系电话，用于预约确认和提醒 |
 | PartySize | NUMBER(3) | | 预约人数，用于安排合适大小的桌台 |
 | ReservationTime | DATE | | 预约的用餐时间 |
 | ExpectedDuration | NUMBER(3) | | 预计用餐时长(分钟)，用于桌台周转安排 |
@@ -66,6 +62,7 @@
 | 字段名 | 类型 | 约束 | 描述 |
 |--------|------|------|------|
 | DishID | NUMBER(10) | PK | 菜品的唯一标识符，使用序列自动生成 |
+|StoreID|NUMBER(10)|FK|店面标识符，关联门店表|
 | DishName | VARCHAR2(200) | NOT NULL, UNIQUE | 菜品名称，不能为空且唯一 |
 | Price | NUMBER(10,2) | NOT NULL | 菜品价格，保留两位小数，不能为空 |
 | CategoryID | NUMBER(10) | FK | 关联分类表的外键，标识菜品所属分类 |
@@ -114,32 +111,6 @@
 | DishPromotionID | NUMBER(10) | PK | 关联记录的唯一标识符，使用序列自动生成 |
 | DishID | NUMBER(10) | FK | 关联菜品表的外键，标识参与促销的菜品 |
 | PromotionID | NUMBER(10) | FK | 关联促销活动表的外键，标识菜品参与的促销活动 |
-
-#### CorporateDish（总部标准菜单表）
-| 字段名 | 类型 | 约束 | 描述 |
-|--------|------|------|------|
-| CorporateDishID | NUMBER(10) | PK | 总部菜品的唯一标识符，使用序列自动生成 |
-| DishName | VARCHAR2(200) | NOT NULL, UNIQUE | 菜品名称，不能为空且唯一 |
-| StandardPrice | NUMBER(10,2) | NOT NULL | 总部制定的标准价格，保留两位小数，不能为空 |
-| CategoryID | NUMBER(10) | FK | 关联分类表的外键，标识菜品所属分类 |
-| Description | VARCHAR2(1000) | | 菜品描述，包括原料、做法、特色等 |
-| ImageURL | VARCHAR2(500) | | 菜品标准图片的URL链接 |
-| EstimatedTime | NUMBER(5) | | 标准制作时间(分钟) |
-| IsActive | CHAR(1) | CHECK | 是否启用，限定为Y(是)/N(否)，默认为Y |
-| CreateTime | DATE | DEFAULT SYSDATE | 记录创建时间，默认为系统当前时间 |
-| UpdateTime | DATE | DEFAULT SYSDATE | 记录最后更新时间，默认为系统当前时间 |
-
-#### StoreDishMapping（门店菜单关联表）
-| 字段名 | 类型 | 约束 | 描述 |
-|--------|------|------|------|
-| MappingID | NUMBER(10) | PK | 映射记录的唯一标识符，使用序列自动生成 |
-| StoreID | NUMBER(10) | FK | 关联门店表的外键，标识映射所属的门店 |
-| CorporateDishID | NUMBER(10) | FK | 关联总部菜单表的外键，标识总部标准菜品 |
-| LocalDishID | NUMBER(10) | FK | 关联菜品表的外键，标识门店实际菜品 |
-| LocalPrice | NUMBER(10,2) | | 门店实际定价，可根据当地市场情况调整 |
-| IsAvailable | CHAR(1) | CHECK | 门店是否提供此菜品，限定为Y(是)/N(否)，默认为Y |
-| CreateTime | DATE | DEFAULT SYSDATE | 映射记录创建时间，默认为系统当前时间 |
-| UpdateTime | DATE | DEFAULT SYSDATE | 映射记录最后更新时间，默认为系统当前时间 |
 
 ### 3. 客户管理模块
 
