@@ -29,6 +29,9 @@ namespace DBManagement.Models
         [Column("TOTALPRICE", TypeName = "decimal(12,2)")]
         public decimal TotalPrice { get; set; } = 0;
 
+        [Column("FINALPRICE", TypeName = "decimal(12,2)")]
+        public decimal FinalPrice { get; set; } = 0;
+
         [Column("ORDERSTATUS")]
         [StringLength(20)]
         public string OrderStatus { get; set; } = "待处理"; // 默认状态
