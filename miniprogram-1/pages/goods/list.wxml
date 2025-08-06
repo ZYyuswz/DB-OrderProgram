@@ -1,0 +1,147 @@
+<!-- pages/goods/list.wxml -->
+<view class="container">
+  <!-- 顶部搜索区域 -->
+  <van-sticky>
+    <view class="header">
+      <view class="search">
+        <input type="text" placeholder="搜索菜品" value="{{name}}" bindinput="bindinput" bindconfirm="bindconfirm"></input>
+        <image src="/images/icon/search.png" bindtap="search"></image>
+      </view>
+      <image class="show-type" src="/images/icon/list{{listType}}.png" bindtap="changeShowType"></image>
+    </view>
+  </van-sticky>
+  
+  <!-- 分类和菜品区域 -->
+  <view class="content-container">
+    <!-- 左侧分类导航 -->
+    <scroll-view class="category-nav" scroll-y>
+      <view 
+        wx:for="{{categories}}" 
+        wx:key="id"
+        class="category-item {{item.id == activeCategory ? 'active' : ''}}"
+        data-id="{{item.id}}"
+        bindtap="switchCategory"
+      >
+        <text class="category-name">{{item.name}}</text>
+        <text class="category-count" wx:if="{{item.goods.length > 0}}">{{item.goods.length}}</text>
+      </view>
+    </scroll-view>
+    
+    <!-- 右侧菜品列表 -->
+    <scroll-view class="goods-list" scroll-y>
+      <block wx:for="{{categories}}" wx:key="id">
+        <!-- 分类标题 -->
+        <view class="category-title" id="category{{item.id}}">
+          <text class="title-text">{{item.name}}</text>
+          <text class="category-desc">{{item.description}}</text>
+        </view>
+        
+        <!-- ====================================================== -->
+        <!-- 修改开始：这里将原来的网格布局改为了新的列表布局 -->
+        <!-- ====================================================== -->
+        <view class="list1-container">
+          <view class="list1" wx:for="{{item.goods}}" wx:key="dishId" wx:for-item="dish">
+            <navigator url="#" class="goods-link">
+              <!-- 左侧图片 -->
+              <image class="goods-img" mode="aspectFill" src="{{dish.pic}}"></image>
+              <!-- 右侧信息 -->
+              <view class="goods-info">
+                <view class="info-top">
+                  <view class="title">{{dish.dishName}}</view>
+                  <view wx:if="{{dish.characteristic}}" class="characteristic">
+                    {{dish.characteristic}}
+                  </view>
+                </view>
+                <view class="info-bottom">
+                  <!-- 价格和销量区域 -->
+                  <view class="price-area">
+                    <text class="price">¥{{dish.Price}}</text>
+                    
+                    <!-- 已售数量移动到这里 -->
+                    <text wx:if="{{show_seller_number == '1'}}" class="sold-num">
+                      已售: {{dish.numberSells}}
+                    </text>
+                  </view>
+                  <!-- 加减组件 -->
+                  <view class="goods-action">
+                    <text class="minus-btn" bindtap="decreaseQuantity" data-id="{{dish.dishId}}">-</text>
+                    <text class="quantity">{{dish.quantity || 0}}</text>
+                    <text class="plus-btn" bindtap="increaseQuantity" data-id="{{dish.dishId}}">+</text>
+                  </view>
+                </view>
+                
+              </view>
+            </navigator>
+          </view>
+        </view>        
+      </block>
+    </scroll-view>
+  </view>
+</view>
+
+<!-- 底部购物车栏 (已通过wxss固定在底部) -->
+<view class="cart-bar" bindtap="toggleCartPopup">
+  <view class="cart-icon">
+    <image src="/images/icon/car.png" class="icon"></image>
+    <text class="badge" wx:if="{{totalQuantity > 0}}">{{totalQuantity}}</text>
+  </view>
+  <view class="cart-info">
+    <text class="total-price">¥{{totalPrice}}</text>
+  </view>
+  <view class="checkout-btn" bindtap="checkout">去结算</view>
+</view>
+
+<!-- 购物车弹窗 -->
+<view class="cart-popup" wx:if="{{showCartPopup}}">
+  <view class="popup-header">
+    <text class="title">购物车</text>
+    <text class="clear-btn" bindtap="clearCart">清空</text>
+  </view>
+  
+  <scroll-view class="cart-items" scroll-y>
+    <view class="cart-item" wx:for="{{cartItems}}" wx:key="dishId">
+      <view class="item-info">
+        <text class="name">{{item.dishName}}</text>
+        <text class="price">¥{{item.minPrice}}</text>
+      </view>
+      <!-- 已放大的加减组件 -->
+      <view class="item-actions">
+        <text class="minus-btn" bindtap="decreaseQuantity" data-id="{{item.dishId}}">-</text>
+        <text class="quantity">{{item.quantity}}</text>
+        <text class="plus-btn" bindtap="increaseQuantity" data-id="{{item.dishId}}">+</text>
+      </view>
+    </view>
+  </scroll-view>
+</view>
+
+<!-- 弹窗遮罩层 -->
+<view class="mask" wx:if="{{showCartPopup}}" bindtap="toggleCartPopup"></view>
+
+
+
+
+<!-- SKU弹窗部分保持不变 -->
+
+
+
+<block wx:if="{{skuCurGoods}}">
+  <view class="sku-mask"></view>
+  <view class="sku-container">
+    <image class="close" src="/images/icon/close.svg" bindtap="closeSku"></image>
+    <view class="sku" wx:for="{{skuCurGoods.properties}}" wx:key="id">
+      <view class="t">{{item.name}}</view>
+      <view class="items">
+        <text class="{{small.active? 'active' : ''}}" wx:for="{{item.childsCurGoods}}" wx:for-item="small" wx:key="id" data-pid="{{small.propertyId}}" data-id="{{small.id}}" bindtap="skuSelect">{{small.name}}</text>
+      </view>
+    </view>
+    <view class="num">
+      <view class="t">{{ $t.goodsDetail.buyNumber }}</view>
+      <view class="num-box">
+        <text class="a" bindtap="storesJian">-</text>
+        <text class="b">{{skuCurGoods.basicInfo.storesBuy}}</text>
+        <text class="a" bindtap="storesJia">+</text>
+      </view>
+    </view>
+  </view>
+  <view class="sku-btn" bindtap="addCarSku">{{ $t.goodsDetail.addCartBtn }}</view>
+</block>
