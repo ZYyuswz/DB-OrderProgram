@@ -10,7 +10,7 @@
   <view class="section order-details">
     <scroll-view class="order-scroll" scroll-y>
       <view class="order-item" wx:for="{{orderItems}}" wx:key="dishId">
-        <image class="dish-pic" src="/images/dish/{{item.dishId}}.jpg" mode="aspectFill"></image>
+        <image class="dish-pic" src="/images/dish/ID-{{item.dishId}}.png" mode="aspectFill"></image>
         <view class="dish-info">
           <text class="name">{{item.dishName}}</text>
           <text class="quantity">x {{item.quantity}}</text>
@@ -28,6 +28,17 @@
       </view>
     </view>
   </view>
+  
+  <text class="label">请输入备注：</text>
+  <input
+    type="text"
+    placeholder="请输入备注"
+    bindinput="onInputChange"
+    value="{{remark}}"
+    class="input"
+  />
+
+
 
 </view>
 
@@ -37,7 +48,7 @@
     <text>合计：</text>
     <text class="total-price">¥{{totalPrice}}</text>
   </view>
-  <view class="pay-btn" bindtap="handlePayment">
+  <view class="pay-btn" bindtap="handleOrder">
     确认下单
   </view>
 </view>

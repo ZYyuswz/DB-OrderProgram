@@ -23,7 +23,7 @@
         bindtap="switchCategory"
       >
         <text class="category-name">{{item.name}}</text>
-        <text class="category-count" wx:if="{{item.goods.length > 0}}">{{item.goods.length}}</text>
+        <!-- <text class="category-count" wx:if="{{item.goods.length > 0}}">{{item.goods.length}}</text> -->
       </view>
     </scroll-view>
     
@@ -58,8 +58,8 @@
                     <text class="price">¥{{dish.Price}}</text>
                     
                     <!-- 已售数量移动到这里 -->
-                    <text wx:if="{{show_seller_number == '1'}}" class="sold-num">
-                      已售: {{dish.numberSells}}
+                    <text  class="estimatedTime">
+                      预计等候时间: {{dish.estimatedTime}}分钟
                     </text>
                   </view>
                   <!-- 加减组件 -->
@@ -117,12 +117,7 @@
 <!-- 弹窗遮罩层 -->
 <view class="mask" wx:if="{{showCartPopup}}" bindtap="toggleCartPopup"></view>
 
-
-
-
 <!-- SKU弹窗部分保持不变 -->
-
-
 
 <block wx:if="{{skuCurGoods}}">
   <view class="sku-mask"></view>

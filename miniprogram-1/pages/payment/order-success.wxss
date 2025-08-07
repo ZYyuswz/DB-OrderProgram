@@ -1,0 +1,19 @@
+/* pages/payment/order-success.wxss */
+.container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.success-text {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 40rpx;
+}
+
+.btn-group {
+  display: flex;
+  gap: 20rpx;
+}

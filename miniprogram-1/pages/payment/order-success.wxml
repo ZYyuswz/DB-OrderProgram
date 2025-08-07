@@ -1,0 +1,9 @@
+<!--pages/payment/order-success.wxml-->
+<view class="container">
+  <view class="success-text">下单成功！</view>
+
+  <view class="btn-group">
+    <button bindtap="goToHome">返回首页</button>
+    <button bindtap="goToMenu">继续点餐</button>
+  </view>
+</view>

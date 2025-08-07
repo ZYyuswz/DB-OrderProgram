@@ -110,7 +110,18 @@
   margin-left: 5px;
   font-family: sans-serif; /* 使 > 符号看起来更像箭头 */
 }
+.label {
+  font-size: 28rpx;
+  margin-bottom: 10rpx;
+  display: block;
+}
 
+.input {
+  border: 1px solid #ccc;
+  border-radius: 8rpx;
+  padding: 10rpx;
+  font-size: 28rpx;
+}
 
 /* 底部付款栏 */
 .payment-bar {

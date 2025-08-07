@@ -1,21 +1,19 @@
-// list.js - 修复版测试文件
+// list.js 
+
 Page({
   data: {
     listType: 1,
     name: '',
-    orderBy: '',
     page: 1,
     categories: [], // 分类数组
     activeCategory: null, // 当前激活分类
     goods: [],
-    show_seller_number: '1',
     skuCurGoods: null,
     
     cartItems: [], // 购物车商品
     totalPrice: 0, // 总价格
     totalQuantity: 0, // 总数量
     showCartPopup: false, // 是否显示购物车弹窗
-    minOrderPrice: 20, // 最低起送价
     $t: {
       common: {
         searchPlaceholder: "搜索菜品",
@@ -23,18 +21,70 @@ Page({
       },     
     }
   },
+  
 
+    
   onLoad: function (options) {
+    wx.request({
+      url: 'http://localhost:5000/api/dish',
+      method: 'GET',
+      success: (res) => {        
+        if (res.statusCode === 200) {
+          console.log(`接收成功`);
+          const dishes = res.data.data;
+          this.setData({
+            categories: this.getTransformedDishData(dishes),
+            activeCategory: 1 // 默认激活第一个分类
+          });
+        }
+      }})   
     // 设置测试数据
-    this.setData({
-      categories: this.getTestCategories(),
-      activeCategory: 1 // 默认激活第一个分类
-    });
+    
     // 初始化购物车
-    this.updateCartSummary();
+    this.updateCartSummary();    
+       
+  },
+  getTransformedDishData: function (rawData) {
+    const categoryMap = {
+      1: { name: "凉菜", description: "开胃冷盘，精致小食" },
+      2: { name: "热菜", description: "招牌热菜，美味佳肴" },
+      3: { name: "汤", description: "清炖浓煮，荤素皆宜" },
+      4: { name: "主食", description: "米面杂粮，煮炒蒸烤" },
+      5: { name: "甜点", description: "香甜可口，冷热皆备" },
+      6: { name: "饮料", description: "清凉饮品，解渴佳品" }
+    };
+  
+    const categoryResult = {};
+  
+    rawData.forEach(dish => {
+      const cid = dish.categoryId;
+      if (!categoryMap[cid]) return; // 忽略无效分类
+  
+      if (!categoryResult[cid]) {
+        categoryResult[cid] = {
+          id: cid,
+          name: categoryMap[cid].name,
+          description: categoryMap[cid].description,
+          goods: []
+        };
+      }
+  
+      // 组装商品字段
+      categoryResult[cid].goods.push({
+        dishId: dish.dishId,
+        dishName: dish.dishName,
+        pic: "/images/dish/ID-"+ dish.dishId +".png",
+        characteristic: dish.description,
+        Price: dish.price,  
+        estimatedTime:dish.estimatedTime     
+      });
+    });
+  
+    // 返回数组形式
+    return Object.values(categoryResult);
   },
   
-  // 获取测试菜品数据
+  
     // 获取测试分类数据
     getTestCategories: function() {
       return [
@@ -48,9 +98,8 @@ Page({
               dishName: "拍黄瓜",
               pic: "/images/dish/2.jpg",
               characteristic: "清爽开胃，蒜香浓郁",
-              Price: 12,
-              numberSells: 89,
-              stores: 30
+              estimatedTime:5,
+              Price: 12              
             }
           ]
         },
@@ -64,9 +113,8 @@ Page({
               dishName: "宫保鸡丁",
               pic: "/images/dish/1.jpg",
               characteristic: "经典川菜，微辣，鸡肉鲜嫩",
-              Price: 28,
-              numberSells: 128,
-              stores: 20
+              estimatedTime:15,
+              Price: 28
             }
           ]
         },
@@ -80,9 +128,8 @@ Page({
               dishName: "可乐",
               pic: "/images/dish/3.jpg",
               characteristic: "冰镇可乐，畅爽解渴",
-              Price: 6,
-              numberSells: 256,
-              stores: 100
+              estimatedTime:2,
+              Price: 6
             }
           ]
         }

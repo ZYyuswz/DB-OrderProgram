@@ -8,7 +8,8 @@
     "pages/points/points",
     "pages/member/member",
     "pages/logs/logs",
-    "pages/payment/order"
+    "pages/payment/order",
+    "pages/payment/order-success"
   ],
   "window": {
     "navigationBarTextStyle": "black",
