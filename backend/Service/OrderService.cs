@@ -28,7 +28,7 @@ namespace DBManagement.Service
         }
 
         // 创建订单及订单详情
-        public (bool success, string message) CreateOrder(Order order, List<OrderDetail> orderDetails)
+        public (bool success, string message, int order_id) CreateOrder(Order order, List<OrderDetail> orderDetails)
         {
             try
             {
@@ -40,10 +40,11 @@ namespace DBManagement.Service
                 order.UpdateTime = DateTime.Now;
                 order.OrderStatus = "待处理"; // 默认状态
                 
+                int min_orderDetail_id = GenerateDetailId();
                 foreach (var detail in orderDetails)
                 {
                     // 生成订单明细ID
-                    detail.OrderDetailId = GenerateDetailId();
+                    detail.OrderDetailId = min_orderDetail_id++;
                     // 设置外键关联
                     detail.OrderId = order.OrderId;
                     // 计算明细小计（单价 * 数量）
@@ -52,20 +53,24 @@ namespace DBManagement.Service
                     order.OrderDetails.Add(detail);
                 }
 
-                // 设置订单的详情集合
-                order.OrderDetails = orderDetails;
+                //// 设置订单的详情集合
+                //order.OrderDetails = orderDetails;
 
                 // 计算订单总价（所有明细小计之和）
                 order.TotalPrice = order.OrderDetails.Sum(d => d.Subtotal);
 
-                // 添加order到数据库
-                DbUtils.AddEntity(_db, order); // 这里会自动处理订单详情的添加，因为已设置导航属性
+                // 先设置finalPrice为0，后续可根据实际情况更新
+                order.FinalPrice = 0;
 
-                return (true, "订单创建成功");
+                // 只需要添加主订单，关联的详情会自动处理
+                _db.Orders.Add(order);
+                _db.SaveChanges();
+
+                return (true, "订单创建成功", order.OrderId);
             }
             catch (Exception ex)
             {
-                return (false, $"订单创建失败: {ex.Message}");
+                return (false, $"订单创建失败: {ex.Message}", -1); // -1表示创建错误
             }
         }
 

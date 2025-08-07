@@ -42,10 +42,11 @@ namespace DBManagement.Controllers
         // POST: /api/order
         // 添加新订单
         [HttpPost]
-        public ActionResult<ApiResponse> AddOrder([FromBody] OrderRequest request)
+        public ActionResult<ApiResponse<int>> AddOrder([FromBody] OrderRequest request)
         {
-            var (success, message) = _orderService.CreateOrder(request.Order, request.OrderDetails);
-            return new ApiResponse(success, message);
+            var (success, message, id) = _orderService.CreateOrder(request.Order, request.OrderDetails);
+            int order_id = id;
+            return new ApiResponse<int>(success, message, order_id);
         }
 
         // PUT: /api/order/{customer_id}

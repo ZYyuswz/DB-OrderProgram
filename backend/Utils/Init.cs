@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using DBManagement.Models;
+﻿using DBManagement.Models;
+
 
 namespace DBManagement.Utils
 {
@@ -9,11 +8,24 @@ namespace DBManagement.Utils
         // 初始化入口，后续可扩展更多初始化方法
         public static void InitializeAll(RestaurantDbContext db)
         {
-            InitializeStores(db);
-            InitializeCategories(db);
-            InitializeDishes(db);
-            InitializeCustomer(db);
-            InitializeTable(db);
+            //InitializeStores(db);
+            //InitializeCategories(db);
+            //InitializeDishes(db);
+            //InitializeCustomer(db);
+            //InitializeTable(db);
+            //InitializeOrder(db);
+        }
+
+        // 初始化订单，先删除所有订单
+        private static void InitializeOrder(RestaurantDbContext db)
+        {
+            var (success, message) = DbUtils.DeleteAllEntities<Order>(db);
+            Console.WriteLine(message); // 输出操作结果信息
+            // 如果需要根据结果做进一步处理，可以这样：
+            if (!success)
+            {
+                Console.WriteLine("清空Order表失败");
+            }
         }
 
         private static void InitializeStores(RestaurantDbContext db)

@@ -30,7 +30,7 @@ namespace DBManagement.Models
         public decimal TotalPrice { get; set; } = 0;
 
         [Column("FINALPRICE", TypeName = "decimal(12,2)")]
-        public decimal FinalPrice { get; set; } = 0;
+        public decimal? FinalPrice { get; set; } = 0;
 
         [Column("ORDERSTATUS")]
         [StringLength(20)]

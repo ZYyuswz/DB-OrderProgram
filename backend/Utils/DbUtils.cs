@@ -138,6 +138,30 @@ namespace DBManagement.Utils
             }
         }
 
+        // 删除表中所有实体
+        // db 数据库上下文
+        // returns 操作结果和提示信息
+        public static (bool success, string message) DeleteAllEntities<T>(DbContext db) where T : class
+        {
+            try
+            {
+                var entities = db.Set<T>().ToList(); // 获取所有实体
+                if (!entities.Any())
+                {
+                    return (true, "表中没有数据可删除");
+                }
+
+                db.Set<T>().RemoveRange(entities); // 批量删除
+                var result = db.SaveChanges();
+                return (result > 0, $"成功删除 {result} 条数据");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("删除失败: " + ex.ToString());
+                return (false, $"删除失败: {ex.Message}");
+            }
+        }
+
         // 按主键删除单个实体
         // id 主键
         // returns 操作结果和提示信息
