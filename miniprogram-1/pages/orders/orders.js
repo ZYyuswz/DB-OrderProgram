@@ -100,6 +100,11 @@ Page({
       const orders = await API.getCustomerOrders(userInfo.customerId, this.data.page, this.data.pageSize);
       return this.formatOrdersData(orders);
     } catch (error) {
+      console.error('获取订单数据失败:', error);
+      wx.showToast({
+        title: '获取订单数据失败',
+        icon: 'none'
+      });
       throw error;
     }
   },

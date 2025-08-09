@@ -1,10 +1,6 @@
-// api.js - API工具类
 class APIManager {
   constructor() {
-    // 后端API基础URL - 根据实际部署情况修改
-    // this.baseURL = 'http://192.168.2.21:5000/api'; // 开发环境（使用本机IP）
-    this.baseURL = 'http://localhost:5000/api'; // 本地环境（需要开发者工具允许localhost）
-    // this.baseURL = 'https://your-api-domain.com/api'; // 生产环境
+    this.baseURL = 'http://localhost:5002/api';
   }
 
   // 通用请求方法
@@ -16,7 +12,6 @@ class APIManager {
         header = {}
       } = options;
 
-      // 获取用户token（如果需要的话）
       const userInfo = wx.getStorageSync('userInfo');
       if (userInfo && userInfo.token) {
         header.Authorization = `Bearer ${userInfo.token}`;
@@ -53,8 +48,8 @@ class APIManager {
       });
       return orders;
     } catch (error) {
-      // 如果API调用失败，返回模拟数据
-      return this.getMockOrders();
+      console.error('获取订单列表失败:', error);
+      throw error;
     }
   }
 
@@ -64,85 +59,27 @@ class APIManager {
       const details = await this.request(`/orders/${orderId}/details`);
       return details;
     } catch (error) {
-      return this.getMockOrderDetails(orderId);
+      console.error('获取订单详情失败:', error);
+      throw error;
     }
   }
 
-  // 模拟订单数据（用于开发和测试）
-  getMockOrders() {
-    return [
-      {
-        orderId: 1,
-        orderTime: '2024-01-20 18:30:00',
-        totalPrice: 168.50,
-        orderStatus: '已完成',
-        storeName: '旗舰店[模拟数据]',
-        tableNumber: 'A-05',
-        customerName: '默认会员[模拟]',
-        details: [
-          { dishName: '宫保鸡丁', quantity: 1, unitPrice: 58.50, subtotal: 58.50, specialRequests: '微辣' },
-          { dishName: '蚂蚁上树', quantity: 2, unitPrice: 45.00, subtotal: 90.00, specialRequests: '' },
-          { dishName: '白米饭', quantity: 2, unitPrice: 8.00, subtotal: 16.00, specialRequests: '' }
-        ]
-      },
-      {
-        orderId: 2,
-        orderTime: '2024-01-19 12:15:00',
-        totalPrice: 89.80,
-        orderStatus: '已完成',
-        storeName: '旗舰店[模拟数据]',
-        tableNumber: 'B-12',
-        customerName: '默认会员[模拟]',
-        details: [
-          { dishName: '红烧肉', quantity: 1, unitPrice: 68.00, subtotal: 68.00, specialRequests: '少油' },
-          { dishName: '紫菜蛋花汤', quantity: 1, unitPrice: 18.00, subtotal: 18.00, specialRequests: '' }
-        ]
-      },
-      {
-        orderId: 3,
-        orderTime: '2024-01-18 19:20:00',
-        totalPrice: 245.60,
-        orderStatus: '制作中',
-        storeName: '旗舰店[模拟数据]',
-        tableNumber: 'C-08',
-        customerName: '默认会员[模拟]',
-        details: [
-          { dishName: '水煮鱼', quantity: 1, unitPrice: 128.00, subtotal: 128.00, specialRequests: '不要香菜' },
-          { dishName: '麻婆豆腐', quantity: 1, unitPrice: 38.00, subtotal: 38.00, specialRequests: '中辣' },
-          { dishName: '酸辣土豆丝', quantity: 1, unitPrice: 28.00, subtotal: 28.00, specialRequests: '' },
-          { dishName: '白米饭', quantity: 3, unitPrice: 8.00, subtotal: 24.00, specialRequests: '' }
-        ]
-      }
-    ];
-  }
 
-  // 模拟订单详情数据
-  getMockOrderDetails(orderId) {
-    const orders = this.getMockOrders();
-    const order = orders.find(o => o.orderId === orderId);
-    return order ? order.details : [];
-  }
 
-  // 格式化时间
   formatTime(timeString) {
-    // 安全检查
     if (!timeString || typeof timeString !== 'string') {
       return '时间未知';
     }
 
     try {
       const date = new Date(timeString);
-      
-      // 检查日期是否有效
       if (isNaN(date.getTime())) {
-        return timeString; // 返回原始字符串
+        return timeString;
       }
 
       const now = new Date();
       const diffTime = now - date;
       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      
-      // 安全处理时间字符串分割
       const timeParts = timeString.split(' ');
       const timePart = timeParts.length > 1 ? timeParts[1] : '';
       
@@ -153,10 +90,94 @@ class APIManager {
       } else if (diffDays < 7 && diffDays > 0) {
         return diffDays + '天前';
       } else {
-        return timeParts[0] || timeString; // 返回日期部分或原始字符串
+        return timeParts[0] || timeString;
       }
     } catch (error) {
-      return timeString; // 发生错误时返回原始字符串
+      return timeString;
+    }
+  }
+
+  // 获取客户积分记录
+  async getCustomerPointsRecords(customerId, page = 1, pageSize = 10) {
+    try {
+      const records = await this.request(`/points/customer/${customerId}/records`, {
+        method: 'GET',
+        data: { page, pageSize }
+      });
+      return records;
+    } catch (error) {
+      console.error('获取积分记录失败:', error);
+      throw error;
+    }
+  }
+
+  // 获取客户积分余额
+  async getCustomerPointsBalance(customerId) {
+    try {
+      const balance = await this.request(`/points/customer/${customerId}/balance`);
+      return balance;
+    } catch (error) {
+      console.error('获取积分余额失败:', error);
+      throw error;
+    }
+  }
+
+  // 获取客户会员信息
+  async getCustomerMemberInfo(customerId) {
+    try {
+      const memberInfo = await this.request(`/member/customer/${customerId}/info`);
+      return memberInfo;
+    } catch (error) {
+      console.error('获取会员信息失败:', error);
+      throw error;
+    }
+  }
+
+  // 获取会员等级规则
+  async getMemberLevels() {
+    try {
+      const levels = await this.request('/member/levels');
+      return levels;
+    } catch (error) {
+      console.error('获取会员等级规则失败:', error);
+      throw error;
+    }
+  }
+
+  // 获取客户消费统计
+  async getCustomerConsumptionStats(customerId) {
+    try {
+      const stats = await this.request(`/member/customer/${customerId}/consumption-stats`);
+      return stats;
+    } catch (error) {
+      console.error('获取消费统计失败:', error);
+      throw error;
+    }
+  }
+
+  // 更新客户累计消费金额
+  async updateCustomerTotalConsumption(customerId) {
+    try {
+      const result = await this.request(`/member/customer/${customerId}/update-consumption`, {
+        method: 'POST'
+      });
+      return result;
+    } catch (error) {
+      console.error('更新累计消费金额失败:', error);
+      throw error;
+    }
+  }
+
+  // 更新客户会员等级
+  async updateCustomerMemberLevel(customerId) {
+    try {
+      const result = await this.request(`/member/customer/${customerId}/update-level`, {
+        method: 'POST'
+      });
+      return result;
+    } catch (error) {
+      console.error('更新会员等级失败:', error);
+      throw error;
     }
   }
 

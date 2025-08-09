@@ -2,9 +2,14 @@
   "pages": [
     "pages/login/login",
     "pages/index/index",
+    "pages/goods/list",
     "pages/account/account",
     "pages/orders/orders",
-    "pages/logs/logs"
+    "pages/points/points",
+    "pages/member/member",
+    "pages/logs/logs",
+    "pages/payment/order",
+    "pages/payment/order-success"
   ],
   "window": {
     "navigationBarTextStyle": "black",
@@ -19,6 +24,12 @@
     "list": [
       {
         "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "images/tab-home.png",
+        "selectedIconPath": "images/tab-home.png"
+      },
+      {
+        "pagePath": "pages/goods/list",
         "text": "点餐",
         "iconPath": "images/tab-order.png",
         "selectedIconPath": "images/tab-order-active.png"

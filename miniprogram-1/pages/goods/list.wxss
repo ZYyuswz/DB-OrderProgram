@@ -1,0 +1,484 @@
+/* pages/goods/list.wxss */
+page {
+  background: #f5f5f5;
+}
+page,view,image,input {
+  display: block;
+  box-sizing: border-box;
+}
+.header {
+  padding: 32rpx;
+  background: #fff;
+  display: flex;
+  align-items: center;
+}
+.header .search {
+  position: relative;
+  width: 650rpx;
+  height: 66rpx;
+}
+.header .search input {
+  border: 1rpx solid #e3e3e3;
+  width: 100%;
+  height: 100%;
+  border-radius: 30rpx;
+  padding-left: 60rpx; 
+}
+.header .search image {
+  width: 35rpx;
+  height: 35rpx;
+  position: absolute;
+  top: 16rpx;
+  right: 40rpx;
+  z-index: 9999;
+}
+.header .show-type {
+  width: 40rpx;
+  height: 40rpx;
+  margin-left: 20rpx;
+}
+.line {
+  width: 100vw;
+  height: 2rpx;
+  background: #dfdfdf;
+}
+.filters {
+  width: 100vw;
+  height: 88rpx;
+  background: #fff;
+  display: flex;
+  justify-content: space-around;
+}
+.filters .item {
+  line-height: 88rpx;
+}
+.filters .active {
+  color:#fa1e26;
+}
+/* 
+  请求 1: 将菜品展示改为列表形式
+  新请求: 将list1的背景色改为灰色
+*/
+.list1-container {
+  padding: 0 10px; /* 给列表容器一些边距 */
+}
+
+.list1 {
+  display: flex; /* 使用flex布局，实现图片和信息左右排列 */
+  align-items: flex-start; /* 顶部对齐 */
+  
+  /* === 新增/修改的样式 === */
+  background-color: #f9f9f9; /* 新增：设置背景为浅灰色 */
+  padding: 10px;             /* 修改：给上下左右都增加内边距 */
+  border-radius: 8px;        /* 新增：添加圆角，使其看起来更柔和 */
+  margin-bottom: 10px;       /* 新增：项目之间的外边距，替代原有的border-bottom */
+  /* border-bottom: 1px solid #f2f2f2; */ /* 移除：原有的下边框线 */
+}
+
+.list1 .goods-link {
+  display: flex;
+  width: 100%;
+}
+
+.list1 .goods-img {
+  width: 80px;  /* 可以根据新的布局微调尺寸 */
+  height: 120px; /* 可以根据新的布局微调尺寸 */
+  border-radius: 5px;
+  margin-right: 10px;
+  flex-shrink: 0; /* 防止图片被压缩 */
+}
+
+.list1 .goods-info {
+  flex: 1; /* 占据剩余所有空间，确保文字不会被截断 */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* 让内容在垂直方向上均匀分布 */
+  min-height: 80px; /* 最小高度与图片保持一致 */
+}
+
+.list1 .info-top {
+  /* 包含标题和描述的上半部分 */
+}
+
+.list1 .info-bottom {
+  /* 包含价格和购买按钮的下半部分 */
+}
+
+.list1 .title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  /* 防止标题过长换行 */
+  white-space: normal; 
+  word-break: break-all;
+}
+
+.list1 .characteristic {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.list1 .buy-info {
+  display: flex;
+  justify-content: space-between; /* 两端对齐，销量在左，按钮在右 */
+  align-items: center; /* 垂直居中 */
+  margin-top: 8px;
+}
+
+.list1 .estimatedTime {
+  font-size: 12px;
+  color: #999;
+}
+
+
+.sku-mask {
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.3);
+}
+.sku-container {
+  position: fixed;
+  width: 100vw;
+  bottom: 90rpx;
+  left: 0;
+  background: #fff;
+  padding: 32rpx 32rpx 0 32rpx;
+}
+.sku-container .close {
+  position: absolute;
+  width: 54rpx;
+  height: 54rpx;
+  top: 16rpx;
+  right: 16rpx;
+  /* border: 1rpx solid #666;
+  border-radius: 50%; */
+}
+.sku-container .sku {
+  border-bottom: 1rpx solid #eee;
+  padding-bottom: 24rpx;
+  margin-bottom: 16rpx;
+}
+.sku-container .sku .t {
+  color: #333;
+}
+.sku-container .sku .items {
+  display: flex;
+  flex-wrap: wrap;
+}
+.sku-container .sku .items text {
+  padding: 8rpx;
+  border: 1rpx solid #999;
+  color: #999;
+  margin: 24rpx 24rpx 0 0;
+  font-size: 26rpx;
+  border-radius: 12rpx;
+}
+.sku-container .sku .items text.active {
+  border: 1rpx solid #e64340;
+  color: #e64340;
+}
+.sku-container .num {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+.sku-container .num .t {
+  color: #333;
+}
+.sku-container .num .num-box {
+  display: flex;
+}
+.sku-container .num .num-box .a {
+  width: 64rpx;
+  height: 64rpx;
+  border: 1rpx solid #999;
+  text-align: center;
+  line-height: 64rpx;
+  font-size: 46rpx;
+  color: #666;
+}
+.sku-container .num .num-box .b {
+  color: #333;
+  line-height: 64rpx;
+  padding: 0 32rpx;
+  border-top: 1rpx solid #999;
+  border-bottom: 1rpx solid #999;
+}
+.sku-btn {
+  width: 100vw;
+  height: 90rpx;
+  line-height: 90rpx;
+  background: #e64340;
+  color: #fff;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  text-align: center;
+}
+.originalPrice {
+  color: #aaa;
+  text-decoration: line-through;
+  margin-left: 20rpx;
+  font-size: 28rpx;
+}
+/* 添加以下样式 */
+
+/* 主容器 */
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* 内容区域 */
+.content-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* 分类导航 */
+.category-nav {
+  width: 25%;
+  background-color: #f8f8f8;
+  height: 100%;
+}
+
+.category-item {
+  padding: 20rpx;
+  font-size: 28rpx;
+  text-align: center;
+  border-left: 4rpx solid transparent;
+  position: relative;
+  color: #666;
+}
+
+.category-item.active {
+  background-color: #fff;
+  color: #e93b3d;
+  font-weight: bold;
+  border-left-color: #e93b3d;
+}
+
+.category-item.active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 4rpx;
+  background-color: #e93b3d;
+}
+
+/* 菜品列表 */
+.goods-list {
+  width: 75%;
+  height: 100%;
+  padding: 0 20rpx;
+  box-sizing: border-box;
+}
+
+/* 分类标题 */
+.category-title {
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #eee;
+  margin-bottom: 20rpx;
+  font-size: 40rpx;
+  font-weight: bold;
+  display: flex;
+  flex-direction: column;
+}
+
+.category-desc {
+  font-size: 24rpx;
+  color: #999;
+  font-weight: normal;
+  margin-top: 8rpx;
+}
+
+.small-text {
+  font-size: 28rpx;  /* 调小字体，默认一般为28-32rpx */
+  color: #666;       /* 可选：浅色字体更显简洁 */
+  line-height: 1.4;  /* 合适的行高 */
+}
+
+/* 在原有样式基础上添加以下购物车相关样式 */
+
+/* 购物车容器 */
+.cart-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+/* 底部购物车栏 */
+.cart-bar {
+  display: flex;
+  align-items: center;
+  height: 100rpx;
+  background: #fff;
+  border-top: 1rpx solid #e3e3e3;
+  padding: 0 20rpx;
+}
+
+.cart-icon {
+  position: relative;
+  width: 80rpx;
+  height: 80rpx;
+  margin-top: -20rpx;
+}
+
+.cart-icon image {
+  width: 100%;
+  height: 100%;
+}
+
+.cart-badge {
+  position: absolute;
+  top: -10rpx;
+  right: -10rpx;
+  min-width: 36rpx;
+  height: 36rpx;
+  border-radius: 18rpx;
+  background: #fa1e26;
+  color: #fff;
+  font-size: 22rpx;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5rpx;
+}
+
+.cart-info {
+  flex: 1;
+  padding: 0 20rpx;
+}
+
+.cart-price {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.cart-hint {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 5rpx;
+}
+
+.checkout-btn {
+  background: #fa1e26;
+  color: #fff;
+  height: 70rpx;
+  line-height: 70rpx;
+  border-radius: 35rpx;
+  padding: 0 40rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.cart-bar {
+  position: fixed; /* 固定定位 */
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100; /* 确保在最上层 */
+  background-color: #fff;
+  /* 以下是原有的样式，仅作展示 */
+  display: flex;
+  align-items: center;
+  /* 可以根据需要添加阴影等效果 */
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05); 
+}
+
+/* 防止菜品列表底部被固定的购物车栏遮挡 */
+.goods-list {
+  /* 留出购物栏的高度，可以根据实际高度微调 */
+  padding-bottom: 70px; 
+}
+
+
+/* 
+  请求 3: 将菜品加减相关组件放大
+  (同时应用于列表和购物车弹窗)
+*/
+.goods-action .minus-btn,
+.goods-action .plus-btn,
+.item-actions .minus-btn,
+.item-actions .plus-btn {
+  display: inline-block;
+  width: 28px;   /* 增大宽度 */
+  height: 28px;  /* 增大高度 */
+  line-height: 26px; /* 垂直居中 */
+  text-align: center;
+  border: 1px solid #007aff;
+  border-radius: 50%; /* 圆形按钮 */
+  font-size: 20px;  /* 增大字体 */
+  color: #007aff;
+}
+
+.goods-action .minus-btn,
+.item-actions .minus-btn {
+  border-color: #ccc;
+  color: #ccc;
+}
+
+.goods-action .plus-btn,
+.item-actions .plus-btn {
+  background-color: #007aff;
+  color: #fff;
+}
+
+.goods-action .quantity,
+.item-actions .quantity {
+  display: inline-block;
+  padding: 0 8px; /* 增加水平内边距 */
+  font-size: 16px; /* 增大数字字体 */
+  min-width: 20px; /* 确保数字有足够空间 */
+  text-align: center;
+  vertical-align: top; /* 与按钮对齐 */
+  line-height: 28px; /* 与按钮高度一致 */
+}
+
+/* 为商品添加按钮样式 */
+/* 商品卡片中的数量控制器 */
+.list2.goods-action {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  right: 16rpx;
+  bottom: 16rpx;
+  background: rgb(91, 179, 252);
+  border-radius: 40rpx;
+  padding: 0 10rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.1);
+}
+
+.action-btn {
+  width: 100rpx; /* 增大 */
+  height: 60rpx; /* 增大 */
+  border-radius: 50%;
+  background: #8d94fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx; /* 增大 */
+  color: #666;
+  font-weight: bold;
+}
+
+.quantity-text {
+  width: 70rpx; /* 增大 */
+  text-align: center;
+  font-size: 36rpx; /* 增大 */
+  font-weight: bold;
+  color: #333;
+}
