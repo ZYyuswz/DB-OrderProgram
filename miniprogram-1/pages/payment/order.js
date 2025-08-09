@@ -1,14 +1,14 @@
 // pages/order/order.js
 Page({
   data: {
-    tableNumber: 'table:00', // 这里可以动态获取，例如从扫码参数中
+    tableNumber: 'table:1', // 这里可以动态获取，例如从扫码参数中
     orderItems: [], 
     totalPrice: 0,
     remark: '',
     
     // 用于存储需要提交到后端的数据
-    storeId: 1, // 假设店铺ID为0，实际应从全局或缓存获取
-    customerId: 2, // 假设顾客ID为0，实际应在用户登录后获取
+    storeId: 1, // 假设店铺ID为1，实际应从全局或缓存获取
+    customerId: 1, // 假设顾客ID为1，实际应在用户登录后获取
   },
 
   onLoad: function (options) {
@@ -16,6 +16,7 @@ Page({
     try {
       const items = wx.getStorageSync('order_items');
       const price = wx.getStorageSync('order_total_price');
+      console.log(items,price);
       if (items && price) {
         this.setData({
           orderItems: items,
@@ -62,8 +63,8 @@ Page({
     return {
       order: {
           "tableId": 1,
-          "customerId": 2,
-          "storeId": 2,          
+          "customerId": 1,
+          "storeId": 1,          
           "orderTime": "2024-10-05T14:30:45"
 
       },
@@ -100,8 +101,9 @@ Page({
         dishId: item.dishId,
         quantity: item.quantity,
         unitPrice: item.Price,
-        specialRequests: item.remark 
+        specialRequests: item.dishRemark 
       };
+      
     });
 
     // 组装成最终的请求体
@@ -139,7 +141,7 @@ Page({
           console.log('订单提交成功，后端返回:', res.data);
                    
             // 订单创建成功后，再根据需求发起GET请求获取总价
-          that.getTotalPriceFromServer(this.data.customerId);          
+          that.getTotalPriceFromServer(res.data.data);          
         } else {
           // 其他状态码，表示有错误
           wx.hideLoading();
@@ -167,15 +169,16 @@ Page({
    * @param {number} orderId - 订单ID
    */
   getTotalPriceFromServer: function(orderId) {
-    const backendApiUrl = `http://localhost:5000/api/order/${orderId}`; 
-
+    const backendApiUrl = 'http://localhost:5000/api/order/'+ orderId; 
+    console.log(backendApiUrl);
     wx.request({
       url: backendApiUrl,
       method: 'GET',
       success: (res) => {
         wx.hideLoading(); // 在这里隐藏加载提示
         if (res.statusCode === 200) {
-          console.log(`后端确认总价为: ${res.data.totalPrice}`);
+          console.log(res.data)
+          console.log(`后端确认总价为: ${res.data.data.finalPrice}`);
           wx.showToast({
             title: '下单成功！',
             icon: 'success',

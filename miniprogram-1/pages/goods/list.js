@@ -2,18 +2,29 @@
 
 Page({
   data: {
-    listType: 1,
-    name: '',
-    page: 1,
     categories: [], // 分类数组
     activeCategory: null, // 当前激活分类
-    goods: [],
-    skuCurGoods: null,
     
     cartItems: [], // 购物车商品
     totalPrice: 0, // 总价格
     totalQuantity: 0, // 总数量
-    showCartPopup: false, // 是否显示购物车弹窗
+
+    showDishPopup: false,
+    selectedDish: {},
+    dishRemark: '',
+    selectedIceOption: '',
+    selectedSpicyOption: '',
+    iceOptions: [
+      { label: '去冰', value: '去冰' },
+      { label: '少冰', value: '少冰' },
+      { label: '正常', value: '正常' },
+    ],
+    spicyOptions: [
+      { label: '不辣', value: '不辣' },
+      { label: '微辣', value: '微辣' },
+      { label: '中辣', value: '中辣' },
+      { label: '重辣', value: '重辣' },
+    ],
     $t: {
       common: {
         searchPlaceholder: "搜索菜品",
@@ -51,7 +62,8 @@ Page({
       3: { name: "汤", description: "清炖浓煮，荤素皆宜" },
       4: { name: "主食", description: "米面杂粮，煮炒蒸烤" },
       5: { name: "甜点", description: "香甜可口，冷热皆备" },
-      6: { name: "饮料", description: "清凉饮品，解渴佳品" }
+      6: { name: "饮料", description: "清凉饮品，解渴佳品" },
+      7:{name:"忌口", description:"香菜和辣度选择"}
     };
   
     const categoryResult = {};
@@ -75,8 +87,10 @@ Page({
         dishName: dish.dishName,
         pic: "/images/dish/ID-"+ dish.dishId +".png",
         characteristic: dish.description,
-        Price: dish.price,  
-        estimatedTime:dish.estimatedTime     
+        Price: dish.price, 
+        categoryId:dish.categoryId, 
+        estimatedTime:dish.estimatedTime,
+        dishRemark:''     
       });
     });
   
@@ -85,56 +99,6 @@ Page({
   },
   
   
-    // 获取测试分类数据
-    getTestCategories: function() {
-      return [
-        {
-          id: 1,
-          name: "前菜",
-          description: "开胃冷盘，精致小食",
-          goods: [
-            {
-              dishId: 2,
-              dishName: "拍黄瓜",
-              pic: "/images/dish/2.jpg",
-              characteristic: "清爽开胃，蒜香浓郁",
-              estimatedTime:5,
-              Price: 12              
-            }
-          ]
-        },
-        {
-          id: 2,
-          name: "主菜",
-          description: "招牌热菜，美味佳肴",
-          goods: [
-            {
-              dishId: 1,
-              dishName: "宫保鸡丁",
-              pic: "/images/dish/1.jpg",
-              characteristic: "经典川菜，微辣，鸡肉鲜嫩",
-              estimatedTime:15,
-              Price: 28
-            }
-          ]
-        },
-        {
-          id: 3,
-          name: "饮料",
-          description: "清凉饮品，解渴佳品",
-          goods: [
-            {
-              dishId: 3,
-              dishName: "可乐",
-              pic: "/images/dish/3.jpg",
-              characteristic: "冰镇可乐，畅爽解渴",
-              estimatedTime:2,
-              Price: 6
-            }
-          ]
-        }
-      ];
-    },
   
 // 增加商品数量
 increaseQuantity: function(e) {
@@ -146,6 +110,68 @@ increaseQuantity: function(e) {
 decreaseQuantity: function(e) {
   const dishId = e.currentTarget.dataset.id;
   this.removeFromCart(dishId);
+},
+
+
+// 打开弹窗
+openDishPopup(e) {
+  const dish = e.currentTarget.dataset.dish;
+  this.setData({
+    selectedDish: dish,
+    showDishPopup: true,
+    dishRemark: '',
+    selectedIceOption: ''
+  });
+},
+
+// 关闭弹窗
+closeDishPopup() {
+  this.setData({
+    showDishPopup: false,
+    selectedDish: {},
+    dishRemark: '',
+    selectedIceOption: ''
+  });
+  
+},
+
+// 输入备注
+onRemarkInput(e) {
+  this.setData({ dishRemark: e.detail.value });
+},
+
+// 选择冰量
+onIceOptionChange(e) {
+  this.setData({ selectedIceOption: e.detail.value });
+},
+onSpicyOptionChange(e) {
+  this.setData({ selectedSpicyOption: e.detail.value });
+},
+
+// 确认选择
+confirmDishPopup() {
+  let remark = this.data.dishRemark;
+  let dishId = this.data.selectedDish.dishId;
+  
+  // 如果是饮料，合并冰量选项到备注
+  if (this.data.selectedDish.categoryId === 6 && this.data.selectedIceOption || this.data.selectedDish.dishName === "辣度选择" && this.data.selectedSpicyOption) {
+    console.log(this.data.selectedIceOption,this.data.selectedSpicyOption);
+    remark = `${this.data.selectedIceOption};${this.data.selectedSpicyOption};${remark}`;
+  }
+  console.log(remark);
+  // 保存到数据库或购物车项
+
+  //TODO：将remark添加到对应dishId的dishRemark区
+  for (const category of this.data.categories) {
+    for (const good of category.goods) {
+      if (good.dishId == dishId) {
+        good.dishRemark = remark;
+        console.log("下单前的商品数据",good);
+      }
+    }
+  }
+  this.addToCart(dishId);
+  this.closeDishPopup();
 },
 
 // 添加商品到购物车
@@ -171,7 +197,8 @@ addToCart: function(dishId) {
             dishId: good.dishId,
             dishName: good.dishName,
             Price: good.Price,
-            quantity: 1
+            quantity: 1,
+            dishRemark:good.dishRemark
           });
         }
         
@@ -211,8 +238,7 @@ removeFromCart: function(dishId) {
           } else {
             cartItems.splice(itemIndex, 1);
           }
-        }
-        
+        }        
         break;
       }
     }
@@ -285,6 +311,7 @@ checkout: function() {
   // 1. 将购物车数据和总价存入本地缓存
   try {
     wx.setStorageSync('order_items', this.data.cartItems);
+    console.log(his.data.cartItems);
     wx.setStorageSync('order_total_price', this.data.totalPrice);
   } catch (e) {
     console.error('存储订单数据失败', e);
@@ -380,100 +407,5 @@ checkout: function() {
     }
     
     this.setData({ goods: sortedGoods });
-  },
-
-  // 加入购物车
-  addShopCar: function(e) {
-    const dishId = e.currentTarget.dataset.id;
-    const dish = this.data.goods.find(function(item) {
-      return item.dishId == dishId;
-    });
-    
-    if (!dish) return;
-    
-    // 50%概率显示SKU弹窗
-    if (Math.random() > 0.5) {
-      this.showSkuForDish(dish);
-    } else {
-      wx.showToast({
-        title: dish.dishName + ' ' + this.data.$t.goodsDetail.addCartSuccess,
-        icon: 'success'
-      });
-    }
-  },
-  
-  // 显示菜品SKU选择
-  showSkuForDish: function(dish) {
-    const skuData = {
-      basicInfo: {
-        id: dish.dishId,
-        name: dish.dishName,
-        storesBuy: 1,
-        stores: dish.stores
-      },
-      properties: [
-        {
-          id: 1,
-          name: "规格",
-          childsCurGoods: [
-            { id: 101, propertyId: 1, name: "小份", active: true },
-            { id: 102, propertyId: 1, name: "中份", active: false },
-            { id: 103, propertyId: 1, name: "大份", active: false }
-          ]
-        }
-      ]
-    };
-    
-    this.setData({ skuCurGoods: skuData });
-  },
-  
-  // 关闭SKU弹窗
-  closeSku: function() {
-    this.setData({ skuCurGoods: null });
-  },
-  
-  // 选择SKU属性
-  skuSelect: function(e) {
-    const pid = e.currentTarget.dataset.pid;
-    const id = e.currentTarget.dataset.id;
-    const skuCurGoods = JSON.parse(JSON.stringify(this.data.skuCurGoods));
-    
-    // 更新选中状态
-    const property = skuCurGoods.properties.find(function(p) {
-      return p.id == pid;
-    });
-    property.childsCurGoods.forEach(function(item) {
-      item.active = item.id == id;
-    });
-    
-    this.setData({ skuCurGoods: skuCurGoods });
-  },
-  
-  // 增加购买数量
-  storesJia: function() {
-    const skuCurGoods = JSON.parse(JSON.stringify(this.data.skuCurGoods));
-    if (skuCurGoods.basicInfo.storesBuy < skuCurGoods.basicInfo.stores) {
-      skuCurGoods.basicInfo.storesBuy++;
-      this.setData({ skuCurGoods: skuCurGoods });
-    }
-  },
-  
-  // 减少购买数量
-  storesJian: function() {
-    const skuCurGoods = JSON.parse(JSON.stringify(this.data.skuCurGoods));
-    if (skuCurGoods.basicInfo.storesBuy > 1) {
-      skuCurGoods.basicInfo.storesBuy--;
-      this.setData({ skuCurGoods: skuCurGoods });
-    }
-  },
-  
-  // 添加带SKU的商品到购物车
-  addCarSku: function() {
-    const dish = this.data.skuCurGoods.basicInfo;
-    wx.showToast({
-      title: dish.name + ' ' + this.data.$t.goodsDetail.addCartSuccess,
-      icon: 'success'
-    });
-    this.closeSku();
   }
 });

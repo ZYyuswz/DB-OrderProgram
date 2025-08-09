@@ -307,6 +307,7 @@ page,view,image,input {
   line-height: 1.4;  /* 合适的行高 */
 }
 
+
 /* 在原有样式基础上添加以下购物车相关样式 */
 
 /* 购物车容器 */
@@ -481,4 +482,83 @@ page,view,image,input {
   font-size: 36rpx; /* 增大 */
   font-weight: bold;
   color: #333;
+}
+
+/* 弹窗外层，覆盖页面其它元素 */
+.dish-popup {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+}
+
+/* 半透明遮罩 */
+.popup-mask {
+  position: absolute;
+  left: 0; top: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.45);
+}
+
+/* 弹窗主体（居中或自定义） */
+.popup-content {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 12%;
+  max-height: 76%;
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px 16px 20px 16px;
+  box-sizing: border-box;
+  overflow: auto;
+  z-index: 10000;
+}
+
+/* 右上角关闭按钮 */
+.close-btn {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  right: 12px;
+  top: 12px;
+  z-index: 10010;
+}
+
+/* 放大图片 */
+.dish-image {
+  width: 100%;
+  height: 180px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+/* 在图片、名称、描述、备注之间留出空白 */
+.dish-info { margin-top: 12px; }
+.dish-name { font-size: 18px; font-weight: 600; margin-bottom: 8px; display:block; }
+.dish-feature { color: #666; line-height: 1.6; margin-bottom: 12px; display:block; }
+
+/* 备注 */
+.remark { margin-top: 6px; }
+.remark textarea {
+  width: 100%;
+  min-height: 72px;
+  border: 1px solid #eee;
+  padding: 8px;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+/* 确认按钮 */
+.confirm-btn {
+  width: 100%;
+  height: 44px;
+  line-height: 44px;
+  text-align: center;
+  background: #ff4d4f;
+  color: #fff;
+  border-radius: 8px;
+  border: none;
+  margin-top: 12px;
 }
