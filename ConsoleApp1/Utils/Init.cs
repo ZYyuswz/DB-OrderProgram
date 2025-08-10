@@ -1,7 +1,7 @@
-﻿using B_DBManagement.Models;
+﻿using DBManagement.Models;
 
 
-namespace B_DBManagement.Utils
+namespace DBManagement.Utils
 {
     public static class Init
     {

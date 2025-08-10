@@ -1,9 +1,9 @@
 ﻿// OrderService 是一个服务层类，主要负责处理与 “Order” 相关的业务逻辑和数据处理
 // 通俗讲就是OrderController需要的方法
-using B_DBManagement.Models;
-using B_DBManagement.Utils;
+using DBManagement.Models;
+using DBManagement.Utils;
 using Microsoft.EntityFrameworkCore;
-namespace B_DBManagement.Service
+namespace DBManagement.Service
 {
     public class OrderService
     {

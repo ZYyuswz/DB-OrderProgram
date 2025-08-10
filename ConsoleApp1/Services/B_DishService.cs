@@ -1,8 +1,8 @@
 ﻿// DishService 是一个服务层类，主要负责处理与 “Dish” 相关的业务逻辑和数据处理
 // 通俗讲就是DishController需要的方法
-using B_DBManagement.Models;
-using B_DBManagement.Utils;
-namespace B_DBManagement.Service
+using DBManagement.Models;
+using DBManagement.Utils;
+namespace DBManagement.Service
 {
     public class DishService
     {

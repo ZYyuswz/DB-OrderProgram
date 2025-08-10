@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace B_DBManagement.Models
+namespace DBManagement.Models
 {
     /// <summary>
     /// 订单主表实体

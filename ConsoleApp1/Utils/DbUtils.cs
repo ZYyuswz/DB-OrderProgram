@@ -1,7 +1,7 @@
 ﻿using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 
-namespace B_DBManagement.Utils
+namespace DBManagement.Utils
 {
     // 数据库通用工具类，支持所有实体的增删改查操作
     public static class DbUtils

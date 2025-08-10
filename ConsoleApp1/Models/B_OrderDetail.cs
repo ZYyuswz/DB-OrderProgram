@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace B_DBManagement.Models
+namespace DBManagement.Models
 {
     /// <summary>
     /// 订单详情实体

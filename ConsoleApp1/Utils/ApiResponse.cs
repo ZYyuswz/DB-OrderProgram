@@ -1,4 +1,4 @@
-﻿namespace B_DBManagement.Utils
+﻿namespace DBManagement.Utils
 {
     // 统一API响应格式(泛型)
     public class ApiResponse<T>

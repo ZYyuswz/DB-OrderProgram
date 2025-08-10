@@ -1,4 +1,4 @@
-﻿using B_DBManagement.Models;
+﻿using DBManagement.Models;
 using ConsoleApp1.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
@@ -76,7 +76,7 @@ using (var scope = app.Services.CreateScope())
     {
         // 初始化第二个后端的数据库
         var db = services.GetRequiredService<RestaurantDbContext>();
-        B_DBManagement.Utils.Init.InitializeAll(db);
+        DBManagement.Utils.Init.InitializeAll(db);
         Console.WriteLine("数据库初始化成功！");
     }
     catch (Exception ex)

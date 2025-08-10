@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using B_DBManagement.Service;
-using B_DBManagement.Models;
-using B_DBManagement.Utils;
+using DBManagement.Service;
+using DBManagement.Models;
+using DBManagement.Utils;
 
-namespace B_DBManagement.Controller
+namespace DBManagement.Controller
 {
     [ApiController]  // 标记为API控制器，自动处理模型绑定和验证
     [Route("api/[controller]")] // [controller] 是一个占位符，会被自动替换为控制器类名的前半部分，API路由前缀：api/dish

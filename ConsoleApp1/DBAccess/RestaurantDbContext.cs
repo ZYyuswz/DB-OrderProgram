@@ -2,7 +2,7 @@
 // 主要作用是映射数据库结构、管理实体与数据库表的关系、提供数据访问入口
 using Microsoft.EntityFrameworkCore;
 
-namespace B_DBManagement.Models
+namespace DBManagement.Models
 {
     // RestaurantDbContext 继承自 DbContext,封装了数据库连接、查询、保存等基础操作
     public class RestaurantDbContext : DbContext
