@@ -100,9 +100,10 @@ Page({
       return {
         dishId: item.dishId,
         quantity: item.quantity,
-        unitPrice: item.Price
-        //specialRequests: item.remark 
+        unitPrice: item.Price,
+        specialRequests: item.dishRemark 
       };
+      
     });
 
     // 组装成最终的请求体
