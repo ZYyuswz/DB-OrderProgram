@@ -9,9 +9,7 @@
     "pages/member/member",
     "pages/logs/logs",
     "pages/payment/order",
-    "pages/payment/order-success",
-    "pages/reservation/reservation",
-    "pages/reservation/reserve-success"
+    "pages/payment/order-success"
   ],
   "window": {
     "navigationBarTextStyle": "black",
@@ -35,12 +33,6 @@
         "text": "点餐",
         "iconPath": "images/tab-order.png",
         "selectedIconPath": "images/tab-order-active.png"
-      },
-      {
-        "pagePath": "pages/reservation/reservation",
-        "text": "预定",
-        "iconPath": "images/tab-reservation.png",
-        "selectedIconPath": "images/tab-reservation.png"
       },
       {
         "pagePath": "pages/account/account",

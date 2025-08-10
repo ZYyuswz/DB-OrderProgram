@@ -35,9 +35,13 @@
           <text class="title-text">{{item.name}}</text>
           <text class="category-desc">{{item.description}}</text>
         </view>
+        
+        <!-- ====================================================== -->
+        <!-- 修改开始：这里将原来的网格布局改为了新的列表布局 -->
+        <!-- ====================================================== -->
         <view class="list1-container">
           <view class="list1" wx:for="{{item.goods}}" wx:key="dishId" wx:for-item="dish">
-            <view class="goods-link" bindtap="openDishPopup" data-dish="{{dish}}">
+            <navigator url="#" class="goods-link">
               <!-- 左侧图片 -->
               <image class="goods-img" mode="aspectFill" src="{{dish.pic}}"></image>
               <!-- 右侧信息 -->
@@ -67,7 +71,7 @@
                 </view>
                 
               </view>
-            </view>
+            </navigator>
           </view>
         </view>        
       </block>
@@ -113,49 +117,26 @@
 <!-- 弹窗遮罩层 -->
 <view class="mask" wx:if="{{showCartPopup}}" bindtap="toggleCartPopup"></view>
 
-<!-- 菜品详情弹窗 -->
-<view class="dish-popup" wx:if="{{showDishPopup}}">
-  <view class="popup-mask" bindtap="closeDishPopup"></view>
+<!-- SKU弹窗部分保持不变 -->
 
-  <view class="popup-content">
-    <image class="close-btn" src="/images/icon/close.png" bindtap="closeDishPopup"></image>
-
-    <!-- 放大菜品图 -->
-    <image class="dish-image" src="{{selectedDish.pic}}" mode="aspectFill"></image>
-
-    <!-- 菜品名称与特色 -->
-    <view class="dish-info">
-      <text class="dish-name">{{selectedDish.dishName}}</text>
-      <text class="dish-feature">{{selectedDish.characteristic}}</text>
+<block wx:if="{{skuCurGoods}}">
+  <view class="sku-mask"></view>
+  <view class="sku-container">
+    <image class="close" src="/images/icon/close.svg" bindtap="closeSku"></image>
+    <view class="sku" wx:for="{{skuCurGoods.properties}}" wx:key="id">
+      <view class="t">{{item.name}}</view>
+      <view class="items">
+        <text class="{{small.active? 'active' : ''}}" wx:for="{{item.childsCurGoods}}" wx:for-item="small" wx:key="id" data-pid="{{small.propertyId}}" data-id="{{small.id}}" bindtap="skuSelect">{{small.name}}</text>
+      </view>
     </view>
-
-    <!-- 饮料选项 -->
-    <view wx:if="{{selectedDish.categoryId === 6}}" class="ice-options">
-      <text>请选择冰量：</text>
-      <radio-group bindchange="onIceOptionChange">
-        <label wx:for="{{iceOptions}}" wx:key="value">
-          <radio value="{{item.value}}" checked="{{selectedIceOption === item.value}}"></radio> {{item.label}}
-        </label>
-      </radio-group>
+    <view class="num">
+      <view class="t">{{ $t.goodsDetail.buyNumber }}</view>
+      <view class="num-box">
+        <text class="a" bindtap="storesJian">-</text>
+        <text class="b">{{skuCurGoods.basicInfo.storesBuy}}</text>
+        <text class="a" bindtap="storesJia">+</text>
+      </view>
     </view>
-
-    <!-- 加辣 -->
-    <view wx:if="{{selectedDish.dishName === '辣度选择'}}" class="ice-options">
-      <text>请选择辣度：</text>
-      <radio-group bindchange="onSpicyOptionChange">
-        <label wx:for="{{spicyOptions}}" wx:key="value">
-          <radio value="{{item.value}}" checked="{{selectedSpicyOption === item.value}}"></radio> {{item.label}}
-        </label>
-      </radio-group>
-    </view>
-
-    <!-- 备注输入 -->
-    <view class="remark">
-      <text>备注：</text>
-      <textarea placeholder="请输入备注内容" value="{{dishRemark}}" bindinput="onRemarkInput"></textarea>
-    </view>
-
-    <button class="confirm-btn" bindtap="confirmDishPopup">确定</button>
   </view>
-</view>
-
+  <view class="sku-btn" bindtap="addCarSku">{{ $t.goodsDetail.addCartBtn }}</view>
+</block>

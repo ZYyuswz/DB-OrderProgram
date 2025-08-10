@@ -4,6 +4,7 @@
   <view class="placeholder-content">
     <text class="placeholder-icon">🍽️</text>
     <text class="placeholder-title">点餐功能</text>
-    <view class="order-btn" bindtap="order">去点餐</view>
+    <text class="placeholder-desc">此页面预留给其他组进行开发</text>
+    <text class="placeholder-desc">将包含门店查询、菜品选择、菜品结算等功能</text>
   </view>
 </view>
