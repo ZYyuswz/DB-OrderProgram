@@ -156,9 +156,9 @@ confirmDishPopup() {
   // 如果是饮料，合并冰量选项到备注
   if (this.data.selectedDish.categoryId === 6 && this.data.selectedIceOption || this.data.selectedDish.dishName === "辣度选择" && this.data.selectedSpicyOption) {
     console.log(this.data.selectedIceOption,this.data.selectedSpicyOption);
-    remark = `${this.data.selectedIceOption};${this.data.selectedSpicyOption};${remark}`;
+    remark = `${this.data.selectedIceOption}${this.data.selectedSpicyOption}${remark}`;
   }
-  console.log(remark);
+
   // 保存到数据库或购物车项
 
   //TODO：将remark添加到对应dishId的dishRemark区
