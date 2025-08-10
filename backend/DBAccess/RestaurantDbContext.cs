@@ -1,5 +1,6 @@
 ﻿// RestaurantDbContext 类是基于 Entity Framework Core（EF Core）实现的数据库上下文类
 // 主要作用是映射数据库结构、管理实体与数据库表的关系、提供数据访问入口
+using DB_Prog.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace DBManagement.Models
@@ -22,6 +23,9 @@ namespace DBManagement.Models
         public DbSet<TableInfo> TableInfos { get; set; }
         public DbSet<Store> Stores { get; set; }
         public DbSet<Customer> Customers { get; set; }
+        public DbSet<TableInfo> TableInfo { get; set; }
+        public DbSet<TableReservation> TableReservation { get; set; }
+
 
         // OnModelCreating方法配置实体关系与约束
         protected override void OnModelCreating(ModelBuilder modelBuilder)
