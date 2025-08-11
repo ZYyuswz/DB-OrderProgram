@@ -1,5 +1,7 @@
 using Dapper;
 using RestaurantManagement.Models;
+using Oracle.ManagedDataAccess.Client;
+using System.Data;
 
 namespace RestaurantManagement.Services
 {
@@ -63,41 +65,49 @@ namespace RestaurantManagement.Services
         {
             using var connection = _dbService.CreateConnection();
             
-            // 设置默认值
+            var maxId = await connection.ExecuteScalarAsync<int>(
+                "SELECT MAX(STAFFID) FROM PUB.STAFF"
+            );
+            staff.StaffID = maxId + 1;
+
+            // 2. 设置默认值
             staff.HireDate = DateTime.Now;
             staff.CreateTime = DateTime.Now;
             staff.UpdateTime = DateTime.Now;
             if (string.IsNullOrEmpty(staff.Status))
                 staff.Status = "在职";
 
-            // 外键有效性简单校验
+            // 3. 外键有效性简单校验
             if (staff.DepartmentID == 0 || staff.StoreID == 0)
                 throw new ArgumentException("DepartmentID 和 StoreID 必须有效且存在。");
 
-            // 使用Oracle序列在INSERT语句中直接获取下一个ID
+            // 4. 使用Oracle序列插入数据
             var sql = @"
                 INSERT INTO PUB.STAFF 
                 (STAFFID, STAFFNAME, GENDER, POSITION, PHONE, EMAIL, HIREDATE, SALARY, DEPARTMENTID, STOREID, STATUS, WORKSCHEDULE, CREATETIME, UPDATETIME)
                 VALUES
-                (PUB.STAFF_SEQ.NEXTVAL, :StaffName, :Gender, :Position, :Phone, :Email, :HireDate, :Salary, :DepartmentID, :StoreID, :Status, :WorkSchedule, :CreateTime, :UpdateTime)";
+                (:STAFFID, :STAFFNAME, :GENDER, :POSITION, :PHONE, :EMAIL, :HIREDATE, :SALARY, :DEPARTMENTID, :STOREID, :STATUS, :WORKSCHEDULE, :CREATETIME, :UPDATETIME)";
 
             var result = await connection.ExecuteAsync(sql, new {
-                StaffName = staff.StaffName,
-                Gender = staff.Gender,
-                Position = staff.Position,
-                Phone = staff.Phone,
-                Email = staff.Email,
-                HireDate = staff.HireDate,
-                Salary = staff.Salary,
-                DepartmentID = staff.DepartmentID,
-                StoreID = staff.StoreID,
-                Status = staff.Status,
-                WorkSchedule = staff.WorkSchedule,
-                CreateTime = staff.CreateTime,
-                UpdateTime = staff.UpdateTime
+                STAFFID = staff.StaffID,
+                STAFFNAME = staff.StaffName,
+                GENDER = staff.Gender,
+                POSITION = staff.Position,
+                PHONE = staff.Phone,
+                EMAIL = staff.Email,
+                HIREDATE = staff.HireDate,
+                SALARY = staff.Salary,
+                DEPARTMENTID = staff.DepartmentID,
+                STOREID = staff.StoreID,
+                STATUS = staff.Status,
+                WORKSCHEDULE = staff.WorkSchedule,
+                CREATETIME = staff.CreateTime,
+                UPDATETIME = staff.UpdateTime
             });
             return result > 0;
         }
+
+
 
         // 更新员工信息（字段补全，增加外键有效性校验）
         public async Task<bool> UpdateStaffAsync(Staff staff)
