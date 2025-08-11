@@ -4,7 +4,10 @@ Page({
   data: {
     categories: [], // 分类数组
     activeCategory: null, // 当前激活分类
-    
+    toView: '',
+    categoryPositions: [],
+    isClickingCategory: false,
+
     cartItems: [], // 购物车商品
     totalPrice: 0, // 总价格
     totalQuantity: 0, // 总数量
@@ -35,9 +38,9 @@ Page({
   
 
     
-  onLoad: function (options) {
+  onLoad: function () {
     wx.request({
-      url: 'http://localhost:5000/api/dish',
+      url: 'http://localhost:5002/api/dish',
       method: 'GET',
       success: (res) => {        
         if (res.statusCode === 200) {
@@ -97,9 +100,8 @@ Page({
     // 返回数组形式
     return Object.values(categoryResult);
   },
-  
-  
-  
+
+
 // 增加商品数量
 increaseQuantity: function(e) {
   const dishId = e.currentTarget.dataset.id;
@@ -334,49 +336,72 @@ checkout: function() {
       wx.hideLoading();
     }, 500);
   },
-  switchCategory: function(e) {
-    const categoryId = e.currentTarget.dataset.id;
-    this.setData({
-      activeCategory: categoryId
-    });
-  },
+
+
+  // 绑定点击左侧分类
+  switchCategory(e) {
+  const id = e.currentTarget.dataset.id;
+  this.setData({
+    activeCategory: id,
+    toView: 'category' + id, // 控制右侧跳转
+    isClickingCategory: true
+  });
+
+  // 一定时间后恢复滚动监听
+  setTimeout(() => {
+    this.setData({ isClickingCategory: false });
+  }, 300); // 300ms 
+},
+
   
   /**
    * 监听菜品列表滚动
    */
-  onGoodsScroll: function(e) {
-    // 获取滚动位置
-    const scrollTop = e.detail.scrollTop;
-    
-    // 计算当前应该激活的分类
-    // 这里需要实现根据滚动位置确定当前显示的分类
-    // 可以使用IntersectionObserver或计算各分类位置
-    
-    // 示例伪代码：
-    // const categories = this.data.categories;
-    // for (let i = 0; i < categories.length; i++) {
-    //   const category = categories[i];
-    //   const top = this.getCategoryPosition(category.id);
-    //   if (scrollTop >= top && scrollTop < top + categoryHeight) {
-    //     this.setData({ activeCategory: category.id });
-    //     break;
-    //   }
-    // }
+  onReady() {
+    this._calculateCategoryPositions();
   },
   
-  /**
-   * 获取分类位置（需要配合选择器）
-   */
-  getCategoryPosition: function(categoryId) {
-    return new Promise((resolve) => {
-      wx.createSelectorQuery()
-        .select('#category' + categoryId)
-        .boundingClientRect(rect => {
-          resolve(rect.top);
-        })
-        .exec();
+  _calculateCategoryPositions() {
+    const query = wx.createSelectorQuery();
+    const categories = this.data.categories;
+    const positions = [];
+  
+    categories.forEach(cat => {
+      query.select(`#category${cat.id}`).boundingClientRect();
+    });
+  
+    query.exec((res) => {
+      let top = 0;
+      const pos = res.map((rect, i) => {
+        return {
+          id: categories[i].id,
+          top: rect.top + top // 考虑scroll-view偏移
+        };
+      });
+  
+      this.setData({ categoryPositions: pos });
     });
   },
+  
+  onGoodsScroll(e) {
+    if (this.data.isClickingCategory) return; // 屏蔽点击后的滚动更新
+    const scrollTop = e.detail.scrollTop;
+    const categoryPositions = this.data.categoryPositions;
+  
+    let current = this.data.activeCategory;
+  
+    for (let i = categoryPositions.length - 1; i >= 0; i--) {
+      if (scrollTop >= categoryPositions[i].top - 10) {
+        current = categoryPositions[i].id;
+        break;
+      }
+    }
+  
+    if (current !== this.data.activeCategory) {
+      this.setData({ activeCategory: current });
+    }
+  }, 
+  
 
   // 输入处理
   bindinput: function(e) {

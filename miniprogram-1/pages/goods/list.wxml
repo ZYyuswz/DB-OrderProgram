@@ -14,7 +14,7 @@
   <!-- 分类和菜品区域 -->
   <view class="content-container">
     <!-- 左侧分类导航 -->
-    <scroll-view class="category-nav" scroll-y>
+    <scroll-view class="category-nav" scroll-y >
       <view 
         wx:for="{{categories}}" 
         wx:key="id"
@@ -28,7 +28,8 @@
     </scroll-view>
     
     <!-- 右侧菜品列表 -->
-    <scroll-view class="goods-list" scroll-y>
+    <!-- scroll-view 加上 scroll-into-view -->
+  <scroll-view class="goods-list" scroll-y scroll-with-animation="{{true}}" scroll-into-view="{{toView}}" bindscroll="onGoodsScroll">
       <block wx:for="{{categories}}" wx:key="id">
         <!-- 分类标题 -->
         <view class="category-title" id="category{{item.id}}">

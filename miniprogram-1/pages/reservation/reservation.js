@@ -102,7 +102,7 @@ Page({
         // HTTP状态码200或201通常代表成功
         if (res.statusCode === 200 || res.statusCode === 201) {
           console.log('预约提交，后端返回:', res.data);
-          if(res.data.suceess){         
+          if(res.data.suceess === true){         
           // 订单创建成功后，发起GET请求
             this.getResponse(res.data.data);   
           }
