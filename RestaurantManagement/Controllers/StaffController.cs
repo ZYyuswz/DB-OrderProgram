@@ -70,16 +70,6 @@ namespace RestaurantManagement.Controllers
             return Ok();
         }
 
-        // 删除员工
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteStaff(int id)
-        {
-            var result = await _staffService.DeleteStaffAsync(id);
-            if (!result)
-                return BadRequest("删除员工失败。");
-            return Ok();
-        }
-
         // 按条件搜索员工（支持姓名、部门、职位）
         [HttpGet("search")]
         public async Task<IActionResult> SearchStaff(
@@ -120,6 +110,17 @@ namespace RestaurantManagement.Controllers
             if (!result)
                 return BadRequest("签退失败。");
             return Ok();
+        }
+
+        // 获取考勤统计
+        [HttpGet("attendance/statistics")]
+        public async Task<IActionResult> GetAttendanceStatistics(
+            [FromQuery] DateTime? startDate,
+            [FromQuery] DateTime? endDate,
+            [FromQuery] int? departmentId)
+        {
+            var statistics = await _staffService.GetAttendanceStatisticsAsync(startDate, endDate, departmentId);
+            return Ok(statistics);
         }
     }
 }
