@@ -17,7 +17,6 @@
 | CustomerID | NUMBER(10) | FK | 关联客户表的外键，标识下单的客户 |
 | TotalPrice | NUMBER(12,2) | DEFAULT 0 | 订单总价，保留两位小数，默认为0 |
 | OrderStatus | VARCHAR2(20) | CHECK | 订单状态，限定为：待处理/制作中/已完成/已结账 |
-| StaffID | NUMBER(10) | FK | 关联员工表的外键，标识处理订单的服务员 |
 | StoreID | NUMBER(10) | FK | 关联门店表的外键，标识订单所在的门店 |
 | CreateTime | DATE | DEFAULT SYSDATE | 订单记录创建时间，默认为系统当前时间 |
 | UpdateTime | DATE | DEFAULT SYSDATE | 订单记录最后更新时间，默认为系统当前时间 |
@@ -55,7 +54,7 @@
 | Status | VARCHAR2(20) | CHECK | 预约状态，限定为：已预约/已到店/已取消/未到店 |
 | Notes | VARCHAR2(500) | | 预约备注，如特殊要求、庆祝活动等 |
 | CreateTime | DATE | DEFAULT SYSDATE | 预约记录创建时间，默认为系统当前时间 |
-
+| MealTime | NUMBER(1) |DEFAULT 0 CHECK (MealTime IN (0, 1))|0表示中午，1表示晚上|
 ### 2. 菜品管理模块
 
 #### Dish（菜品表）
@@ -163,6 +162,17 @@
 | LoginLocation | VARCHAR2(200) | | 登录地点，通过IP解析得到的地理位置 |
 | LogoutTime | DATE | | 登出时间，用于计算会话时长 |
 
+#### CustomerReview（客户评价表）
+|字段名|类型|约束|描述|
+|--------|------|------|------|
+|ReviewID|	NUMBER(10)|	PK	|评价记录的唯一标识符，使用序列自动生成|
+|CustomerID	|NUMBER(10)	|FK	|关联客户表的外键，标识提交评价的客户|
+|OrderID	|NUMBER(10)	|FK	|关联订单表的外键，标识评价所属的订单|
+|StoreID	|NUMBER(10)	|FK	|关联门店表的外键，标识被评价的门店|
+|OverallRating	|NUMBER(1)	|NOT NULL, CHECK	|总体评分，范围为1-5分，不能为空|
+|Comment	|VARCHAR2(2000)|		|评价文字内容|
+|ReviewTime|	DATE|	DEFAULT SYSDATE|	评价提交时间，默认为系统当前时间|
+|Status	|VARCHAR2(20)	|CHECK	|评价状态，限定为：待审核/已发布/已删除|
 ### 4. 员工管理模块
 
 #### Staff（员工表）
