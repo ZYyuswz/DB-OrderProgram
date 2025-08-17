@@ -8,6 +8,30 @@ page {
   min-height: 100vh;
 }
 
+/* 调试信息样式 */
+.debug-section {
+  background-color: #fff3cd;
+  border: 1rpx solid #ffeaa7;
+  border-radius: 8rpx;
+  padding: 16rpx;
+  margin-bottom: 20rpx;
+}
+
+.debug-title {
+  display: block;
+  font-size: 24rpx;
+  color: #856404;
+  font-weight: bold;
+  margin-bottom: 8rpx;
+}
+
+.debug-content {
+  display: block;
+  font-size: 22rpx;
+  color: #856404;
+  font-family: monospace;
+}
+
 
 
 /* 订单列表 */
@@ -34,6 +58,16 @@ page {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 20rpx;
+}
+
+/* 可点击区域样式 */
+.clickable {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.clickable:active {
+  opacity: 0.7;
 }
 
 .order-info {
@@ -142,12 +176,12 @@ page {
   line-height: 1;
 }
 
-.reorder-btn {
+.review-btn {
   background: #FF8C42;
   color: white;
 }
 
-.reorder-btn:active {
+.review-btn:active {
   background: #E6753A;
 }
 
@@ -335,6 +369,17 @@ page {
   font-size: 26rpx;
   color: #FF8C42;
   font-weight: bold;
+}
+
+/* 暂无菜品详情提示 */
+.no-details {
+  text-align: center;
+  padding: 40rpx 20rpx;
+}
+
+.no-details-text {
+  font-size: 28rpx;
+  color: #999;
 }
 
 /* 价格汇总 */

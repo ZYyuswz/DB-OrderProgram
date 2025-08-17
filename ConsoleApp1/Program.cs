@@ -6,13 +6,19 @@ var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://localhost:5002");
 
 // 添加服务到容器
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // 保持属性名的大小写，不转换为小写
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // 注册自定义服务
 builder.Services.AddScoped<DatabaseService>();
 builder.Services.AddScoped<OrderService>();
+builder.Services.AddScoped<ReviewService>();
 builder.Services.AddScoped<PointsService>();
 builder.Services.AddScoped<MemberService>();
 

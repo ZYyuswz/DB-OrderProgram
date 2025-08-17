@@ -1,16 +1,20 @@
 <!--orders.wxml - 订单记录页面-->
 <view class="container">
+
+  
   <!-- 订单列表 -->
   <view class="orders-list" wx:if="{{orders.length > 0}}">
-    <view 
-      class="order-item" 
-      wx:for="{{orders}}" 
-      wx:key="orderId"
-      data-orderid="{{item.orderId}}"
-      bindtap="viewOrderDetail"
-    >
-      <!-- 订单头部信息 -->
-      <view class="order-header">
+         <view 
+       class="order-item" 
+       wx:for="{{orders}}" 
+       wx:key="orderId"
+     >
+             <!-- 订单头部信息（可点击查看详情） -->
+       <view 
+         class="order-header clickable"
+         data-orderid="{{item.orderId}}"
+         bindtap="viewOrderDetail"
+       >
         <view class="order-info">
           <text class="order-id">订单号：{{item.orderId}}</text>
           <text class="order-time">{{item.orderTime}}</text>
@@ -20,14 +24,22 @@
         </view>
       </view>
 
-      <!-- 餐厅信息 -->
-      <view class="restaurant-info">
+             <!-- 餐厅信息（可点击查看详情） -->
+       <view 
+         class="restaurant-info clickable"
+         data-orderid="{{item.orderId}}"
+         bindtap="viewOrderDetail"
+       >
         <text class="store-name">{{item.storeName}}</text>
         <text class="table-number" wx:if="{{item.tableNumber}}">桌号：{{item.tableNumber}}</text>
       </view>
 
-      <!-- 订单简要内容 -->
-      <view class="order-preview">
+             <!-- 订单简要内容（可点击查看详情） -->
+       <view 
+         class="order-preview clickable"
+         data-orderid="{{item.orderId}}"
+         bindtap="viewOrderDetail"
+       >
         <view class="dishes-preview">
           <text 
             class="dish-item" 
@@ -46,18 +58,21 @@
 
       <!-- 订单底部 -->
       <view class="order-footer">
-        <view class="price-info">
+                 <view 
+           class="price-info clickable"
+           data-orderid="{{item.orderId}}"
+           bindtap="viewOrderDetail"
+         >
           <text class="total-price">¥{{item.totalPrice}}</text>
         </view>
         <view class="order-actions">
-          <button 
-            class="action-btn reorder-btn" 
-            data-orderid="{{item.orderId}}"
-            bindtap="reorder"
-            catchtap="true"
-          >
-            再来一单
-          </button>
+                     <button 
+             class="action-btn review-btn" 
+             data-orderid="{{item.orderId}}"
+             bindtap="goToReview"
+           >
+             评价
+           </button>
         </view>
       </view>
     </view>
@@ -128,11 +143,16 @@
             wx:key="dishName"
           >
             <view class="dish-info">
-              <text class="dish-name">{{item.dishName}}</text>
-              <text class="dish-price">¥{{item.unitPrice}} × {{item.quantity}}</text>
+              <text class="dish-name">{{item.dishName || '未知菜品'}}</text>
+              <text class="dish-price">¥{{item.unitPrice || 0}} × {{item.quantity || 0}}</text>
             </view>
-            <text class="dish-subtotal">¥{{item.subtotal}}</text>
+            <text class="dish-subtotal">¥{{item.subtotal || 0}}</text>
           </view>
+        </view>
+        
+        <!-- 如果没有详情数据，显示提示 -->
+        <view class="no-details" wx:if="{{!selectedOrder.details || selectedOrder.details.length === 0}}">
+          <text class="no-details-text">暂无菜品详情</text>
         </view>
       </view>
 

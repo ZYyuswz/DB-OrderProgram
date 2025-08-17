@@ -4,6 +4,7 @@
     "pages/index/index",
     "pages/account/account",
     "pages/orders/orders",
+    "pages/review/review",
     "pages/points/points",
     "pages/member/member",
     "pages/logs/logs"
