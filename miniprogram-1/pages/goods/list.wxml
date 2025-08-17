@@ -61,9 +61,9 @@
                   </view>
                   <!-- 加减组件 -->
                   <view class="goods-action">
-                    <text class="minus-btn" bindtap="decreaseQuantity" data-id="{{dish.dishId}}">-</text>
+                    <text class="minus-btn" catchtap="decreaseQuantity" data-id="{{dish.dishId}}">-</text>
                     <text class="quantity">{{dish.quantity || 0}}</text>
-                    <text class="plus-btn" bindtap="increaseQuantity" data-id="{{dish.dishId}}">+</text>
+                    <text class="plus-btn" catchtap="increaseQuantity" data-id="{{dish.dishId}}">+</text>
                   </view>
                 </view>
                 

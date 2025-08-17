@@ -317,7 +317,7 @@ checkout: function() {
   // 1. 将购物车数据和总价存入本地缓存
   try {
     wx.setStorageSync('order_items', this.data.cartItems);
-    console.log(his.data.cartItems);
+    console.log(this.data.cartItems);
     wx.setStorageSync('order_total_price', this.data.totalPrice);
   } catch (e) {
     console.error('存储订单数据失败', e);
@@ -364,7 +364,7 @@ checkout: function() {
    * 监听菜品列表滚动
    */
   onReady: function() {
-    //this._calculateCategoryPositions();
+    
   },
   
   _calculateCategoryPositions() {

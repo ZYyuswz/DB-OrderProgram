@@ -58,32 +58,7 @@ Page({
     // 2. 发起POST请求，提交订单
     this.postOrder(postData);
   },
-
-  prepareTestPostData: function() {
-    return {
-      order: {
-          "tableId": 1,
-          "customerId": 1,
-          "storeId": 1,          
-          "orderTime": "2024-10-05T14:30:45"
-
-      },
-      orderDetails: [
-          {
-              "dishId": 2,
-              "quantity": 2,
-              "unitPrice": 28.90,
-              "specialRequests": "不要辣"
-          },
-          {
-              "dishId": 1,
-              "quantity": 1,
-              "unitPrice": 18.50
-          }
-      ]
-  }
   
-  },
   /**
    * 准备要POST到后端的数据
    * @returns {object|null} 组装好的数据对象，或在失败时返回null
@@ -126,7 +101,7 @@ Page({
    */
   postOrder: function(postData) {
     const that = this; // 保存this指向
-    const backendApiUrl = 'http://localhost:5000/api/order'; 
+    const backendApiUrl = 'http://localhost:5002/api/order'; 
     wx.request({
       url: backendApiUrl,
       method: 'POST',
@@ -169,7 +144,7 @@ Page({
    * @param {number} orderId - 订单ID
    */
   getTotalPriceFromServer: function(orderId) {
-    const backendApiUrl = 'http://localhost:5000/api/order/'+ orderId; 
+    const backendApiUrl = 'http://localhost:5002/api/order/'+ orderId; 
     console.log(backendApiUrl);
     wx.request({
       url: backendApiUrl,
