@@ -42,23 +42,7 @@ page,view,image,input {
   height: 2rpx;
   background: #dfdfdf;
 }
-.filters {
-  width: 100vw;
-  height: 88rpx;
-  background: #fff;
-  display: flex;
-  justify-content: space-around;
-}
-.filters .item {
-  line-height: 88rpx;
-}
-.filters .active {
-  color:#fa1e26;
-}
-/* 
-  请求 1: 将菜品展示改为列表形式
-  新请求: 将list1的背景色改为灰色
-*/
+
 .list1-container {
   padding: 0 10px; /* 给列表容器一些边距 */
 }
@@ -131,95 +115,6 @@ page,view,image,input {
   color: #999;
 }
 
-
-.sku-mask {
-  width: 100vw;
-  height: 100vh;
-  position: fixed;
-  top: 0;
-  left: 0;
-  background: rgba(0, 0, 0, 0.3);
-}
-.sku-container {
-  position: fixed;
-  width: 100vw;
-  bottom: 90rpx;
-  left: 0;
-  background: #fff;
-  padding: 32rpx 32rpx 0 32rpx;
-}
-.sku-container .close {
-  position: absolute;
-  width: 54rpx;
-  height: 54rpx;
-  top: 16rpx;
-  right: 16rpx;
-  /* border: 1rpx solid #666;
-  border-radius: 50%; */
-}
-.sku-container .sku {
-  border-bottom: 1rpx solid #eee;
-  padding-bottom: 24rpx;
-  margin-bottom: 16rpx;
-}
-.sku-container .sku .t {
-  color: #333;
-}
-.sku-container .sku .items {
-  display: flex;
-  flex-wrap: wrap;
-}
-.sku-container .sku .items text {
-  padding: 8rpx;
-  border: 1rpx solid #999;
-  color: #999;
-  margin: 24rpx 24rpx 0 0;
-  font-size: 26rpx;
-  border-radius: 12rpx;
-}
-.sku-container .sku .items text.active {
-  border: 1rpx solid #e64340;
-  color: #e64340;
-}
-.sku-container .num {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24rpx;
-}
-.sku-container .num .t {
-  color: #333;
-}
-.sku-container .num .num-box {
-  display: flex;
-}
-.sku-container .num .num-box .a {
-  width: 64rpx;
-  height: 64rpx;
-  border: 1rpx solid #999;
-  text-align: center;
-  line-height: 64rpx;
-  font-size: 46rpx;
-  color: #666;
-}
-.sku-container .num .num-box .b {
-  color: #333;
-  line-height: 64rpx;
-  padding: 0 32rpx;
-  border-top: 1rpx solid #999;
-  border-bottom: 1rpx solid #999;
-}
-.sku-btn {
-  width: 100vw;
-  height: 90rpx;
-  line-height: 90rpx;
-  background: #e64340;
-  color: #fff;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  text-align: center;
-}
 .originalPrice {
   color: #aaa;
   text-decoration: line-through;
@@ -247,6 +142,7 @@ page,view,image,input {
   width: 25%;
   background-color: #f8f8f8;
   height: 100%;
+  z-index: 100;
 }
 
 .category-item {
@@ -501,56 +397,65 @@ page,view,image,input {
   background: rgba(0,0,0,0.45);
 }
 
-/* 弹窗主体（居中或自定义） */
+/* 弹窗主体（允许滚动） */
 .popup-content {
   position: absolute;
   left: 6%;
   right: 6%;
   top: 12%;
-  max-height: 76%;
+  bottom: 12%;
   background: #fff;
   border-radius: 12px;
-  padding: 16px 16px 20px 16px;
+  padding: 16px;
   box-sizing: border-box;
-  overflow: auto;
-  z-index: 10000;
+  overflow-y: auto;       /* ✅ 允许内容垂直滚动 */
+  -webkit-overflow-scrolling: touch; /* iOS 惯性滚动 */
 }
 
-/* 右上角关闭按钮 */
+/* 右上角关闭按钮（固定在弹窗右上） */
 .close-btn {
   position: absolute;
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   right: 12px;
   top: 12px;
   z-index: 10010;
 }
 
-/* 放大图片 */
+/* 图片：等比例缩放，宽度100%，高度自适应 */
 .dish-image {
-  width: 100%;
-  height: 180px;
+  width: auto;
+  height: 100%;
+  max-height: 40vh;       /* 最大高度防止图片过大 */
   border-radius: 8px;
-  object-fit: cover;
+  object-fit: contain;    /* 保持比例，完整显示 */
+  margin-bottom: 12px;
 }
 
-/* 在图片、名称、描述、备注之间留出空白 */
-.dish-info { margin-top: 12px; }
-.dish-name { font-size: 18px; font-weight: 600; margin-bottom: 8px; display:block; }
-.dish-feature { color: #666; line-height: 1.6; margin-bottom: 12px; display:block; }
+/* 名称与描述 */
+.dish-info { margin-bottom: 10px; }
+.dish-name { font-size: 18px; font-weight: 600; margin-bottom: 6px; display:block; }
+.dish-feature { color: #666; line-height: 1.6; margin-bottom: 10px; display:block; }
 
-/* 备注 */
-.remark { margin-top: 6px; }
+/* 饮料/辣度选项区域 */
+.ice-options { margin-bottom: 10px; }
+
+/* 备注：缩小高度 */
+.remark { margin-bottom: 12px; }
 .remark textarea {
   width: 100%;
-  min-height: 72px;
+  min-height: 48px;       /* 缩小高度 */
+  max-height: 120px;
   border: 1px solid #eee;
   padding: 8px;
   border-radius: 6px;
   box-sizing: border-box;
+  resize: none;
+  font-size: 14px;
+  line-height: 1.4;
 }
 
-/* 确认按钮 */
+/* 底部操作按钮 */
 .confirm-btn {
   width: 100%;
   height: 44px;

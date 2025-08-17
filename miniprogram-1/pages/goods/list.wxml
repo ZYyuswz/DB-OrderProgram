@@ -121,8 +121,8 @@
   <view class="popup-content">
     <image class="close-btn" src="/images/icon/close.png" bindtap="closeDishPopup"></image>
 
-    <!-- 放大菜品图 -->
-    <image class="dish-image" src="{{selectedDish.pic}}" mode="aspectFill"></image>
+   <!-- 等比例缩放图片 -->
+   <image class="dish-image" src="{{selectedDish.pic}}" mode="aspectFit" />
 
     <!-- 菜品名称与特色 -->
     <view class="dish-info">

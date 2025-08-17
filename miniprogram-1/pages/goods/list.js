@@ -7,6 +7,7 @@ Page({
     toView: '',
     categoryPositions: [],
     isClickingCategory: false,
+    scrollTop: 0,
 
     cartItems: [], // 购物车商品
     totalPrice: 0, // 总价格
@@ -49,6 +50,9 @@ Page({
           this.setData({
             categories: this.getTransformedDishData(dishes),
             activeCategory: 1 // 默认激活第一个分类
+          }, () => {
+            // 数据渲染完成后再计算
+            setTimeout(() => this._calculateCategoryPositions(), 100);
           });
         }
       }})   
@@ -347,6 +351,8 @@ checkout: function() {
     isClickingCategory: true
   });
 
+  console.log(this.data.activeCategory,this.data.toView,this.data.categoryPositions);
+
   // 一定时间后恢复滚动监听
   setTimeout(() => {
     this.setData({ isClickingCategory: false });
@@ -357,51 +363,82 @@ checkout: function() {
   /**
    * 监听菜品列表滚动
    */
-  onReady() {
-    this._calculateCategoryPositions();
+  onReady: function() {
+    //this._calculateCategoryPositions();
   },
   
   _calculateCategoryPositions() {
-    const query = wx.createSelectorQuery();
-    const categories = this.data.categories;
-    const positions = [];
+    const self = this;
   
-    categories.forEach(cat => {
-      query.select(`#category${cat.id}`).boundingClientRect();
-    });
+    const tryCalc = (attempt = 0) => {
+      const query = wx.createSelectorQuery().in(self);
   
-    query.exec((res) => {
-      let top = 0;
-      const pos = res.map((rect, i) => {
-        return {
-          id: categories[i].id,
-          top: rect.top + top // 考虑scroll-view偏移
-        };
+      // 获取滚动容器 rect 和 所有分类标题 rect
+      query.select('.goods-list').boundingClientRect();
+      query.selectAll('.category-title').boundingClientRect();
+      query.exec(res => {
+        // res[0] -> goods-list rect, res[1] -> array of title rects
+        const scrollRect = res && res[0];
+        const titleRects = (res && res[1]) || [];
+  
+        // 如果没拿到 titleRects，则重试（最多重试 5 次）
+        if (!scrollRect || titleRects.length === 0) {
+          if (attempt < 5) {
+            // 增加一点回退时间，给渲染留足够时间
+            setTimeout(() => tryCalc(attempt + 1), 150 + attempt * 50);
+          } else {
+            console.warn('计算分类位置超时，未找到 category-title 节点', res);
+          }
+          return;
+        }
+  
+        // 计算每个分类相对于滚动容器顶部的 top（考虑 scrollTop）
+        const positions = titleRects.map(rect => {
+          // 确认 rect.id 存在并格式正确
+          const idStr = rect.id || '';
+          const id = idStr.replace('category', '') || null;
+          return {
+            id: id,
+            top: (rect.top - scrollRect.top) + (scrollRect.scrollTop || 0)
+          };
+        }).filter(p => p.id !== null);
+  
+        // 排序并写入 data
+        positions.sort((a, b) => a.top - b.top);
+        self.setData({ categoryPositions: positions });
+        console.log('分类位置计算完成:', positions);
       });
+    };
   
-      this.setData({ categoryPositions: pos });
-    });
+    // 立即尝试一次
+    tryCalc(0);
   },
   
+  
+  
   onGoodsScroll(e) {
-    if (this.data.isClickingCategory) return; // 屏蔽点击后的滚动更新
+    if (this.data.isClickingCategory === true) return;
+    
     const scrollTop = e.detail.scrollTop;
     const categoryPositions = this.data.categoryPositions;
-  
-    let current = this.data.activeCategory;
-  
+    this.setData({ scrollTop }); // 更新滚动位置
+    
+    if (!categoryPositions || categoryPositions.length === 0) return;
+    
+    let current = categoryPositions[0].id;
+    
+    // 从后往前查找当前滚动位置对应的分类
     for (let i = categoryPositions.length - 1; i >= 0; i--) {
-      if (scrollTop >= categoryPositions[i].top - 10) {
+      if (scrollTop >= categoryPositions[i].top - 50) {
         current = categoryPositions[i].id;
         break;
       }
     }
-  
+    
     if (current !== this.data.activeCategory) {
       this.setData({ activeCategory: current });
     }
-  }, 
-  
+  },
 
   // 输入处理
   bindinput: function(e) {
