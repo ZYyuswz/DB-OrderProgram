@@ -1050,7 +1050,7 @@
             Utils.showModal('openTableModal');
         }
 
-        async function showTableDetails(table) {
+       async function showTableDetails(table) {
             try {
                 // 显示加载状态
                 document.getElementById('modal-title').textContent = `桌台${table.tableNumber} - 加载中...`;
@@ -1284,110 +1284,6 @@
                 `;
                 Utils.showNotification('获取桌台详情失败', 'error');
             }
-        }
-
-        // 获取订单状态对应的CSS类
-        function getOrderStatusClass(status) {
-            const statusMap = {
-                '待处理': 'status-default',
-                '制作中': 'status-active',
-                '已完成': 'status-success',
-                '已结账': 'status-finished'
-            };
-            return statusMap[status] || 'status-default';
-        }
-
-        // 打印订单
-        function printOrder(orderId) {
-            // TODO: 实现打印功能
-            Utils.showNotification('打印功能待实现', 'info');
-        }
-
-        function showTableCleaningOptions(table) {
-            document.getElementById('modal-title').textContent = `桌台${table.tableNumber} - 清洁中`;
-            document.getElementById('modal-body').innerHTML = `
-                <div class="table-details-container">
-                    <div style="
-                        text-align: center; 
-                        padding: 3rem 2rem; 
-                        background: linear-gradient(135deg, #fff3e0 0%, #fffef7 100%); 
-                        border: 2px dashed #ff9800; 
-                        border-radius: 16px; 
-                        margin: 1rem 0;
-                        box-shadow: 0 4px 15px rgba(255, 152, 0, 0.1);
-                    ">
-                        <div style="
-                            font-size: 4rem; 
-                            margin-bottom: 1.5rem;
-                            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-                        ">🧹</div>
-                        <h4 style="
-                            color: #f57f17; 
-                            margin-bottom: 1rem;
-                            font-size: 1.5rem;
-                            font-weight: 700;
-                        ">桌台${table.tableNumber} 清洁中</h4>
-                        
-                        <div style="
-                            background: rgba(255,255,255,0.8);
-                            padding: 1.5rem;
-                            border-radius: 12px;
-                            margin: 1.5rem 0;
-                            border: 1px solid #e9ecef;
-                            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-                        ">
-                            <p style="margin: 0.5rem 0; color: #495057;"><strong>桌台号:</strong> ${table.tableNumber}</p>
-                            <p style="margin: 0.5rem 0; color: #495057;"><strong>容量:</strong> ${table.capacity}人</p>
-                            <p style="margin: 0.5rem 0; color: #495057;"><strong>区域:</strong> ${table.area}</p>
-                            <p style="margin: 0.5rem 0; color: #495057;"><strong>当前状态:</strong> <span class="status-badge status-cleaning">清洁中</span></p>
-                        </div>
-                        
-                        <p style="
-                            color: #6c757d; 
-                            margin-bottom: 2rem;
-                            font-size: 1.1rem;
-                            font-weight: 500;
-                        ">该桌台正在清洁中，清洁完成后可设置为空闲状态</p>
-                        
-                        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                            <button onclick="finishCleaning(${table.tableID})" class="btn btn-success" style="
-                                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-                                border: none;
-                                padding: 1rem 2rem;
-                                border-radius: 12px;
-                                font-size: 1.1rem;
-                                font-weight: 600;
-                                text-transform: uppercase;
-                                letter-spacing: 0.5px;
-                                box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-                                transition: all 0.3s ease;
-                                color: white;
-                            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(40, 167, 69, 0.4)'"
-                               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(40, 167, 69, 0.3)'">
-                                ✨ 完成清洁
-                            </button>
-                            
-                            <button onclick="Utils.hideModal('tableModal')" class="btn btn-secondary" style="
-                                background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-                                border: none;
-                                padding: 1rem 1.5rem;
-                                border-radius: 12px;
-                                font-size: 1.1rem;
-                                font-weight: 600;
-                                text-transform: uppercase;
-                                letter-spacing: 0.5px;
-                                box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
-                                transition: all 0.3s ease;
-                                color: white;
-                            " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 20px rgba(108, 117, 125, 0.4)'"
-                               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(108, 117, 125, 0.3)'">
-                                关闭
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            Utils.showModal('tableModal');
         }
 
         async function handleOpenTable() {

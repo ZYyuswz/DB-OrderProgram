@@ -397,6 +397,35 @@ namespace RestaurantManagement.Controllers
             }
         }
 
+        [HttpDelete("details/{detailId}")]
+        public async Task<IActionResult> DeleteOrderDetail(int detailId)
+        {
+            try
+            {
+                // 1. 检查明细是否存在
+                var detail = await _orderService.GetOrderDetailByIdAsync(detailId);
+                if (detail == null)
+                    return NotFound(new { message = "订单菜品不存在" });
+
+                // 2. 删除明细
+                var result = await _orderService.DeleteOrderDetailAsync(detailId);
+                if (result)
+                {
+                    // 3. 更新订单总金额
+                    await _orderService.UpdateOrderTotalAsync(detail.OrderID);
+                    return Ok(new { success = true, message = "删除成功" });
+                }
+                else
+                {
+                    return BadRequest(new { message = "删除失败" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "删除异常", error = ex.Message });
+            }
+        }
+
         [HttpPost("{id}/print")]
         public async Task<IActionResult> PrintOrder(int id)
         {

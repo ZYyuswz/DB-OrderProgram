@@ -363,10 +363,31 @@
         async function loadDishes() {
             try {
                 const dishData = await API.get('/menu/dishes');
-                dishes = dishData.filter(d => d.isAvailable);
+                dishes = dishData.filter(d => d.IsAvailable === true);
+                // console.log(dishData);
+                // console.log(dishes);
+
                 populateDishSelect();
             } catch (error) {
                 console.error('加载菜品数据失败:', error);
+            }
+        }
+
+        async function removeOrderDetail(detailId) {
+            if (!Utils.showConfirm('确认要删除这个菜品吗？')) {
+                return;
+            }
+            try {
+                await API.delete(`/orders/details/${detailId}`);
+                Utils.showNotification('菜品已删除', 'success');
+                // 重新加载订单详情
+                const currentOrderId = document.getElementById('orderDetailTitle').textContent.match(/#(\d+)/)?.[1];
+                if (currentOrderId) {
+                await viewOrderDetails(parseInt(currentOrderId));
+            }
+        } catch (error) {
+            console.error('删除菜品失败:', error);
+            Utils.showNotification('删除菜品失败', 'error');
             }
         }
 
@@ -376,9 +397,9 @@
             
             dishes.forEach(dish => {
                 const option = document.createElement('option');
-                option.value = dish.dishID;
-                option.textContent = `${dish.dishName} - ${Utils.formatCurrency(dish.price)}`;
-                option.dataset.price = dish.price;
+                option.value = dish.DishID;
+                option.textContent = `${dish.DishName} - ${Utils.formatCurrency(dish.Price)}`;
+                option.dataset.price = dish.Price;
                 select.appendChild(option);
             });
         }

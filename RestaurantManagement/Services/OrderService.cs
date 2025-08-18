@@ -111,6 +111,40 @@ namespace RestaurantManagement.Services
             return await connection.QueryFirstOrDefaultAsync<Order>(sql, new { TableId = tableId });
         }
 
+        // 获取单个订单明细
+public async Task<OrderDetailDto?> GetOrderDetailByIdAsync(int detailId)
+{
+    using var connection = _dbService.CreateConnection();
+    var sql = @"
+        SELECT 
+            od.ORDERDETAILID as OrderDetailID,
+            od.ORDERID as OrderID,
+            od.DISHID as DishID,
+            od.QUANTITY as Quantity,
+            od.UNITPRICE as UnitPrice,
+            od.SUBTOTAL as Subtotal,
+            od.SPECIALREQUESTS as SpecialRequests,
+            d.DISHNAME as DishName,
+            d.DESCRIPTION as DishDescription,
+            d.IMAGEURL as DishImageURL,
+            c.CATEGORYNAME as CategoryName,
+            c.CATEGORYID as CategoryID
+        FROM PUB.ORDERDETAIL od
+        INNER JOIN PUB.DISH d ON od.DISHID = d.DISHID
+        LEFT JOIN PUB.CATEGORY c ON d.CATEGORYID = c.CATEGORYID
+        WHERE od.ORDERDETAILID = :DetailId";
+    return await connection.QueryFirstOrDefaultAsync<OrderDetailDto>(sql, new { DetailId = detailId });
+}
+
+// 删除订单明细
+public async Task<bool> DeleteOrderDetailAsync(int detailId)
+{
+    using var connection = _dbService.CreateConnection();
+    var sql = "DELETE FROM PUB.OrderDetail WHERE ORDERDETAILID = :DetailId";
+    var result = await connection.ExecuteAsync(sql, new { DetailId = detailId });
+    return result > 0;
+}
+
         // 获取桌台的所有订单（用于调试）
         public async Task<IEnumerable<Order>> GetAllOrdersByTableAsync(int tableId)
         {
