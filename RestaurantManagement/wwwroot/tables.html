@@ -976,10 +976,12 @@
             const select = document.getElementById('staffSelect');
             select.innerHTML = '<option value="">请选择服务员</option>';
             
-            staff.filter(s => s.status === '在职').forEach(s => {
+            console.log('staff:',staff);
+
+            staff.filter(s => s.Status === '在职').forEach(s => {
                 const option = document.createElement('option');
-                option.value = s.staffID;
-                option.textContent = s.staffName;
+                option.value = s.StaffID;
+                option.textContent = s.StaffName;
                 select.appendChild(option);
             });
         }
@@ -1037,7 +1039,7 @@
             } else if (table.Status === '占用') {
                 await showTableDetails(table);
             } else if (table.Status === '清洁中') {
-                showTableCleaningOptions(table);
+                    showTableCleaningOptions(table);
             }
         }
 
@@ -1058,7 +1060,7 @@
        async function showTableDetails(table) {
             try {
                 // 显示加载状态
-                document.getElementById('modal-title').textContent = `桌台${table.tableNumber} - 加载中...`;
+                document.getElementById('modal-title').textContent = `桌台${table.TableNumber} - 加载中...`;
                 document.getElementById('modal-body').innerHTML = `
                     <div style="text-align: center; padding: 2rem;">
                         <div class="loading-spinner"></div>
@@ -1196,13 +1198,13 @@
                         
                         <div class="action-buttons" style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #dee2e6;">
                             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                <button onclick="addDish(${currentOrder.orderID})" class="btn btn-primary">
+                                <button onclick="addDish(${currentOrder.OrderID})" class="btn btn-primary">
                                     <i class="icon-add"></i> 加菜
                                 </button>
-                                <button onclick="printOrder(${currentOrder.orderID})" class="btn btn-secondary">
+                                <button onclick="printOrder(${currentOrder.OrderID})" class="btn btn-secondary">
                                     <i class="icon-print"></i> 打印
                                 </button>
-                                <button onclick="checkoutOrder(${currentOrder.orderID})" class="btn btn-success">
+                                <button onclick="checkoutOrder(${currentOrder.OrderID})" class="btn btn-success">
                                     <i class="icon-checkout"></i> 结账 (${Utils.formatCurrency(totalAmount)})
                                 </button>
                             </div>
@@ -1266,7 +1268,7 @@
                     `;
                 }
 
-                document.getElementById('modal-title').textContent = `桌台${table.tableNumber}`;
+                document.getElementById('modal-title').textContent = `桌台${table.TableNumber}`;
                 document.getElementById('modal-body').innerHTML = `
                     <div class="table-details-container">
                         ${orderDetails}
@@ -1276,7 +1278,7 @@
                 Utils.showModal('tableModal');
             } catch (error) {
                 console.error('获取桌台详情失败:', error);
-                document.getElementById('modal-title').textContent = `桌台${table.tableNumber} - 错误`;
+                document.getElementById('modal-title').textContent = `桌台${table.TableNumber} - 错误`;
                 document.getElementById('modal-body').innerHTML = `
                     <div class="error-state" style="text-align: center; padding: 2rem;">
                         <div style="font-size: 3rem; color: #dc3545; margin-bottom: 1rem;">⚠️</div>
@@ -1493,20 +1495,21 @@
                 }
 
                 // 获取桌台信息
-                const table = tables.find(t => t.tableID === order.tableID);
-                const tableNumber = table ? table.tableNumber : order.tableID;
+                const table = tables.find(t => t.TableID === order.TableID);
+                const tableNumber = table ? table.TableNumber : order.TableID;
 
+                
                 // 设置模态框标题和订单摘要
                 document.getElementById('addDishModalTitle').textContent = `加菜 - 桌台${tableNumber}`;
                 document.getElementById('orderSummary').innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <h5 style="margin: 0; color: #28a745;">订单 #${orderId}</h5>
-                            <p style="margin: 0.25rem 0 0 0; color: #6c757d;">桌台${tableNumber} | ${Utils.formatDateTime(order.orderTime)}</p>
+                            <p style="margin: 0.25rem 0 0 0; color: #6c757d;">桌台${tableNumber} | ${Utils.formatDateTime(order.OrderTime)}</p>
                         </div>
                         <div style="text-align: right;">
                             <div style="color: #6c757d; font-size: 0.9rem;">当前状态</div>
-                            <span class="status-badge ${getOrderStatusClass(order.orderStatus)}">${order.orderStatus}</span>
+                            <span class="status-badge ${getOrderStatusClass(order.OrderStatus)}">${order.OrderStatus}</span>
                         </div>
                     </div>
                 `;
@@ -1535,11 +1538,14 @@
                     console.log('第一个菜品数据示例:', availableDishes[0]);
                 }
                 
+                console.log(".....");
+
+                console.log(availableDishes);
                 // 过滤可用菜品
                 const originalCount = availableDishes?.length || 0;
                 availableDishes = availableDishes?.filter(dish => {
                     // 处理大小写字段名问题
-                    const isAvailable = dish.isAvailable === true || dish.ISAVAILABLE === 'Y';
+                    const isAvailable = dish.IsAvailable === true || dish.IsAvailable === 'Y';
                     return isAvailable;
                 }) || [];
                 console.log(`菜品过滤结果: 原始${originalCount}个，可用${availableDishes.length}个`);
@@ -1557,8 +1563,8 @@
                         categorySelect.innerHTML = '<option value="">全部分类</option>';
                         dishCategories.forEach(category => {
                             const option = document.createElement('option');
-                            const categoryID = category.categoryID || category.CATEGORYID;
-                            const categoryName = category.categoryName || category.CATEGORYNAME;
+                            const categoryID = category.CategoryID ;
+                            const categoryName = category.CategoryName;
                             option.value = categoryID;
                             option.textContent = categoryName;
                             categorySelect.appendChild(option);
@@ -1593,10 +1599,13 @@
             // 过滤菜品
             let filteredDishes = availableDishes;
 
+            console.log(".......")
+            console.log(filteredDishes);
+
             if (categoryFilter) {
                 const beforeFilter = filteredDishes.length;
                 filteredDishes = filteredDishes.filter(dish => {
-                    const categoryID = dish.categoryID || dish.CATEGORYID;
+                    const categoryID = dish.CategoryID || dish.CATEGORYID;
                     return categoryID == categoryFilter;
                 });
                 console.log(`按分类过滤: ${beforeFilter} -> ${filteredDishes.length}`);
@@ -1632,14 +1641,15 @@
             }
 
             console.log('开始渲染菜品网格，菜品数量:', filteredDishes.length);
+            console.log('filteredDishes:',filteredDishes);
             
             dishesGrid.innerHTML = `
                 <div class="dish-grid">
                     ${filteredDishes.map(dish => {
-                        const dishID = dish.dishID || dish.DISHID;
-                        const dishName = dish.dishName || dish.DISHNAME || '未知菜品';
-                        const description = dish.description || dish.DESCRIPTION || '暂无描述';
-                        const price = dish.price || dish.PRICE || 0;
+                        const dishID = dish.DishID;
+                        const dishName = dish.DishName || '未知菜品';
+                        const description = dish.Description || '暂无描述';
+                        const price = dish.Price || 0;
                         
                         const isSelected = selectedDishes.has(dishID);
                         const selectedData = selectedDishes.get(dishID);
@@ -1676,7 +1686,7 @@
         function updateDishQuantity(dishId, newQuantity) {
             newQuantity = Math.max(0, Math.min(99, newQuantity)); // 限制数量范围
 
-            const dish = availableDishes.find(d => (d.dishID || d.DISHID) === dishId);
+            const dish = availableDishes.find(d => (d.DishID) === dishId);
             if (!dish) return;
 
             if (newQuantity === 0) {
@@ -1685,11 +1695,11 @@
             } else {
                 // 添加或更新菜品，标准化字段名
                 const standardizedDish = {
-                    dishID: dish.dishID || dish.DISHID,
-                    dishName: dish.dishName || dish.DISHNAME,
-                    price: dish.price || dish.PRICE,
-                    description: dish.description || dish.DESCRIPTION,
-                    categoryID: dish.categoryID || dish.CATEGORYID
+                    dishID: dish.DishID ,
+                    dishName: dish.DishName ,
+                    price: dish.Price ,
+                    description: dish.Description ,
+                    categoryID: dish.CategoryID 
                 };
                 
                 selectedDishes.set(dishId, {
@@ -1934,6 +1944,23 @@
                 case '待处理': return 'status-reserved';
                 default: return 'status-secondary';
             }
+            }
+
+            // 清洁中弹窗选择完成清洁
+            function showTableCleaningOptions(table) {
+                // 创建弹窗内容
+                const modalBody = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <div style="font-size: 2.5rem; margin-bottom: 1rem;">🧹</div>
+                        <h4 style="color: #28a745; margin-bottom: 1rem;">桌台 ${table.TableNumber} 清洁中</h4>
+                        <p style="color: #6c757d; margin-bottom: 2rem;">请确认清洁是否完成</p>
+                        <button class="btn btn-success" style="margin-right: 1rem;" onclick="finishCleaning(${table.TableID})">完成清洁</button>
+                        <button class="btn btn-secondary" onclick="Utils.hideModal('tableModal')">取消</button>
+                    </div>
+                `;
+                document.getElementById('modal-title').textContent = `桌台${table.TableNumber} - 清洁中`;
+                document.getElementById('modal-body').innerHTML = modalBody;
+                Utils.showModal('tableModal');
         }
     </script>
 </body>
