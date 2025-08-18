@@ -928,7 +928,7 @@
     <script src="js/auth.js"></script>
     <script>
         let currentTableId = null;
-        let tables = [];
+        var tables = [];
         let staff = [];
         let currentAddDishOrderId = null;
         let availableDishes = [];
@@ -954,6 +954,7 @@
         async function loadTables() {
             try {
                 tables = await API.get('/tables');
+                console.log("桌台信息", tables);
                 renderTables();
                 updateStatusCounts();
             } catch (error) {
@@ -993,7 +994,8 @@
                 const statusInfo = Utils.getStatusInfo(table.Status, 'table');
                 const tableStatusClass = statusInfo.class.replace('status-', ''); // 移除 status- 前缀
                 tableItem.className = `table-item ${tableStatusClass}`;
-                tableItem.onclick = () => handleTableClick(table);
+                console.log("桌台对象：", tables);
+                tableItem.onclick = () => handleTableClick(tables[0]);
 
                 tableItem.innerHTML = `
                     <div class="table-number">桌台 ${table.TableID}</div>
@@ -1026,6 +1028,9 @@
 
         async function handleTableClick(table) {
             currentTableId = table.TableID;
+            console.log("当前桌台ID:", currentTableId);
+            console.log("handleTableClick-table:", table);
+
             
             if (table.Status === '空闲') {
                 showOpenTableModal(table);
@@ -1065,7 +1070,8 @@
                 // 获取当前订单信息，增加错误处理
                 let currentOrder = null;
                 try {
-                    const response = await fetch(`/api/tables/${table.tableID}/current-order`, {
+                    console.log("桌台信息", table)
+                    const response = await fetch(`/api/tables/${table.TableID}/current-order`, {
                         method: 'GET',
                         headers: {
                             'Content-Type': 'application/json'
@@ -1093,12 +1099,12 @@
                 if (currentOrder) {
                     // 获取订单详情和服务员信息
                     const [detailsResponse, orderStaff] = await Promise.all([
-                        API.get(`/orders/${currentOrder.orderID}/details`).catch(() => ({ details: [] })),
-                        currentOrder.staffID ? API.get(`/staff/${currentOrder.staffID}`).catch(() => null) : null
+                        API.get(`/orders/${currentOrder.OrderID}/details`).catch(() => ({ details: [] })),
+                        currentOrder.StaffID ? API.get(`/staff/${currentOrder.StaffID}`).catch(() => null) : null
                     ]);
 
                     staffInfo = orderStaff ? `
-                        <p><strong>负责服务员:</strong> ${orderStaff.staffName}</p>
+                        <p><strong>负责服务员:</strong> ${orderStaff.StaffName}</p>
                     ` : '';
 
                     // 正确解析后端返回的数据结构
@@ -1134,11 +1140,11 @@
                                 <i class="icon-order"></i> 当前订单信息
                             </h4>
                             <div class="info-grid">
-                                <p><strong>订单号:</strong> #${currentOrder.orderID}</p>
-                                <p><strong>下单时间:</strong> ${Utils.formatDateTime(currentOrder.orderTime)}</p>
+                                <p><strong>订单号:</strong> #${currentOrder.OrderID}</p>
+                                <p><strong>下单时间:</strong> ${Utils.formatDateTime(currentOrder.OrderTime)}</p>
                                 ${staffInfo}
-                                <p><strong>订单状态:</strong> <span class="status-badge ${getOrderStatusClass(currentOrder.orderStatus)}">${currentOrder.orderStatus}</span></p>
-                                <p><strong>备注:</strong> ${currentOrder.notes || '无'}</p>
+                                <p><strong>订单状态:</strong> <span class="status-badge ${getOrderStatusClass(currentOrder.OrderStatus)}">${currentOrder.OrderStatus}</span></p>
+                                <p><strong>备注:</strong> ${currentOrder.Notes || '无'}</p>
                             </div>
                         </div>
                         
@@ -1917,6 +1923,17 @@
             Utils.showNotification('正在刷新...', 'info');
             await loadTables();
             Utils.showNotification('刷新完成', 'success');
+        }
+
+        // 订单状态样式辅助函数
+        function getOrderStatusClass(status) {
+            switch (status) {
+                case '进行中': return 'status-occupied';
+                case '已结账': return 'status-available';
+                case '已取消': return 'status-cleaning';
+                case '待处理': return 'status-reserved';
+                default: return 'status-secondary';
+            }
         }
     </script>
 </body>
