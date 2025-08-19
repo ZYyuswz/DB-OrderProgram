@@ -81,14 +81,22 @@ Page({
       
       // 获取最新的会员信息
       const memberInfo = await API.getCustomerMemberInfo(customerId);
+      console.log('🔍 个人中心获取到的会员信息:', memberInfo);
+      
+      // 处理字段映射，兼容PascalCase和camelCase
+      const currentLevelName = memberInfo.CurrentLevelName || memberInfo.currentLevelName || '普通会员';
+      const vipPoints = memberInfo.VipPoints || memberInfo.vipPoints || 0;
+      const totalConsumption = memberInfo.TotalConsumption || memberInfo.totalConsumption || 0;
+      
+      console.log('✅ 处理后的字段值:', { currentLevelName, vipPoints, totalConsumption });
       
       // 更新用户信息，包含最新的会员等级
       const updatedUserInfo = {
         ...this.data.userInfo,
-        memberLevel: memberInfo.currentLevelName,
-        memberLevelName: memberInfo.currentLevelName,
-        points: memberInfo.vipPoints,
-        totalConsumption: parseFloat(memberInfo.totalConsumption).toFixed(2)
+        memberLevel: currentLevelName,
+        memberLevelName: currentLevelName,
+        points: vipPoints,
+        totalConsumption: parseFloat(totalConsumption).toFixed(2)
       };
       
       this.setData({
