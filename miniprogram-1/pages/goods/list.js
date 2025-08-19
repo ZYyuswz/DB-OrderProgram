@@ -97,7 +97,8 @@ Page({
         Price: dish.price, 
         categoryId:dish.categoryId, 
         estimatedTime:dish.estimatedTime,
-        dishRemark:''     
+        dishRemark:'' ,
+        isAvailable: dish.isAvailable 
       });
     });
   
@@ -109,6 +110,13 @@ Page({
 // 增加商品数量
 increaseQuantity: function(e) {
   const dishId = e.currentTarget.dataset.id;
+  console.log("增加数量",e.currentTarget.dataset);
+  if(dishId === 58){
+    wx.showToast({
+      title: "请点击图片进入选择",
+      icon: "none"
+    });
+    return;}
   this.addToCart(dishId);
 },
 
@@ -191,6 +199,24 @@ addToCart: function(dishId) {
     for (const good of category.goods) {
       if (good.dishId == dishId) {
         // 更新商品数量
+        //如果已售罄
+        if (good.isAvailable == "N") {
+          wx.showToast({
+            title: "该商品已售罄！",
+            icon: "none"
+          });
+          return; // 阻止增加
+        }
+        //忌口类菜品限制只能选一个
+        if(good.dishName === "辣度选择" || good.dishName === "不要香菜"){
+          if (good.quantity >= 1) {
+            wx.showToast({
+              title: "忌口项最多选择 1 个",
+              icon: "none"
+            });
+            return; // 阻止继续增加
+          }
+        }
         if (!good.quantity) good.quantity = 0;
         good.quantity += 1;
         
@@ -305,6 +331,28 @@ clearCart: function() {
 
 // 结算
 checkout: function() {
+  const cartItems = this.data.cartItems;
+  const requiredItems = ["辣度选择"]; // 必选项名称列表
+  console.log("结算"+cartItems);
+  // 检查购物车是否包含所有必选项
+  const missingItems = requiredItems.filter(itemName => 
+    !cartItems.some(cartItem => cartItem.dishName === itemName)
+  );
+
+  if (missingItems.length > 0) {
+    wx.showToast({
+      title: `请先进行：${missingItems.join('、')}`,
+      icon: 'none',
+      duration: 2000
+    });
+
+    // 滚动到页面底部（假设必选项在最后）
+    this.setData({
+      toView: 'category' + this.data.categories[this.data.categories.length - 1].id
+    });
+    return; // 阻止继续结算
+  }
+
   // 检查购物车是否为空
   if (this.data.cartItems.length === 0) {
     wx.showToast({
