@@ -8,6 +8,8 @@ Page({
     categoryPositions: [],
     isClickingCategory: false,
     scrollTop: 0,
+    isAddDish:false,
+    spicyId:58,
 
     cartItems: [], // 购物车商品
     totalPrice: 0, // 总价格
@@ -59,7 +61,8 @@ Page({
     // 设置测试数据
     
     // 初始化购物车
-    this.updateCartSummary();    
+    this.updateCartSummary();  
+    this.data.isAddDish = wx.getStorageSync('isAddDish') || false; 
        
   },
   getTransformedDishData: function (rawData) {
@@ -70,7 +73,7 @@ Page({
       4: { name: "主食", description: "米面杂粮，煮炒蒸烤" },
       5: { name: "甜点", description: "香甜可口，冷热皆备" },
       6: { name: "饮料", description: "清凉饮品，解渴佳品" },
-      7:{name:"忌口", description:"香菜和辣度选择"}
+      7: {name:"忌口", description:"香菜和辣度选择"}
     };
   
     const categoryResult = {};
@@ -87,7 +90,7 @@ Page({
           goods: []
         };
       }
-  
+      if(dish.isAvailable ==="Y"){
       // 组装商品字段
       categoryResult[cid].goods.push({
         dishId: dish.dishId,
@@ -100,6 +103,8 @@ Page({
         dishRemark:'' ,
         isAvailable: dish.isAvailable 
       });
+      }
+      if(dish.dishName === "辣度选择"){this.data.spicyId = dish.dishId;}
     });
   
     // 返回数组形式
@@ -168,7 +173,7 @@ confirmDishPopup() {
   let dishId = this.data.selectedDish.dishId;
   
   // 如果是饮料，合并冰量选项到备注
-  if (this.data.selectedDish.categoryId === 6 && this.data.selectedIceOption || this.data.selectedDish.dishName === "辣度选择" && this.data.selectedSpicyOption) {
+  if (this.data.selectedDish.categoryId === 6 && this.data.selectedIceOption || this.data.selectedDish.dishId === this.data.spicyId && this.data.selectedSpicyOption) {
     console.log(this.data.selectedIceOption,this.data.selectedSpicyOption);
     remark = `${this.data.selectedIceOption}${this.data.selectedSpicyOption}${remark}`;
   }
@@ -222,7 +227,8 @@ addToCart: function(dishId) {
         
         // 更新购物车
         const existingItem = cartItems.find(item => item.dishId == dishId);
-        if (existingItem) {
+        console.log("更新购物车",category);
+        if (existingItem && category.id != 6) {
           existingItem.quantity += 1;
         } else {
           cartItems.push({
@@ -333,13 +339,13 @@ clearCart: function() {
 checkout: function() {
   const cartItems = this.data.cartItems;
   const requiredItems = ["辣度选择"]; // 必选项名称列表
-  console.log("结算"+cartItems);
+  console.log("结算",cartItems);
   // 检查购物车是否包含所有必选项
   const missingItems = requiredItems.filter(itemName => 
     !cartItems.some(cartItem => cartItem.dishName === itemName)
   );
-
-  if (missingItems.length > 0) {
+  console.log("判断必选",this.data.isAddDish);
+  if (missingItems.length > 0 && !this.data.isAddDish) {
     wx.showToast({
       title: `请先进行：${missingItems.join('、')}`,
       icon: 'none',
@@ -499,23 +505,4 @@ checkout: function() {
     this.search();
   },
 
-  // 筛选排序
-  filter: function(e) {
-    const orderBy = e.currentTarget.dataset.val;
-    this.setData({ orderBy: orderBy, page: 1 });
-    
-    // 简单排序逻辑
-    let sortedGoods = this.data.goods.slice();
-    if (orderBy === 'priceUp') {
-      sortedGoods.sort(function(a, b) {
-        return a.minPrice - b.minPrice;
-      });
-    } else if (orderBy === 'ordersDown') {
-      sortedGoods.sort(function(a, b) {
-        return b.numberSells - a.numberSells;
-      });
-    }
-    
-    this.setData({ goods: sortedGoods });
-  }
 });

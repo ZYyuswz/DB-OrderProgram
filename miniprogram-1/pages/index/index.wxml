@@ -1,7 +1,7 @@
 <!--index.wxml-->
 <view class="container">
   <!-- 此页面预留给其他组进行点餐功能开发 -->
-  <view class="placeholder-content">
+  <view class="placeholder-content" >
     <text class="placeholder-icon">🍽️</text>
     <text class="placeholder-title">点餐功能</text>
     <text class="placeholder-desc">此页面预留给其他组进行开发</text>

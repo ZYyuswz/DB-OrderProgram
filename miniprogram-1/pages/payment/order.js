@@ -91,8 +91,8 @@ Page({
       },
       orderDetails: orderDetails // 这里属性名是 orderDetails, 我根据你的json示例调整
     };
-    
-    return data;
+    const isAddDish = wx.getStorageSync('isAddDish')||false;
+    return isAddDish?orderDetails:data;
   },
   
   /**
@@ -101,10 +101,13 @@ Page({
    */
   postOrder: function(postData) {
     const that = this; // 保存this指向
-    const backendApiUrl = 'http://localhost:5002/api/order'; 
+    const isAddDish = wx.getStorageSync('isAddDish')||false;
+    const backendApiUrl = "http://localhost:5002/api/order"+ ( isAddDish ? ("/"+String(this.data.customerId) ): "");    
+    const method = isAddDish?'PUT':'POST';
+    console.log(isAddDish,backendApiUrl,this.data.customerId,method);
     wx.request({
       url: backendApiUrl,
-      method: 'POST',
+      method: method,
       header: {
         'Content-Type': 'application/json'
         // 'Authorization': 'Bearer ' + wx.getStorageSync('token') // 如果需要登录凭证
@@ -116,7 +119,8 @@ Page({
           console.log('订单提交成功，后端返回:', res.data);
                    
             // 订单创建成功后，再根据需求发起GET请求获取总价
-          that.getTotalPriceFromServer(res.data.data);          
+            if(isAddDish){wx.redirectTo({ url: '/pages/payment/order-success'});return;}
+          that.getTotalPriceFromServer(res.data.data);         
         } else {
           // 其他状态码，表示有错误
           wx.hideLoading();
@@ -161,6 +165,7 @@ Page({
           });
           // 这里可以进行页面跳转，例如跳转到支付页面或订单详情页
           wx.redirectTo({ url: '/pages/payment/order-success'})//?orderId=' + orderId });
+          
         } else {
            wx.showToast({ title: '无法确认总价', icon: 'none' });
         }

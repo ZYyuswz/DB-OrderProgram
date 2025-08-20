@@ -14,6 +14,7 @@
         <view class="dish-info">
           <text class="name">{{item.dishName}}</text>
           <text class="quantity">x {{item.quantity}}</text>
+          <text class="special-request"> {{item.dishRemark}}</text>
         </view>
         <text class="price">¥{{item.Price * item.quantity}}</text>
       </view>
@@ -28,18 +29,6 @@
       </view>
     </view>
   </view>
-  
-  <text class="label">请输入备注：</text>
-  <input
-    type="text"
-    placeholder="请输入备注"
-    bindinput="onInputChange"
-    value="{{remark}}"
-    class="input"
-  />
-
-
-
 </view>
 
 <!-- 下方：固定的付款栏 -->
