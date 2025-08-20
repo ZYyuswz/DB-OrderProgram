@@ -73,5 +73,16 @@ namespace DBManagement.Controllers
             var (success, message) = _orderService.DeleteOrder(id);
             return new ApiResponse(success, message);
         }
+
+        // 新增：根据orderid查询订单总价、最终价和菜品明细
+        [HttpGet("detail/{orderId}")]
+        public ActionResult<ApiResponse<object>> GetOrderDetailWithDishName(int orderId)
+        {
+            var (success, message, data) = _orderService.GetOrderDetailWithDishName(orderId);
+            return new ApiResponse<object>(success, message, data);
+        }
+
+
+
     }
 }

@@ -162,5 +162,42 @@ namespace DBManagement.Service
             int maxId = _db.OrderDetails.Max(od => (int?)od.OrderDetailId) ?? 0;
             return Interlocked.Increment(ref maxId);
         }
+
+        // 新增：根据orderId获取订单总价、最终价和菜品明细
+        public (bool success, string message, object data) GetOrderDetailWithDishName(int orderId)
+        {
+            // 查询订单及其详情和菜品信息
+            var order = _db.Orders
+                .Include(o => o.OrderDetails)
+                .FirstOrDefault(o => o.OrderId == orderId);
+
+            if (order == null)
+                return (false, "未找到该订单", null);
+
+            // 查询所有订单详情及对应菜品名
+            var details = _db.OrderDetails
+                .Where(od => od.OrderId == orderId)
+                .Join(_db.Dishes,
+                      od => od.DishId,
+                      d => d.DishId,
+                      (od, d) => new
+                      {
+                          DishName = d.DishName,
+                          Quantity = od.Quantity
+                      })
+                .ToList();
+
+            var result = new
+            {
+                OrderId = order.OrderId,
+                TotalPrice = order.TotalPrice,
+                FinalPrice = order.FinalPrice,
+                Dishes = details
+            };
+
+            return (true, "查询成功", result);
+        }
+
+
     }
 }
