@@ -149,7 +149,7 @@ Page({
    */
   getTotalPriceFromServer: function(orderId) {
     const backendApiUrl = 'http://localhost:5002/api/order/'+ orderId; 
-    console.log(backendApiUrl);
+    wx.setStorageSync('orderId', orderId);
     wx.request({
       url: backendApiUrl,
       method: 'GET',

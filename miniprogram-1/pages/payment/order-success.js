@@ -2,9 +2,41 @@
 
   
   Page({
-    onLoad:function () {
-      wx.setStorageSync('isAddDish', true);
+    data: {
+      //tableNumber: 'table:1'
+      orderId:0,
+      orderItems: [], 
+      finalPrice: 0,
     },
+  
+    onLoad: function () {
+      wx.setStorageSync('isAddDish', true);
+      this.data.orderId = wx.getStorageSync('orderId')
+      const backendApiUrl = 'http://localhost:5002/api/order/detail/'+ this.data.orderId; 
+      // 页面加载时，从后端读取订单数据
+      try {
+        wx.request({
+          url: backendApiUrl,
+          method: 'GET',
+          success: (res) => {           
+            if (res.statusCode === 200) {
+              console.log(res.data)
+              console.log("后端确认菜单为: ",res.data.data.dishes);
+              //dishes = res.data.data.dishes;
+              //price = res.data.data.finalPrice;
+              this.setData({
+                orderItems: res.data.data.dishes,
+                finalPrice: res.data.data.finalPrice
+              });              
+            } else {
+               wx.showToast({ title: '请稍候', icon: 'none' });
+            }
+          },          
+        });       
+      } catch (e) {
+          console.error('从数据库读取订单数据失败', e);
+        }
+      },
     goToHome() {
     
       wx.reLaunch({
