@@ -6,7 +6,7 @@
       <text class="stat-label">总评价数</text>
     </view>
     <view class="stat-item">
-      <text class="stat-number">{{averageRating.toFixed(1)}}</text>
+      <text class="stat-number">{{averageRating}}</text>
       <text class="stat-label">平均评分</text>
     </view>
     <view class="stat-item">
