@@ -67,11 +67,12 @@
         </view>
         <view class="order-actions">
                      <button 
-             class="action-btn review-btn" 
+             class="action-btn {{item.hasReview ? 'reviewed-btn' : 'review-btn'}}" 
              data-orderid="{{item.orderId}}"
-             bindtap="goToReview"
+             bindtap="{{item.hasReview ? '' : 'goToReview'}}"
+             disabled="{{item.hasReview}}"
            >
-             评价
+             {{item.hasReview ? '已评价' : '评价'}}
            </button>
         </view>
       </view>

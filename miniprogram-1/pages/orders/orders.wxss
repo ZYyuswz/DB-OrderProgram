@@ -185,6 +185,18 @@ page {
   background: #E6753A;
 }
 
+.reviewed-btn {
+  background: #E0E0E0;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.reviewed-btn:disabled {
+  background: #E0E0E0;
+  color: #999;
+  opacity: 0.8;
+}
+
 /* 空状态 */
 .empty-state {
   text-align: center;

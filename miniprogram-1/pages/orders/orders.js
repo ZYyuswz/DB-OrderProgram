@@ -15,6 +15,51 @@ Page({
     // 页面加载时获取用户信息并加载订单
     this.loadUserInfo();
     this.loadOrders();
+    
+    // 关闭API调试模式，减少404等业务逻辑错误的日志输出
+    API.setDebugMode(false);
+  },
+
+  onShow() {
+    // 页面显示时重新检查订单评价状态
+    if (this.data.orders.length > 0) {
+      this.refreshOrderReviewStatus();
+    }
+  },
+
+  // 刷新订单评价状态
+  async refreshOrderReviewStatus() {
+    try {
+      const updatedOrders = [];
+      
+      for (const order of this.data.orders) {
+        try {
+          // 检查订单是否已评价
+          const reviewStatus = await API.checkOrderReviewStatus(order.orderId);
+          
+          updatedOrders.push({
+            ...order,
+            hasReview: !!reviewStatus,
+            reviewData: reviewStatus
+          });
+        } catch (error) {
+          console.error(`刷新订单 ${order.orderId} 评价状态失败:`, error);
+          // 如果获取评价状态失败，保持原有状态
+          updatedOrders.push({
+            ...order,
+            hasReview: order.hasReview || false,
+            reviewData: order.reviewData || null
+          });
+        }
+      }
+      
+      this.setData({
+        orders: updatedOrders
+      });
+      
+    } catch (error) {
+      console.error('刷新订单评价状态失败:', error);
+    }
   },
 
   // 获取用户信息
@@ -97,6 +142,9 @@ Page({
           // 获取订单详情
           const details = await API.getOrderDetails(order.orderId || order.OrderID);
           
+          // 检查订单是否已评价
+          const reviewStatus = await API.checkOrderReviewStatus(order.orderId || order.OrderID);
+          
           // 处理详情数据，确保字段名正确，并过滤掉"辣度选择"菜品
           const processedDetails = (details || [])
             .filter(detail => {
@@ -116,15 +164,20 @@ Page({
           // 合并订单信息和详情
           ordersWithDetails.push({
             ...order,
-            details: processedDetails
+            details: processedDetails,
+            hasReview: !!reviewStatus, // 是否已评价
+            reviewData: reviewStatus // 评价数据
           });
           
         } catch (error) {
+          // 现在404不会抛出错误，所以这里只处理真正的错误
           console.error(`获取订单 ${order.orderId || order.OrderID} 详情失败:`, error);
           // 如果获取详情失败，仍然保留订单基本信息
           ordersWithDetails.push({
             ...order,
-            details: []
+            details: [],
+            hasReview: false,
+            reviewData: null
           });
         }
       }
@@ -135,7 +188,12 @@ Page({
     } catch (error) {
       console.error('批量加载订单详情失败:', error);
       // 如果批量加载失败，返回原始订单数据
-      return orders.map(order => ({ ...order, details: [] }));
+      return orders.map(order => ({ 
+        ...order, 
+        details: [],
+        hasReview: false,
+        reviewData: null
+      }));
     }
   },
 
@@ -197,6 +255,9 @@ Page({
           statusInfo: API.formatOrderStatus(order.OrderStatus || order.orderStatus),
           // 初始化空的详情数组，稍后会通过API获取
           details: [],
+          // 评价状态
+          hasReview: order.hasReview || false,
+          reviewData: order.reviewData || null,
           // 调试信息：记录所有可用字段
           __allKeys: Object.keys(order).join(', ')
         };
@@ -216,7 +277,9 @@ Page({
           customerName: '未知客户',
           formattedTime: '时间未知',
           statusInfo: { text: '状态未知', class: 'default' },
-          details: []
+          details: [],
+          hasReview: false,
+          reviewData: null
         };
       }
     });
@@ -265,6 +328,15 @@ Page({
     if (!order) {
       wx.showToast({
         title: '订单信息获取失败',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    // 检查订单是否已评价
+    if (order.hasReview) {
+      wx.showToast({
+        title: '该订单已评价',
         icon: 'none'
       });
       return;

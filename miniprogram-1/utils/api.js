@@ -1,6 +1,7 @@
 class APIManager {
   constructor() {
     this.baseURL = 'http://localhost:5002/api';
+    this.debugMode = false; // 调试模式，控制是否显示404等业务逻辑错误
   }
 
   // 通用请求方法
@@ -26,13 +27,19 @@ class APIManager {
           ...header
         },
         success: (res) => {
+          // 所有HTTP状态码都会进入success回调，包括404
           if (res.statusCode === 200) {
             resolve(res.data);
+          } else if (res.statusCode === 404) {
+            // 404状态码是正常的业务逻辑，不是错误
+            // 直接resolve一个特殊的标记，而不是reject
+            resolve({ __is404: true });
           } else {
             reject(new Error(`请求失败: ${res.statusCode}`));
           }
         },
         fail: (error) => {
+          // 只有真正的网络错误才会进入fail回调
           reject(new Error('网络连接失败，请检查网络设置'));
         }
       });
@@ -57,6 +64,12 @@ class APIManager {
   async getOrderDetails(orderId) {
     try {
       const details = await this.request(`/orders/${orderId}/details`);
+      
+      // 检查是否是404标记
+      if (details && details.__is404) {
+        return [];
+      }
+      
       return details;
     } catch (error) {
       console.error('获取订单详情失败:', error);
@@ -190,6 +203,34 @@ class APIManager {
       '已结账': { text: '已结账', class: 'completed' }
     };
     return statusMap[status] || { text: status, class: 'default' };
+  }
+
+  // 检查订单是否已评价
+  async checkOrderReviewStatus(orderId) {
+    try {
+      const response = await this.request(`/review/order/${orderId}`);
+      
+      // 检查是否是404标记
+      if (response && response.__is404) {
+        // 只在调试模式下显示404信息
+        if (this.debugMode) {
+          console.log(`订单 ${orderId} 暂无评价`);
+        }
+        return null;
+      }
+      
+      return response.success && response.data;
+    } catch (error) {
+      // 其他错误才在控制台显示
+      console.error('检查订单评价状态失败:', error);
+      return null;
+    }
+  }
+
+  // 切换调试模式
+  setDebugMode(enabled) {
+    this.debugMode = enabled;
+    console.log(`API调试模式: ${enabled ? '开启' : '关闭'}`);
   }
 }
 
