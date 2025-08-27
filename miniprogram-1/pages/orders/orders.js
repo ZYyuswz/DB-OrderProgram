@@ -97,14 +97,21 @@ Page({
           // 获取订单详情
           const details = await API.getOrderDetails(order.orderId || order.OrderID);
           
-          // 处理详情数据，确保字段名正确
-          const processedDetails = (details || []).map(detail => ({
-            dishName: detail.DishName || detail.dishName || '未知菜品',
-            unitPrice: detail.UnitPrice || detail.unitPrice || 0,
-            quantity: detail.Quantity || detail.quantity || 0,
-            subtotal: detail.Subtotal || detail.subtotal || 0,
-            specialRequests: detail.SpecialRequests || detail.specialRequests || ''
-          }));
+          // 处理详情数据，确保字段名正确，并过滤掉"辣度选择"菜品
+          const processedDetails = (details || [])
+            .filter(detail => {
+              const dishName = detail.DishName || detail.dishName || '';
+              // 过滤掉"辣度选择"相关的菜品
+              const excludeKeywords = ['辣度选择', '辣度', '选择', 'SpicyLevel', 'spicyLevel'];
+              return !excludeKeywords.some(keyword => dishName.includes(keyword));
+            })
+            .map(detail => ({
+              dishName: detail.DishName || detail.dishName || '未知菜品',
+              unitPrice: detail.UnitPrice || detail.unitPrice || 0,
+              quantity: detail.Quantity || detail.quantity || 0,
+              subtotal: detail.Subtotal || detail.subtotal || 0,
+              specialRequests: detail.SpecialRequests || detail.specialRequests || ''
+            }));
           
           // 合并订单信息和详情
           ordersWithDetails.push({

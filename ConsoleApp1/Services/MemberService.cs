@@ -443,13 +443,13 @@ namespace ConsoleApp1.Services
                     return new ConsumptionStats
                     {
                         CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerID")),
-                        TotalConsumption = reader.GetDecimal(reader.GetOrdinal("TotalConsumption")),
+                        TotalConsumption = SafeGetDecimal(reader, "TotalConsumption"),
                         TotalOrders = reader.GetInt32(reader.GetOrdinal("TotalOrders")),
-                        MonthlyConsumption = reader.GetDecimal(reader.GetOrdinal("MonthlyConsumption")),
+                        MonthlyConsumption = SafeGetDecimal(reader, "MonthlyConsumption"),
                         MonthlyOrders = reader.GetInt32(reader.GetOrdinal("MonthlyOrders")),
-                        AverageOrderAmount = reader.GetDecimal(reader.GetOrdinal("AverageOrderAmount")),
-                        LastOrderTime = reader.GetDateTime(reader.GetOrdinal("LastOrderTime")),
-                        FavoriteStore = reader.GetString(reader.GetOrdinal("FavoriteStore"))
+                        AverageOrderAmount = SafeGetDecimal(reader, "AverageOrderAmount"),
+                        LastOrderTime = SafeGetDateTime(reader, "LastOrderTime"),
+                        FavoriteStore = SafeGetString(reader, "FavoriteStore")
                     };
                 }
 
@@ -495,7 +495,7 @@ namespace ConsoleApp1.Services
                         Gender = reader.IsDBNull(reader.GetOrdinal("Gender")) ? null : reader.GetString(reader.GetOrdinal("Gender"))[0],
                         RegisterTime = reader.GetDateTime(reader.GetOrdinal("RegisterTime")),
                         LastVisitTime = null, // 字段不存在，设为null
-                        TotalConsumption = reader.GetDecimal(reader.GetOrdinal("TotalConsumption")),
+                        TotalConsumption = SafeGetDecimal(reader, "TotalConsumption"),
                         VIPLevel = reader.IsDBNull(reader.GetOrdinal("VIPLevel")) ? null : reader.GetInt32(reader.GetOrdinal("VIPLevel")),
                         VIPPoints = reader.GetInt32(reader.GetOrdinal("VIPPoints")),
                         Status = reader.GetString(reader.GetOrdinal("Status")),
@@ -598,6 +598,90 @@ namespace ConsoleApp1.Services
                 "diamond" => 5,
                 _ => 1
             };
+        }
+
+        /// <summary>
+        /// 安全地读取Decimal类型字段
+        /// </summary>
+        /// <param name="reader">数据读取器</param>
+        /// <param name="columnName">列名</param>
+        /// <returns>Decimal值，如果为NULL则返回0</returns>
+        private decimal SafeGetDecimal(OracleDataReader reader, string columnName)
+        {
+            try
+            {
+                var ordinal = reader.GetOrdinal(columnName);
+                if (reader.IsDBNull(ordinal))
+                    return 0;
+                
+                var value = reader.GetValue(ordinal);
+                if (value == null)
+                    return 0;
+                
+                // 尝试多种转换方式
+                if (value is decimal decimalValue)
+                    return decimalValue;
+                if (value is double doubleValue)
+                    return Convert.ToDecimal(doubleValue);
+                if (value is int intValue)
+                    return Convert.ToDecimal(intValue);
+                if (value is long longValue)
+                    return Convert.ToDecimal(longValue);
+                if (value is float floatValue)
+                    return Convert.ToDecimal(floatValue);
+                
+                // 最后尝试字符串转换
+                return Convert.ToDecimal(value.ToString());
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// 安全地读取DateTime类型字段
+        /// </summary>
+        /// <param name="reader">数据读取器</param>
+        /// <param name="columnName">列名</param>
+        /// <returns>DateTime值，如果为NULL则返回DateTime.MinValue</returns>
+        private DateTime SafeGetDateTime(OracleDataReader reader, string columnName)
+        {
+            try
+            {
+                var ordinal = reader.GetOrdinal(columnName);
+                if (reader.IsDBNull(ordinal))
+                    return DateTime.MinValue;
+                
+                return reader.GetDateTime(ordinal);
+            }
+            catch
+            {
+                return DateTime.MinValue;
+            }
+        }
+
+        /// <summary>
+        /// 安全地读取String类型字段
+        /// </summary>
+        /// <param name="reader">数据读取器</param>
+        /// <param name="columnName">列名</param>
+        /// <returns>String值，如果为NULL则返回"未知"</returns>
+        private string SafeGetString(OracleDataReader reader, string columnName)
+        {
+            try
+            {
+                var ordinal = reader.GetOrdinal(columnName);
+                if (reader.IsDBNull(ordinal))
+                    return "未知";
+                
+                var value = reader.GetString(ordinal);
+                return string.IsNullOrEmpty(value) ? "未知" : value;
+            }
+            catch
+            {
+                return "未知";
+            }
         }
 
         #endregion
