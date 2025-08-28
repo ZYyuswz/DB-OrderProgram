@@ -2,6 +2,7 @@
 
 Page({
   data: {
+    tableId : 1,
     categories: [], // 分类数组
     activeCategory: null, // 当前激活分类
     toView: '',
@@ -63,7 +64,9 @@ Page({
     // 初始化购物车
     this.updateCartSummary();  
     this.data.isAddDish = wx.getStorageSync('isAddDish') || false; 
-       
+    const socketTask = wx.connectSocket({
+      url: 'wss://example.com/socket', // 替换成你的 ws 地址
+    });   
   },
   getTransformedDishData: function (rawData) {
     const categoryMap = {
@@ -116,7 +119,7 @@ Page({
 increaseQuantity: function(e) {
   const dishId = e.currentTarget.dataset.id;
   console.log("增加数量",e.currentTarget.dataset);
-  if(dishId === 58){
+  if(dishId === this.data.spicyId){
     wx.showToast({
       title: "请点击图片进入选择",
       icon: "none"
@@ -180,7 +183,7 @@ confirmDishPopup() {
 
   // 保存到数据库或购物车项
 
-  //TODO：将remark添加到对应dishId的dishRemark区
+  //将remark添加到对应dishId的dishRemark区
   for (const category of this.data.categories) {
     for (const good of category.goods) {
       if (good.dishId == dishId) {

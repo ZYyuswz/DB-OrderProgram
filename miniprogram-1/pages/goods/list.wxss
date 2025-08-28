@@ -12,10 +12,11 @@ page,view,image,input {
   display: flex;
   align-items: center;
 }
-.header .search {
-  position: relative;
-  width: 650rpx;
-  height: 66rpx;
+.header .tableId {
+  font-size: 20px;
+  font-weight: bold;
+  width: 300px;
+  color: #333;
 }
 .header .search input {
   border: 1rpx solid #e3e3e3;

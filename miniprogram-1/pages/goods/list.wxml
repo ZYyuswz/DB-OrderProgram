@@ -3,10 +3,7 @@
   <!-- 顶部搜索区域 -->
   <van-sticky>
     <view class="header">
-      <view class="search">
-        <input type="text" placeholder="搜索菜品" value="{{name}}" bindinput="bindinput" bindconfirm="bindconfirm"></input>
-        <image src="/images/icon/search.png" bindtap="search"></image>
-      </view>
+      <text class = "tableId"> 桌号：{{tableId}}</text>
       <image class="show-type" src="/images/icon/list{{listType}}.png" bindtap="changeShowType"></image>
     </view>
   </van-sticky>
