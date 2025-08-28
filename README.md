@@ -55,6 +55,17 @@
 | Notes | VARCHAR2(500) | | 预约备注，如特殊要求、庆祝活动等 |
 | CreateTime | DATE | DEFAULT SYSDATE | 预约记录创建时间，默认为系统当前时间 |
 | MealTime | NUMBER(1) |DEFAULT 0 CHECK (MealTime IN (0, 1))|0表示中午，1表示晚上|
+
+#### ShoppingCache (购物车/点餐缓存表)
+| 字段名 | 类型 | 约束 | 描述 |
+|--------|------|------|------|
+| CacheID	|NUMBER(10)|	PK	|购物车记录的唯一标识符，使用序列自动生成|
+| TableID	|NUMBER(10)	|FK, NOT NULL	|关联桌台表的外键，标识点餐发生的桌台|
+| DishID	|NUMBER(10)	|FK, NOT NULL	|关联菜品表的外键，标识被添加的菜品|
+|Quantity	|NUMBER(5)	|NOT NULL, CHECK(Quantity > 0)	|菜品数量，必须大于0|
+|Status	|VARCHAR2(20)	|CHECK, DEFAULT 'PENDING'	|记录状态，限定为：PENDING (待下单)/ORDERED (已下单)|
+
+功能描述：此表作为多人同时点餐时的临时缓存区。当多个用户在同一桌台通过扫码点餐时，他们添加、修改或删除的菜品记录会实时写入此表。前端应用通过轮询或WebSocket技术，根据 CacheID 拉取此表的最新数据，从而在所有用户的设备上实现点餐列表的实时同步。当用户最终确认下单后，表内的数据将被事务性地转移到 Orders 和 OrderDetail 表中。
 ### 2. 菜品管理模块
 
 #### Dish（菜品表）
@@ -189,10 +200,19 @@
 | DepartmentID | NUMBER(10) | FK | 关联部门表的外键，标识员工所属部门 |
 | StoreID | NUMBER(10) | FK | 关联门店表的外键，标识员工所在门店 |
 | Status | VARCHAR2(20) | CHECK | 员工状态，限定为：在职/离职/休假 |
-| WorkSchedule | VARCHAR2(500) | | 工作时间安排，记录员工的排班信息 |
 | CreateTime | DATE | DEFAULT SYSDATE | 记录创建时间，默认为系统当前时间 |
 | UpdateTime | DATE | DEFAULT SYSDATE | 记录最后更新时间，默认为系统当前时间 |
 
+#### StaffSchedule（员工排班表）
+|字段名	|类型	|约束	|描述|
+|--------|------|------|------|
+|ScheduleID	|NUMBER(10)|	PK	|排班记录的唯一标识符，使用序列自动生成|
+|StaffID	|NUMBER(10)	|FK, NOT NULL	|关联员工表的外键，标识排班所属的员工|    
+|WorkDate	|NUMBER(1)	|NOT NULL	|工作的星期，1-7。|
+|StartTime	|INTERVAL DAY(0) TO SECOND(0)	|NOT NULL	|上班计划开始时间，表示从午夜开始的时间间隔|
+|EndTime	|INTERVAL DAY(0) TO SECOND(0)	|NOT NULL	|下班计划结束时间，表示从午夜开始的时间间隔|
+|StoreID	|NUMBER(10)	|FK	|关联门店表的外键，标识该班次所在的门店|
+|Notes	|VARCHAR2(500)|	|排班备注，如“顶替小王”、“参加培训”等|
 #### Department（部门表）
 | 字段名 | 类型 | 约束 | 描述 |
 |--------|------|------|------|
