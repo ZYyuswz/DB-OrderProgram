@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ConsoleApp1.Services;
+using Microsoft.Extensions.Logging;
 
 namespace ConsoleApp1.Controllers
 {
@@ -10,17 +11,23 @@ namespace ConsoleApp1.Controllers
         private readonly DatabaseService _databaseService;
         private readonly OrderService _orderService;
         private readonly PointsService _pointsService;
+        private readonly ReviewService _reviewService;
+        private readonly QRCodeService _qrCodeService;
         private readonly ILogger<TestController> _logger;
 
         public TestController(
             DatabaseService databaseService, 
             OrderService orderService, 
             PointsService pointsService,
+            ReviewService reviewService,
+            QRCodeService qrCodeService,
             ILogger<TestController> logger)
         {
             _databaseService = databaseService;
             _orderService = orderService;
             _pointsService = pointsService;
+            _reviewService = reviewService;
+            _qrCodeService = qrCodeService;
             _logger = logger;
         }
 
@@ -139,6 +146,98 @@ namespace ConsoleApp1.Controllers
             {
                 _logger.LogError(ex, $"为客户 {customerId} 的现有订单添加积分记录失败");
                 return StatusCode(500, new { message = "添加积分记录失败", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// 测试二维码生成功能
+        /// </summary>
+        /// <returns>二维码生成测试结果</returns>
+        [HttpGet("qrcode")]
+        public async Task<IActionResult> TestQRCode()
+        {
+            try
+            {
+                _logger.LogInformation("开始测试二维码生成功能...");
+
+                // 测试生成单个桌台的二维码
+                var tableNumber = "001";
+                var qrCodeBytes = await _qrCodeService.GenerateQRCodeAsync(tableNumber);
+                
+                _logger.LogInformation($"成功生成桌台{tableNumber}的二维码，大小: {qrCodeBytes.Length} 字节");
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "二维码生成测试成功",
+                    tableNumber = tableNumber,
+                    qrCodeSize = qrCodeBytes.Length,
+                    downloadUrl = $"/api/qrcode/generate/{tableNumber}",
+                    base64Url = $"/api/qrcode/generate-base64/{tableNumber}"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "二维码生成测试失败");
+                return BadRequest(new
+                {
+                    success = false,
+                    error = ex.Message,
+                    message = "请检查微信配置是否正确，包括AppId、AppSecret和AccessToken"
+                });
+            }
+        }
+
+        /// <summary>
+        /// 测试批量生成二维码
+        /// </summary>
+        /// <returns>批量生成测试结果</returns>
+        [HttpGet("qrcode-batch")]
+        public async Task<IActionResult> TestBatchQRCode()
+        {
+            try
+            {
+                _logger.LogInformation("开始测试批量二维码生成功能...");
+
+                // 测试批量生成桌台001-005的二维码
+                var startTable = 1;
+                var endTable = 5;
+                var qrCodes = await _qrCodeService.GenerateRangeQRCodesAsync(startTable, endTable);
+                
+                _logger.LogInformation($"成功批量生成桌台{startTable}-{endTable}的二维码，共{qrCodes.Count}个");
+
+                var results = new List<object>();
+                foreach (var kvp in qrCodes)
+                {
+                    results.Add(new
+                    {
+                        tableNumber = kvp.Key,
+                        qrCodeSize = kvp.Value.Length,
+                        downloadUrl = $"/api/qrcode/generate/{kvp.Key}",
+                        base64Url = $"/api/qrcode/generate-base64/{kvp.Key}"
+                    });
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "批量二维码生成测试成功",
+                    startTable = startTable,
+                    endTable = endTable,
+                    totalCount = results.Count,
+                    results = results,
+                    downloadZipUrl = $"/api/qrcode/download-zip?startTableNumber={startTable}&endTableNumber={endTable}"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "批量二维码生成测试失败");
+                return BadRequest(new
+                {
+                    success = false,
+                    error = ex.Message,
+                    message = "请检查微信配置是否正确"
+                });
             }
         }
     }

@@ -1,10 +1,43 @@
 <!--index.wxml-->
 <view class="container">
-  <!-- 此页面预留给其他组进行点餐功能开发 -->
-  <view class="placeholder-content">
-    <text class="placeholder-icon">🍽️</text>
-    <text class="placeholder-title">点餐功能</text>
-    <text class="placeholder-desc">此页面预留给其他组进行开发</text>
-    <text class="placeholder-desc">将包含门店查询、菜品选择、菜品结算等功能</text>
+  <!-- 从二维码进入时显示桌台信息 -->
+  <view wx:if="{{isFromQRCode}}" class="table-info-card">
+    <view class="card-header">
+      <view class="card-title">桌台信息</view>
+    </view>
+    
+    <view class="card-content">
+      <!-- 核心信息：店铺ID和桌台号 -->
+      <view class="info-row">
+        <text class="label">店铺ID:</text>
+        <text class="value">{{storeId}}</text>
+      </view>
+      
+      <view class="info-row">
+        <text class="label">桌台号:</text>
+        <text class="value">{{tableNumber}}</text>
+      </view>
+      
+      <!-- 点餐开发组参考说明 -->
+      <view class="dev-note">
+        <text class="note-title">💡 点餐开发组参考</text>
+        <text class="note-desc">这两个参数可用于：</text>
+        <text class="note-item">• 调用后端API获取菜单</text>
+        <text class="note-item">• 提交订单时标识桌台</text>
+        <text class="note-item">• 查询桌台状态</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 普通进入时显示提示 -->
+  <view wx:else class="qr-tip">
+    <view class="tip-icon">📱</view>
+    <view class="tip-title">扫描桌台二维码</view>
+    <view class="tip-desc">扫描桌台二维码即可进入点餐模式</view>
+  </view>
+
+  <!-- 此页面预留给其他组进行开发 -->
+  <view class="placeholder">
+    <text>点餐页面 - 此页面预留给其他组开发</text>
   </view>
 </view>
