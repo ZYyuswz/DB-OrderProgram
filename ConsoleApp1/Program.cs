@@ -1,6 +1,7 @@
-﻿using DBManagement.Models;
-using ConsoleApp1.Services;
+﻿using ConsoleApp1.Services;
+using DBManagement.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,7 +19,18 @@ builder.Services.AddControllers()
     });
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "餐饮门店智能管理系统",
+        Version = "v1",
+        Description = "餐饮门店智能管理系统 Web API"
+    });
+
+    // 添加这行代码解决SchemaId冲突
+    c.CustomSchemaIds(type => type.FullName);
+});
 
 // ========== 2. 注册所有自定义服务 ==========
 // 来自第一个后端（ConsoleApp1）的服务

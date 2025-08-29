@@ -25,6 +25,7 @@ namespace DBManagement.Models
         public DbSet<Customer> Customers { get; set; }
         public DbSet<TableInfo> TableInfo { get; set; }
         public DbSet<TableReservation> TableReservation { get; set; }
+        public DbSet<ShoppingCache> ShoppingCache { get; set; }
 
 
         // OnModelCreating方法配置实体关系与约束

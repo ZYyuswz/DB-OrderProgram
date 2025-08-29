@@ -163,7 +163,7 @@ namespace DBManagement.Service
             return Interlocked.Increment(ref maxId);
         }
 
-        // 新增：根据orderId获取订单总价、最终价和菜品明细
+        // 根据orderId获取订单总价、最终价和菜品明细
         public (bool success, string message, object data) GetOrderDetailWithDishName(int orderId)
         {
             // 查询订单及其详情和菜品信息
@@ -197,7 +197,5 @@ namespace DBManagement.Service
 
             return (true, "查询成功", result);
         }
-
-
     }
 }
