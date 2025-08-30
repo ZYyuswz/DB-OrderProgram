@@ -31,17 +31,9 @@ Page({
       { label: '微辣', value: '微辣' },
       { label: '中辣', value: '中辣' },
       { label: '重辣', value: '重辣' },
-    ],
-    $t: {
-      common: {
-        searchPlaceholder: "搜索菜品",
-        empty: "暂无菜品"
-      },     
-    }
+    ]   
   },
-  
-
-    
+     
   onLoad: function () {
     wx.request({
       url: 'http://localhost:5002/api/dish',
@@ -64,9 +56,11 @@ Page({
     // 初始化购物车
     this.updateCartSummary();  
     this.data.isAddDish = wx.getStorageSync('isAddDish') || false; 
-    const socketTask = wx.connectSocket({
+    this.data.tableId = wx.getStorageSync('isAddDish') || 1;
+    this.cacheMap = new Map();
+    /*const socketTask = wx.connectSocket({
       url: 'wss://example.com/socket', // 替换成你的 ws 地址
-    });   
+    }); */  
   },
   getTransformedDishData: function (rawData) {
     const categoryMap = {
@@ -125,15 +119,57 @@ increaseQuantity: function(e) {
       icon: "none"
     });
     return;}
+  this.createCache(dishId);
   this.addToCart(dishId);
 },
 
 // 减少商品数量
 decreaseQuantity: function(e) {
   const dishId = e.currentTarget.dataset.id;
+  this.deleteCache(dishId);
   this.removeFromCart(dishId);
 },
 
+createCache: function(dishId){
+  wx.request({
+    url: 'http://localhost:5002/api/cache',
+    method: 'POST',
+    header: {
+      'Content-Type': 'application/json'
+      // 'Authorization': 'Bearer ' + wx.getStorageSync('token') // 如果需要登录凭证
+    },
+    data: {"tableId": this.data.tableId,"dishId": dishId},
+      success: (res) => {        
+        if (res.statusCode === 200) {
+          let cacheId = res.data.data.cacheId;
+          this.cacheMap.set(cacheId,dishId);
+        }
+      }
+  })
+},
+
+deleteCache: function(dishId){
+  let cacheId = 0;
+  for (let [key, value] of map) {
+    if (value === dishId) {
+      cacheId = key;
+      break;           
+    }
+  }
+  wx.request({
+    url: 'http://localhost:5002/api/cache/'+ cacheId,
+    method: 'DELETE',
+    header: {
+      'Content-Type': 'application/json'
+      // 'Authorization': 'Bearer ' + wx.getStorageSync('token') // 如果需要登录凭证
+    },
+      success: (res) => {        
+        if (res.statusCode === 200) {
+          this.cacheMap.delete(cacheId);
+        }
+      }
+  })
+},
 
 // 打开弹窗
 openDishPopup(e) {
@@ -192,6 +228,7 @@ confirmDishPopup() {
       }
     }
   }
+  this.createCache(dishId);
   this.addToCart(dishId);
   this.closeDishPopup();
 },
@@ -338,8 +375,30 @@ clearCart: function() {
   });
 },
 
+cartsync: function(){
+  let oldDishId = new Array(map.values());
+  let responseData;
+  wx.request({
+    url: 'http://localhost:5002/api/cache/'+ this.data.tableId,
+    method: 'GET',   
+      success: (res) => {        
+        if (res.statusCode === 200) {
+          responseData = res.data.data;
+          console.log("同步后的购物车",responseData);
+        }
+      }
+  })
+  let newDishId = new Array(responseData.map(item => item.dishId));
+  let difference = newDishId.filter(item => !oldDishId.includes(item));
+  difference.forEach(item => {
+    addToCart(item);
+  });
+},
+
+
 // 结算
 checkout: function() {
+  cartsync();
   const cartItems = this.data.cartItems;
   const requiredItems = ["辣度选择"]; // 必选项名称列表
   console.log("结算",cartItems);
@@ -370,7 +429,7 @@ checkout: function() {
     });
     return; // 阻止跳转
   }
-
+  
   // 1. 将购物车数据和总价存入本地缓存
   try {
     wx.setStorageSync('order_items', this.data.cartItems);
@@ -385,20 +444,7 @@ checkout: function() {
     url: '/pages/payment/order' // 新页面的路径
   });
 },
-  // 搜索功能 - 测试用
-  search: function() {
-    wx.showLoading({ title: '搜索中...' });
-    setTimeout(() => {
-      const keyword = this.data.name.toLowerCase();
-      const filteredGoods = this.getTestGoods().filter(function(item) {
-        return item.dishName.toLowerCase().includes(keyword);
-      });
-      this.setData({ goods: filteredGoods });
-      wx.hideLoading();
-    }, 500);
-  },
-
-
+ 
   // 绑定点击左侧分类
   switchCategory(e) {
   const id = e.currentTarget.dataset.id;
@@ -496,16 +542,4 @@ checkout: function() {
       this.setData({ activeCategory: current });
     }
   },
-
-  // 输入处理
-  bindinput: function(e) {
-    this.setData({ name: e.detail.value });
-  },
-
-  // 确认搜索
-  bindconfirm: function(e) {
-    this.setData({ name: e.detail.value, page: 1 });
-    this.search();
-  },
-
 });

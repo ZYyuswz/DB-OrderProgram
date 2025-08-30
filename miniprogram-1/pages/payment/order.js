@@ -102,7 +102,7 @@ Page({
   postOrder: function(postData) {
     const that = this; // 保存this指向
     const isAddDish = wx.getStorageSync('isAddDish')||false;
-    const backendApiUrl = "http://localhost:5002/api/order"+ ( isAddDish ? ("/"+String(this.data.customerId) ): "");    
+    const backendApiUrl = "http://localhost:5002/api/order"+ ( isAddDish ? ("/"+this.data.customerId ): "");    
     const method = isAddDish?'PUT':'POST';
     console.log(isAddDish,backendApiUrl,this.data.customerId,method);
     wx.request({
