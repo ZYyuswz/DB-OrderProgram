@@ -53,6 +53,15 @@ namespace DBManagement.Controllers
             return new ApiResponse<List<ShoppingCache>>(true, "获取成功", caches);
         }
 
+        // PUT: /api/status/{tableId}
+        // 更改状态为已下单
+        [HttpPut("status/{tableId}")]
+        public ActionResult<ApiResponse> UpdateStatus(int tableId)
+        {
+            var (success, message) = _cacheService.UpdateStatus(tableId);
+            return new ApiResponse(success, message);
+        }
+
         // DELETE: /api/table/tableId
         // 根据桌号删除所有缓存
         [HttpDelete("table/{tableId}")]
