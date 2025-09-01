@@ -1,0 +1,118 @@
+<!--member.wxml-->
+<view class="container">
+  <!-- 会员卡片 -->
+  <view class="member-card">
+    <view class="member-header">
+      <view class="member-level-badge" style="background: {{memberInfo.currentLevelInfo.color}}">
+        <text class="level-icon">{{memberInfo.currentLevelInfo.icon}}</text>
+        <text class="level-name">{{memberInfo.currentLevelName}}</text>
+      </view>
+      <view class="member-info">
+        <text class="member-name">{{memberInfo.customerName}}</text>
+        <text class="member-since">会员时长: {{memberSince}}</text>
+      </view>
+    </view>
+    
+    <!-- 消费信息 -->
+    <view class="consumption-info">
+      <view class="consumption-item">
+        <text class="consumption-label">累计消费</text>
+        <text class="consumption-value">¥{{memberInfo.totalConsumption}}</text>
+      </view>
+      <view class="consumption-item">
+        <text class="consumption-label">当前积分</text>
+        <text class="consumption-value">{{memberInfo.vipPoints}}</text>
+      </view>
+    </view>
+
+    <!-- 升级进度 -->
+    <view class="upgrade-progress" wx:if="{{memberInfo.nextLevel}}">
+      <view class="progress-header">
+        <text class="progress-title">升级到 {{memberInfo.nextLevelName}}</text>
+        <text class="progress-remaining">还需 ¥{{remainingAmount}}</text>
+      </view>
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{memberInfo.progressToNextLevel}}%"></view>
+      </view>
+      <text class="progress-text">{{memberInfo.progressToNextLevel}}%</text>
+    </view>
+  </view>
+
+  <!-- 我的数据统计 -->
+  <view class="stats-section">
+    <view class="section-header">
+      <text class="section-title">我的数据</text>
+    </view>
+    <view class="stats-grid">
+      <view class="stats-item">
+        <text class="stats-number">{{stats.totalOrders}}</text>
+        <text class="stats-label">总订单</text>
+      </view>
+      <view class="stats-item">
+        <text class="stats-number">¥{{stats.averageOrderAmount}}</text>
+        <text class="stats-label">平均消费</text>
+      </view>
+      <view class="stats-item">
+        <text class="stats-number">{{stats.monthlyOrders}}</text>
+        <text class="stats-label">本月订单</text>
+      </view>
+      <view class="stats-item">
+        <text class="stats-number">¥{{stats.monthlyConsumption}}</text>
+        <text class="stats-label">本月消费</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 会员等级体系 -->
+  <view class="levels-section">
+    <view class="section-header">
+      <text class="section-title">会员等级体系</text>
+    </view>
+    <view class="levels-list">
+      <view 
+        class="level-item {{item.levelCode === memberInfo.currentLevel ? 'current' : ''}}"
+        wx:for="{{allLevels}}" 
+        wx:key="levelCode"
+        data-level="{{item}}"
+        bindtap="showLevelDetail"
+      >
+        <view class="level-icon">{{item.levelIcon}}</view>
+        <view class="level-info">
+          <text class="level-name">{{item.levelName}}</text>
+          <text class="level-threshold">
+            消费满 ¥{{item.minConsumption}}
+            <text wx:if="{{item.maxConsumption}}"> - ¥{{item.maxConsumption}}</text>
+          </text>
+        </view>
+        <view class="level-badge" wx:if="{{item.levelCode === memberInfo.currentLevel}}">
+          <text>当前等级</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 会员特权 -->
+  <view class="privileges-section" wx:if="{{memberInfo.privileges.length > 0}}">
+    <view class="section-header">
+      <text class="section-title">我的特权</text>
+    </view>
+    <view class="privileges-list">
+      <view class="privilege-item" wx:for="{{memberInfo.privileges}}" wx:key="privilegeType">
+        <view class="privilege-icon">{{item.privilegeIcon}}</view>
+        <view class="privilege-info">
+          <text class="privilege-name">{{item.privilegeName}}</text>
+          <text class="privilege-desc">{{item.privilegeDesc}}</text>
+        </view>
+        <view class="privilege-value">{{item.privilegeValue}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载中状态 -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <view class="loading-content">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">加载中...</text>
+    </view>
+  </view>
+</view>
