@@ -2,14 +2,19 @@
   "pages": [
     "pages/login/login",
     "pages/index/index",
+    "pages/goods/list",
     "pages/account/account",
     "pages/orders/orders",
     "pages/review/review",
     "pages/points/points",
     "pages/member/member",
-    "pages/logs/logs",
     "pages/profile/profile",
-    "pages/reviews/reviews"
+    "pages/reviews/reviews",
+    "pages/logs/logs",
+    "pages/payment/order",
+    "pages/payment/order-success",
+    "pages/reservation/reservation",
+    "pages/reservation/reserve-success"
   ],
   "window": {
     "navigationBarTextStyle": "black",
@@ -24,9 +29,21 @@
     "list": [
       {
         "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "images/tab-home.png",
+        "selectedIconPath": "images/tab-home.png"
+      },
+      {
+        "pagePath": "pages/goods/list",
         "text": "点餐",
         "iconPath": "images/tab-order.png",
         "selectedIconPath": "images/tab-order-active.png"
+      },
+      {
+        "pagePath": "pages/reservation/reservation",
+        "text": "预定",
+        "iconPath": "images/tab-reservation.png",
+        "selectedIconPath": "images/tab-reservation.png"
       },
       {
         "pagePath": "pages/account/account",

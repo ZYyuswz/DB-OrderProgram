@@ -1,0 +1,40 @@
+<view class="container">
+  <!-- 店铺选择 -->
+  <picker mode="selector" range="{{shops}}" value="{{shopIndex}}" bindchange="onShopChange">
+    <view class="picker">选择店铺：{{shops[shopIndex]}}</view>
+  </picker>
+
+  <!-- 日期选择 -->
+  <picker mode="date" value="{{date}}" start="{{startDate}}" end="{{endDate}}" bindchange="onDateChange">
+    <view class="picker">选择日期：{{date}}</view>
+  </picker>
+
+  <!-- 时段选择（中午/晚上） -->
+  <picker mode="selector" range="{{timeSlots}}" value="{{timeIndex}}" bindchange="onTimeChange">
+    <view class="picker">选择时段：{{timeSlots[timeIndex]}}</view>
+  </picker>
+
+  <picker mode="selector" range="{{durationSlots}}" value="{{durationIndex}}" bindchange="onDurationChange">
+    <view class="picker">选择预计用餐时长(分钟)：{{durationSlots[durationIndex]}}</view>
+  </picker>
+
+  <!-- 人数选择 -->
+  <picker mode="selector" range="{{peopleNumbers}}" value="{{peopleIndex}}" bindchange="onPeopleChange">
+    <view class="picker">选择人数：{{peopleNumbers[peopleIndex]}}</view>
+  </picker>
+
+  <!-- 姓名输入 -->
+  <view class="input-label">姓名：</view>
+  <input class="text-input" type="text" placeholder="请输入姓名" value="{{name}}" bindinput="onNameInput" />
+
+  <!-- 手机号输入 -->
+  <view class="input-label">手机号：</view>
+  <input class="text-input" type="number" maxlength="11" placeholder="请输入手机号" value="{{phone}}" bindinput="onPhoneInput" />
+
+  <!-- 备注输入 -->
+  <view class="input-label">备注：</view>
+  <textarea class="textarea-input" placeholder="请输入备注" value="{{remark}}" bindinput="onRemarkInput"></textarea>
+
+  <!-- 预定按钮 -->
+  <button type="primary" bindtap="onSubmit">预定座位</button>
+</view>

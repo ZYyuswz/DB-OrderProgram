@@ -1,32 +1,32 @@
 {
   "format": 1,
   "restore": {
-    "E:\\Sophomore Spring\\database\\DBprogram\\DB-OrderProgram\\DB-OrderProgram-TeamC\\ConsoleApp1\\ConsoleApp1.csproj": {}
+    "E:\\Sophomore Spring\\database\\DBprogram\\DB-OrderProgram\\DB-OrderProgram-TeamB\\ConsoleApp1\\ConsoleApp1.csproj": {}
   },
   "projects": {
-    "E:\\Sophomore Spring\\database\\DBprogram\\DB-OrderProgram\\DB-OrderProgram-TeamC\\ConsoleApp1\\ConsoleApp1.csproj": {
+    "E:\\Sophomore Spring\\database\\DBprogram\\DB-OrderProgram\\DB-OrderProgram-TeamB\\ConsoleApp1\\ConsoleApp1.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\Sophomore Spring\\database\\DBprogram\\DB-OrderProgram\\DB-OrderProgram-TeamC\\ConsoleApp1\\ConsoleApp1.csproj",
+        "projectUniqueName": "E:\\Sophomore Spring\\database\\DBprogram\\DB-OrderProgram\\DB-OrderProgram-TeamB\\ConsoleApp1\\ConsoleApp1.csproj",
         "projectName": "ConsoleApp1",
-        "projectPath": "E:\\Sophomore Spring\\database\\DBprogram\\DB-OrderProgram\\DB-OrderProgram-TeamC\\ConsoleApp1\\ConsoleApp1.csproj",
+        "projectPath": "E:\\Sophomore Spring\\database\\DBprogram\\DB-OrderProgram\\DB-OrderProgram-TeamB\\ConsoleApp1\\ConsoleApp1.csproj",
         "packagesPath": "C:\\Users\\Lenovo\\.nuget\\packages\\",
-        "outputPath": "E:\\Sophomore Spring\\database\\DBprogram\\DB-OrderProgram\\DB-OrderProgram-TeamC\\ConsoleApp1\\obj\\",
+        "outputPath": "E:\\Sophomore Spring\\database\\DBprogram\\DB-OrderProgram\\DB-OrderProgram-TeamB\\ConsoleApp1\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Lenovo\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
-          "net9.0"
+          "net8.0"
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net9.0": {
-            "targetAlias": "net9.0",
+          "net8.0": {
+            "targetAlias": "net8.0",
             "projectReferences": {}
           }
         },
@@ -42,8 +42,46 @@
         }
       },
       "frameworks": {
-        "net9.0": {
-          "targetAlias": "net9.0",
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[9.0.7, )"
+            },
+            "Microsoft.Extensions.Configuration": {
+              "target": "Package",
+              "version": "[9.0.7, )"
+            },
+            "Microsoft.Extensions.Configuration.Json": {
+              "target": "Package",
+              "version": "[9.0.7, )"
+            },
+            "Microsoft.Extensions.DependencyInjection": {
+              "target": "Package",
+              "version": "[9.0.7, )"
+            },
+            "Microsoft.Extensions.Logging": {
+              "target": "Package",
+              "version": "[9.0.7, )"
+            },
+            "Microsoft.Extensions.Logging.Console": {
+              "target": "Package",
+              "version": "[9.0.7, )"
+            },
+            "Oracle.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[9.23.90, )"
+            },
+            "Oracle.ManagedDataAccess.Core": {
+              "target": "Package",
+              "version": "[23.9.0, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[6.5.0, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",
@@ -55,6 +93,14 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
           "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.300/PortableRuntimeIdentifierGraph.json"
         }
       }
