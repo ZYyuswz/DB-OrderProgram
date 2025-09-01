@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小程序二维码生成测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .section h3 {
+            color: #555;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .qr-preview {
+            text-align: center;
+            margin-top: 15px;
+        }
+        .qr-preview img {
+            max-width: 200px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .download-links {
+            margin-top: 15px;
+        }
+        .download-links a {
+            display: inline-block;
+            margin: 5px;
+            padding: 8px 15px;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .download-links a:hover {
+            background-color: #218838;
+        }
+        .progress {
+            width: 100%;
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #007bff;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ 餐饮门店小程序二维码生成器</h1>
+        
+        <!-- 单个二维码生成 -->
+        <div class="section">
+            <h3>📱 生成单个桌台二维码</h3>
+            <div class="form-group">
+                <label for="singleTableNumber">桌台号:</label>
+                <input type="text" id="singleTableNumber" value="001" placeholder="请输入桌台号">
+            </div>
+            <div class="form-group">
+                <label for="singleStoreId">店铺ID:</label>
+                <input type="number" id="singleStoreId" value="1" min="1">
+            </div>
+            <button onclick="generateSingleQR()">生成二维码</button>
+            <button onclick="generateSingleQRBase64()">获取Base64</button>
+            <div id="singleResult" class="result" style="display: none;"></div>
+            <div id="singleQRPreview" class="qr-preview" style="display: none;"></div>
+            <div id="singleDownloadLinks" class="download-links" style="display: none;"></div>
+        </div>
+
+        <!-- 批量生成二维码 -->
+        <div class="section">
+            <h3>🔄 批量生成二维码</h3>
+            <div class="form-group">
+                <label for="batchTableNumbers">桌台号列表 (用逗号分隔):</label>
+                <input type="text" id="batchTableNumbers" value="001,002,003,004,005" placeholder="例如: 001,002,003">
+            </div>
+            <div class="form-group">
+                <label for="batchStoreId">店铺ID:</label>
+                <input type="number" id="batchStoreId" value="1" min="1">
+            </div>
+            <button onclick="generateBatchQR()">批量生成</button>
+            <div id="batchResult" class="result" style="display: none;"></div>
+            <div id="batchDownloadLinks" class="download-links" style="display: none;"></div>
+        </div>
+
+        <!-- 范围生成二维码 -->
+        <div class="section">
+            <h3>📊 范围生成二维码</h3>
+            <div class="form-group">
+                <label for="startTableNumber">起始桌台号:</label>
+                <input type="number" id="startTableNumber" value="1" min="1">
+            </div>
+            <div class="form-group">
+                <label for="endTableNumber">结束桌台号:</label>
+                <input type="number" id="endTableNumber" value="10" min="1">
+            </div>
+            <div class="form-group">
+                <label for="rangeStoreId">店铺ID:</label>
+                <input type="number" id="rangeStoreId" value="1" min="1">
+            </div>
+            <button onclick="generateRangeQR()">范围生成</button>
+            <button onclick="downloadRangeZip()">下载ZIP包</button>
+            <div id="rangeResult" class="result" style="display: none;"></div>
+            <div id="rangeDownloadLinks" class="download-links" style="display: none;"></div>
+        </div>
+
+        <!-- 测试接口 -->
+        <div class="section">
+            <h3>🧪 测试接口</h3>
+            <button onclick="testQRCode()">测试单个二维码</button>
+            <button onclick="testBatchQRCode()">测试批量二维码</button>
+            <div id="testResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- 进度条 -->
+        <div id="progressContainer" class="section" style="display: none;">
+            <h3>⏳ 生成进度</h3>
+            <div class="progress">
+                <div id="progressBar" class="progress-bar"></div>
+            </div>
+            <div id="progressText">准备中...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5002/api';
+
+        // 显示结果
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+            element.style.display = 'block';
+        }
+
+        // 显示二维码预览
+        function showQRPreview(elementId, tableNumber, storeId) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `
+                <h4>桌台 ${tableNumber} 二维码预览</h4>
+                <img src="${API_BASE}/qrcode/generate/${tableNumber}?storeId=${storeId}" alt="二维码">
+            `;
+            element.style.display = 'block';
+        }
+
+        // 显示下载链接
+        function showDownloadLinks(elementId, tableNumber, storeId) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `
+                <a href="${API_BASE}/qrcode/generate/${tableNumber}?storeId=${storeId}" download="qrcode_table_${tableNumber}.png">
+                    📥 下载PNG图片
+                </a>
+                <a href="${API_BASE}/qrcode/generate-base64/${tableNumber}?storeId=${storeId}" target="_blank">
+                    🔗 查看Base64
+                </a>
+            `;
+            element.style.display = 'block';
+        }
+
+        // 生成单个二维码
+        async function generateSingleQR() {
+            const tableNumber = document.getElementById('singleTableNumber').value;
+            const storeId = document.getElementById('singleStoreId').value;
+            
+            if (!tableNumber) {
+                showResult('singleResult', '请输入桌台号', 'error');
+                return;
+            }
+
+            try {
+                showResult('singleResult', '正在生成二维码...', 'info');
+                
+                const response = await fetch(`${API_BASE}/qrcode/generate/${tableNumber}?storeId=${storeId}`);
+                
+                if (response.ok) {
+                    showResult('singleResult', `✅ 二维码生成成功！\n桌台号: ${tableNumber}\n店铺ID: ${storeId}`, 'success');
+                    showQRPreview('singleQRPreview', tableNumber, storeId);
+                    showDownloadLinks('singleDownloadLinks', tableNumber, storeId);
+                } else {
+                    const error = await response.text();
+                    showResult('singleResult', `❌ 生成失败: ${error}`, 'error');
+                }
+            } catch (error) {
+                showResult('singleResult', `❌ 请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 获取单个二维码Base64
+        async function generateSingleQRBase64() {
+            const tableNumber = document.getElementById('singleTableNumber').value;
+            const storeId = document.getElementById('singleStoreId').value;
+            
+            if (!tableNumber) {
+                showResult('singleResult', '请输入桌台号', 'error');
+                return;
+            }
+
+            try {
+                showResult('singleResult', '正在获取Base64编码...', 'info');
+                
+                const response = await fetch(`${API_BASE}/qrcode/generate-base64/${tableNumber}?storeId=${storeId}`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('singleResult', `✅ Base64获取成功！\n桌台号: ${data.tableNumber}\n店铺ID: ${data.storeId}\n图片大小: ${data.qrCodeBase64.length} 字符`, 'success');
+                } else {
+                    const error = await response.text();
+                    showResult('singleResult', `❌ 获取失败: ${error}`, 'error');
+                }
+            } catch (error) {
+                showResult('singleResult', `❌ 请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 批量生成二维码
+        async function generateBatchQR() {
+            const tableNumbersText = document.getElementById('batchTableNumbers').value;
+            const storeId = document.getElementById('batchStoreId').value;
+            
+            if (!tableNumbersText) {
+                showResult('batchResult', '请输入桌台号列表', 'error');
+                return;
+            }
+
+            const tableNumbers = tableNumbersText.split(',').map(t => t.trim()).filter(t => t);
+            
+            try {
+                showResult('batchResult', '正在批量生成二维码...', 'info');
+                
+                const response = await fetch(`${API_BASE}/qrcode/generate-batch`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        tableNumbers: tableNumbers,
+                        storeId: parseInt(storeId)
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('batchResult', `✅ 批量生成成功！\n总数: ${data.totalCount}\n桌台: ${data.results.map(r => r.tableNumber).join(', ')}`, 'success');
+                    
+                    // 显示下载链接
+                    const downloadLinks = document.getElementById('batchDownloadLinks');
+                    downloadLinks.innerHTML = data.results.map(r => 
+                        `<a href="${r.imageUrl}" download="qrcode_table_${r.tableNumber}.png">📥 桌台${r.tableNumber}</a>`
+                    ).join('');
+                    downloadLinks.style.display = 'block';
+                } else {
+                    const error = await response.text();
+                    showResult('batchResult', `❌ 批量生成失败: ${error}`, 'error');
+                }
+            } catch (error) {
+                showResult('batchResult', `❌ 请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 范围生成二维码
+        async function generateRangeQR() {
+            const startTable = parseInt(document.getElementById('startTableNumber').value);
+            const endTable = parseInt(document.getElementById('endTableNumber').value);
+            const storeId = parseInt(document.getElementById('rangeStoreId').value);
+            
+            if (startTable > endTable) {
+                showResult('rangeResult', '起始桌台号不能大于结束桌台号', 'error');
+                return;
+            }
+
+            try {
+                showResult('rangeResult', '正在范围生成二维码...', 'info');
+                
+                const response = await fetch(`${API_BASE}/qrcode/generate-range`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        startTableNumber: startTable,
+                        endTableNumber: endTable,
+                        storeId: storeId
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('rangeResult', `✅ 范围生成成功！\n范围: ${startTable}-${endTable}\n总数: ${data.totalCount}`, 'success');
+                    
+                    // 显示下载链接
+                    const downloadLinks = document.getElementById('rangeDownloadLinks');
+                    downloadLinks.innerHTML = `
+                        <a href="${API_BASE}/qrcode/download-zip?startTableNumber=${startTable}&endTableNumber=${endTable}&storeId=${storeId}" download="qrcodes_tables_${startTable}-${endTable}.zip">
+                            📦 下载ZIP包 (${data.totalCount}个文件)
+                        </a>
+                    `;
+                    downloadLinks.style.display = 'block';
+                } else {
+                    const error = await response.text();
+                    showResult('rangeResult', `❌ 范围生成失败: ${error}`, 'error');
+                }
+            } catch (error) {
+                showResult('rangeResult', `❌ 请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 下载范围ZIP包
+        async function downloadRangeZip() {
+            const startTable = parseInt(document.getElementById('startTableNumber').value);
+            const endTable = parseInt(document.getElementById('endTableNumber').value);
+            const storeId = parseInt(document.getElementById('rangeStoreId').value);
+            
+            if (startTable > endTable) {
+                showResult('rangeResult', '起始桌台号不能大于结束桌台号', 'error');
+                return;
+            }
+
+            const url = `${API_BASE}/qrcode/download-zip?startTableNumber=${startTable}&endTableNumber=${endTable}&storeId=${storeId}`;
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `qrcodes_tables_${startTable}-${endTable}.zip`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showResult('rangeResult', `📦 开始下载ZIP包: qrcodes_tables_${startTable}-${endTable}.zip`, 'info');
+        }
+
+        // 测试单个二维码接口
+        async function testQRCode() {
+            try {
+                showResult('testResult', '正在测试单个二维码接口...', 'info');
+                
+                const response = await fetch(`${API_BASE}/test/qrcode`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('testResult', `✅ 测试成功！\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    const error = await response.text();
+                    showResult('testResult', `❌ 测试失败: ${error}`, 'error');
+                }
+            } catch (error) {
+                showResult('testResult', `❌ 请求失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 测试批量二维码接口
+        async function testBatchQRCode() {
+            try {
+                showResult('testResult', '正在测试批量二维码接口...', 'info');
+                
+                const response = await fetch(`${API_BASE}/test/qrcode-batch`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('testResult', `✅ 测试成功！\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    const error = await response.text();
+                    showResult('testResult', `❌ 测试失败: ${error}`, 'error');
+                }
+            } catch (error) {
+                showResult('testResult', `❌ 请求失败: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

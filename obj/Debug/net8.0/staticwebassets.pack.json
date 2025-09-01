@@ -1,0 +1,25 @@
+{
+  "Files": [
+    {
+      "Id": "E:\\Sophomore Spring\\database\\DBprogram\\DB-OrderProgram\\DB-OrderProgram-TeamB\\ConsoleApp1\\wwwroot\\qrcode-test.html",
+      "PackagePath": "staticwebassets\\qrcode-test.html"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.ConsoleApp1.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.ConsoleApp1.props",
+      "PackagePath": "build\\ConsoleApp1.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.ConsoleApp1.props",
+      "PackagePath": "buildMultiTargeting\\ConsoleApp1.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.ConsoleApp1.props",
+      "PackagePath": "buildTransitive\\ConsoleApp1.props"
+    }
+  ],
+  "ElementsToRemove": []
+}
