@@ -119,7 +119,7 @@ Page({
         // HTTP状态码200或201通常代表成功
         if (res.statusCode === 200 || res.statusCode === 201) {
           console.log('订单提交成功，后端返回:', res.data);
-          this.deleteCache();         
+          this.putStatus();         
             // 订单创建成功后，再根据需求发起GET请求获取总价
             if(isAddDish){wx.redirectTo({ url: '/pages/payment/order-success'});return;}
           that.getTotalPriceFromServer(res.data.data);         
@@ -143,6 +143,18 @@ Page({
         });
       }
     });
+  },
+  
+  putStatus:function () {
+    wx.request({
+      url: 'http://localhost:5002/api/cache/status/'+ this.data.tableId,
+      method: 'PUT',   
+        success: (res) => {        
+          if (res.statusCode === 200) {
+            console.log("更新缓存状态成功");
+          }
+        }
+    })
   },
 
   deleteCache:function () {

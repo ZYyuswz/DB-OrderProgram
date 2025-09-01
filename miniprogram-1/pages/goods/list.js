@@ -108,6 +108,13 @@ Page({
     return Object.values(categoryResult);
   },
 
+  onPullDownRefresh: function () {
+    console.log("用户下拉刷新了");
+
+    // 模拟请求数据
+    this.cartsync();
+    wx.stopPullDownRefresh(); // 即使失败也要停止 
+  },
 
 // 增加商品数量
 increaseQuantity: function(e) {
@@ -267,7 +274,6 @@ addToCart: function(dishId) {
         
         // 更新购物车
         const existingItem = cartItems.find(item => item.dishId == dishId);
-        console.log("更新购物车",category);
         if (existingItem && category.id != 6) {
           existingItem.quantity += 1;
         } else {
@@ -389,7 +395,11 @@ cartsync: function () {
 
         // 在回调里操作 responseData
         let newDishId = responseData.map(item => item.dishId);
-
+        this.clearCart();
+        newDishId.forEach(item => {
+          this.addToCart(item);  
+        });
+        /*
         // 计算差集
         let needToAdd = newDishId.filter(item => !oldDishId.includes(item));
         let needToRemove = oldDishId.filter(item => !newDishId.includes(item));
@@ -401,6 +411,7 @@ cartsync: function () {
         needToRemove.forEach(item => {
           this.removeFromCart(item);  
         });
+        */
       }
     }
   });
