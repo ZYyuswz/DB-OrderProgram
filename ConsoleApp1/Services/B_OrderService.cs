@@ -74,14 +74,14 @@ namespace DBManagement.Service
             }
         }
 
-        public (bool success, string message) ContinueOrder(int customer_id, List<OrderDetail> orderDetails)
+        public (bool success, string message) ContinueOrder(int tableId, List<OrderDetail> orderDetails)
         {
             try
             {
-                // 根据 customerId 查找未结账的订单
+                // 根据 tableId 查找未结账的订单
                 var order = _db.Orders
                    .Include(o => o.OrderDetails)
-                   .FirstOrDefault(o => o.CustomerId == customer_id && o.OrderStatus != "已结账");
+                   .FirstOrDefault(o => o.TableId == tableId && o.OrderStatus != "已结账");
 
                 if (order == null)
                 {

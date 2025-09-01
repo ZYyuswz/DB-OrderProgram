@@ -49,12 +49,12 @@ namespace DBManagement.Controllers
             return new ApiResponse<int>(success, message, order_id);
         }
 
-        // PUT: /api/order/{customer_id}
+        // PUT: /api/order/{tableId}
         // 继续下单
-        [HttpPut("{customer_id}")]
-        public ActionResult<ApiResponse> Updateorder(int customer_id, [FromBody] List<OrderDetail> OrderDetails)
+        [HttpPut("{tableId}")]
+        public ActionResult<ApiResponse> Updateorder(int tableId, [FromBody] List<OrderDetail> OrderDetails)
         {
-            var (success, message) = _orderService.ContinueOrder(customer_id, OrderDetails);
+            var (success, message) = _orderService.ContinueOrder(tableId, OrderDetails);
             return new ApiResponse(success, message);
         }
 

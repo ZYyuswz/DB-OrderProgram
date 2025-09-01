@@ -58,22 +58,39 @@ namespace DBManagement.Service
 
         public List<ShoppingCache> ReturnCacheByTable(int tableId)
         {
-            // 1. 查询符合条件的记录
+            // 查询符合条件的记录
             var result = _db.Set<ShoppingCache>()
                            .Where(sc => sc.TableId == tableId && sc.Status == "PENDING")
                            .ToList();
-            // 2. 如果找到记录，更新Status
-            if (result.Any())
-            {
-                foreach (var cache in result)
-                {
-                    cache.Status = "ORDERED";
-                }
-                // 3. 保存更改到数据库
-                _db.SaveChanges();
-            }
             return result;
         }
+
+        public (bool success, string message) UpdateStatus(int tableId)
+        {
+            try
+            {
+                // 1. 查询符合条件的记录
+                var result = _db.Set<ShoppingCache>()
+                               .Where(sc => sc.TableId == tableId && sc.Status == "PENDING")
+                               .ToList();
+                // 2. 如果找到记录，更新Status
+                if (result.Any())
+                {
+                    foreach (var cache in result)
+                    {
+                        cache.Status = "ORDERED";
+                    }
+                    // 3. 保存更改到数据库
+                    _db.SaveChanges();
+                }
+                return (true, $"成功修改桌号为 {tableId} 的状态");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"修改失败: {ex.Message}");
+            }
+        }
+        
 
         // 生成下一个CacheId
         private int GenerateCacheId()
