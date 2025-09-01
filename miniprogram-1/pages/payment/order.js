@@ -1,7 +1,7 @@
 // pages/order/order.js
 Page({
   data: {
-    tableNumber: 'table:1', // 这里可以动态获取，例如从扫码参数中
+    tableId: 1, // 这里可以动态获取，例如从扫码参数中
     orderItems: [], 
     totalPrice: 0,
     remark: '',
@@ -64,7 +64,7 @@ Page({
    * @returns {object|null} 组装好的数据对象，或在失败时返回null
    */
   preparePostData: function() {
-    const tableId = parseInt(this.data.tableNumber.split(':')[1]);
+    const tableId = this.data.tableId;
     if (isNaN(tableId)) {
       wx.showToast({ title: '桌号信息错误', icon: 'none' });
       return null;
@@ -117,7 +117,7 @@ Page({
         // HTTP状态码200或201通常代表成功
         if (res.statusCode === 200 || res.statusCode === 201) {
           console.log('订单提交成功，后端返回:', res.data);
-                   
+          this.deleteCache();         
             // 订单创建成功后，再根据需求发起GET请求获取总价
             if(isAddDish){wx.redirectTo({ url: '/pages/payment/order-success'});return;}
           that.getTotalPriceFromServer(res.data.data);         
@@ -141,6 +141,19 @@ Page({
         });
       }
     });
+  },
+
+  deleteCache:function () {
+    wx.request({
+      url: 'http://localhost:5002/api/table/tableId/'+ this.data.tableId,
+      method: 'DELETE',   
+        success: (res) => {        
+          if (res.statusCode === 200) {
+            responseData = res.data.data;
+            console.log("删除缓存成功",responseData);
+          }
+        }
+    })
   },
 
   /**

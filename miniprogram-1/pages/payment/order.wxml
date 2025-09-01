@@ -3,7 +3,7 @@
   <!-- 上方：桌号信息 -->
   <view class="section table-info">
     <text class="label">桌号</text>
-    <text class="value">{{tableNumber}}</text>
+    <text class="value">table:{{tableId}}</text>
   </view>
 
   <!-- 中间：订单商品列表 -->

@@ -56,7 +56,7 @@ Page({
     // 初始化购物车
     this.updateCartSummary();  
     this.data.isAddDish = wx.getStorageSync('isAddDish') || false; 
-    this.data.tableId = wx.getStorageSync('isAddDish') || 1;
+    this.data.tableId = wx.getStorageSync('tableId') || 1;
     this.cacheMap = new Map();
     /*const socketTask = wx.connectSocket({
       url: 'wss://example.com/socket', // 替换成你的 ws 地址
@@ -375,30 +375,38 @@ clearCart: function() {
   });
 },
 
-cartsync: function(){
-  let oldDishId = new Array(map.values());
-  let responseData;
+cartsync: function () {
+  // 从 map 中取旧的 dishId（Set 变成数组）
+  let oldDishId = Array.from(this.cacheMap.values());
+
   wx.request({
-    url: 'http://localhost:5002/api/cache/'+ this.data.tableId,
-    method: 'GET',   
-      success: (res) => {        
-        if (res.statusCode === 200) {
-          responseData = res.data.data;
-          console.log("同步后的购物车",responseData);
-        }
+    url: 'http://localhost:5002/api/cache/' + this.data.tableId,
+    method: 'GET',
+    success: (res) => {
+      if (res.statusCode === 200) {
+        let responseData = res.data.data;
+        console.log("同步后的购物车", responseData);
+
+        // 在回调里操作 responseData
+        let newDishId = responseData.map(item => item.dishId);
+
+        // 计算差集
+        let difference = newDishId.filter(item => !oldDishId.includes(item));
+
+        // 遍历差集并添加
+        difference.forEach(item => {
+          this.addToCart(item);  // 注意用 this 调用组件/页面的方法
+        });
       }
-  })
-  let newDishId = new Array(responseData.map(item => item.dishId));
-  let difference = newDishId.filter(item => !oldDishId.includes(item));
-  difference.forEach(item => {
-    addToCart(item);
+    }
   });
 },
 
 
+
 // 结算
 checkout: function() {
-  cartsync();
+  this.cartsync();
   const cartItems = this.data.cartItems;
   const requiredItems = ["辣度选择"]; // 必选项名称列表
   console.log("结算",cartItems);
