@@ -150,7 +150,7 @@ createCache: function(dishId){
 
 deleteCache: function(dishId){
   let cacheId = 0;
-  for (let [key, value] of map) {
+  for (let [key, value] of this.cacheMap) {
     if (value === dishId) {
       cacheId = key;
       break;           
@@ -391,11 +391,15 @@ cartsync: function () {
         let newDishId = responseData.map(item => item.dishId);
 
         // 计算差集
-        let difference = newDishId.filter(item => !oldDishId.includes(item));
+        let needToAdd = newDishId.filter(item => !oldDishId.includes(item));
+        let needToRemove = oldDishId.filter(item => !newDishId.includes(item));
 
         // 遍历差集并添加
-        difference.forEach(item => {
-          this.addToCart(item);  // 注意用 this 调用组件/页面的方法
+        needToAdd.forEach(item => {
+          this.addToCart(item);  
+        });
+        needToRemove.forEach(item => {
+          this.removeFromCart(item);  
         });
       }
     }

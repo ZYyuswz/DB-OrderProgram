@@ -51,7 +51,6 @@
                   <view class="price-area">
                     <text class="price">¥{{dish.Price}}</text>
                     
-                    <!-- 已售数量移动到这里 -->
                     <text  class="estimatedTime">
                       预计等候时间: {{dish.estimatedTime}}分钟
                     </text>
@@ -84,32 +83,7 @@
   </view>
   <view class="checkout-btn" bindtap="checkout">去结算</view>
 </view>
-
-<!-- 购物车弹窗 -->
-<view class="cart-popup" wx:if="{{showCartPopup}}">
-  <view class="popup-header">
-    <text class="title">购物车</text>
-    <text class="clear-btn" bindtap="clearCart">清空</text>
-  </view>
-  
-  <scroll-view class="cart-items" scroll-y>
-    <view class="cart-item" wx:for="{{cartItems}}" wx:key="dishId">
-      <view class="item-info">
-        <text class="name">{{item.dishName}}</text>
-        <text class="price">¥{{item.minPrice}}</text>
-      </view>
-      <!-- 已放大的加减组件 -->
-      <view class="item-actions">
-        <text class="minus-btn" bindtap="decreaseQuantity" data-id="{{item.dishId}}">-</text>
-        <text class="quantity">{{item.quantity}}</text>
-        <text class="plus-btn" bindtap="increaseQuantity" data-id="{{item.dishId}}">+</text>
-      </view>
-    </view>
-  </scroll-view>
-</view>
-
-<!-- 弹窗遮罩层 -->
-<view class="mask" wx:if="{{showCartPopup}}" bindtap="toggleCartPopup"></view>
+ 
 
 <!-- 菜品详情弹窗 -->
 <view class="dish-popup" wx:if="{{showDishPopup}}">

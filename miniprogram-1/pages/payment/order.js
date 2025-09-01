@@ -16,6 +16,8 @@ Page({
     try {
       const items = wx.getStorageSync('order_items');
       const price = wx.getStorageSync('order_total_price');
+      this.data.tableId = wx.getStorageSync('tableId') || 1;
+      this.data.customerId = wx.getStorageSync('customerId') || 1;
       console.log(items,price);
       if (items && price) {
         this.setData({
@@ -145,12 +147,11 @@ Page({
 
   deleteCache:function () {
     wx.request({
-      url: 'http://localhost:5002/api/table/tableId/'+ this.data.tableId,
+      url: 'http://localhost:5002/api/cache/table/'+ this.data.tableId,
       method: 'DELETE',   
         success: (res) => {        
           if (res.statusCode === 200) {
-            responseData = res.data.data;
-            console.log("删除缓存成功",responseData);
+            console.log("删除缓存成功");
           }
         }
     })
