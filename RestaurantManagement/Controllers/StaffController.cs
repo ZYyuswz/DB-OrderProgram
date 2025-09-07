@@ -99,7 +99,7 @@ namespace RestaurantManagement.Controllers
             var result = await _staffService.CheckInAsync(id);
             if (!result)
                 return BadRequest("打卡失败。");
-            return Ok();
+            return Ok(new { success = true, message = "打卡成功" });
         }
 
         // 员工签退
@@ -109,7 +109,27 @@ namespace RestaurantManagement.Controllers
             var result = await _staffService.CheckOutAsync(id);
             if (!result)
                 return BadRequest("签退失败。");
-            return Ok();
+            return Ok(new { success = true, message = "签退成功" });
+        }
+
+        // 员工打卡（从Body获取StaffId）
+        [HttpPost("checkin")]
+        public async Task<IActionResult> CheckInFromBody([FromBody] CheckInRequest request)
+        {
+            var result = await _staffService.CheckInAsync(request.StaffId);
+            if (!result)
+                return BadRequest(new { success = false, message = "打卡失败" });
+            return Ok(new { success = true, message = "打卡成功" });
+        }
+
+        // 员工签退（从Body获取StaffId）
+        [HttpPost("checkout")]
+        public async Task<IActionResult> CheckOutFromBody([FromBody] CheckInRequest request)
+        {
+            var result = await _staffService.CheckOutAsync(request.StaffId);
+            if (!result)
+                return BadRequest(new { success = false, message = "签退失败" });
+            return Ok(new { success = true, message = "签退成功" });
         }
 
         // 获取考勤统计
@@ -121,6 +141,16 @@ namespace RestaurantManagement.Controllers
         {
             var statistics = await _staffService.GetAttendanceStatisticsAsync(startDate, endDate, departmentId);
             return Ok(statistics);
+        }
+
+        // 删除员工（物理删除）
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteStaff(int id)
+        {
+            var success = await _staffService.HardDeleteStaffAsync(id);
+            if (success)
+                return Ok(new { Success = true });
+            return NotFound(new { Success = false, Message = "员工不存在或有考勤记录，无法删除。" });
         }
     }
 }

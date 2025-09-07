@@ -8,6 +8,12 @@ namespace RestaurantManagement.Models
         public string Status { get; set; } = string.Empty;
     }
 
+    // 打卡请求模型
+    public class CheckInRequest
+    {
+        public int StaffId { get; set; }
+    }
+
     // 开台请求模型
     public class OpenTableRequest
     {
@@ -149,9 +155,6 @@ namespace RestaurantManagement.Models
         [Column("STATUS")]
         public string Status { get; set; } = string.Empty; // "在职"/"离职"/"休假"
         
-        [Column("WORKSCHEDULE")]
-        public string? WorkSchedule { get; set; }
-        
         [Column("CREATETIME")]
         public DateTime CreateTime { get; set; }
         
@@ -169,6 +172,7 @@ namespace RestaurantManagement.Models
         public DateTime? CheckOutTime { get; set; }
         public decimal? ActualWorkHours { get; set; }
         public string Status { get; set; } = string.Empty; // 正常、迟到、早退、缺勤
+        public int? StoreID { get; set; }
         
         // 兼容性属性
         public decimal? WorkHours 
@@ -227,5 +231,31 @@ namespace RestaurantManagement.Models
         public int DishID { get; set; }
         public int MaterialID { get; set; }
         public decimal RequiredQuantity { get; set; }
+    }
+
+    // 排班记录
+    [Table("STAFFSCHEDULE")]
+    public class Schedule
+    {
+        [Column("SCHEDULEID")]
+        public int ScheduleID { get; set; }
+
+        [Column("STAFFID")]
+        public int StaffID { get; set; }
+
+        [Column("WORKDATE")]
+        public int WorkDate { get; set; } // 1-7，表示星期几
+
+        [Column("STARTTIME")]
+        public TimeSpan StartTime { get; set; } // INTERVAL DAY TO SECOND
+
+        [Column("ENDTIME")]
+        public TimeSpan EndTime { get; set; } // INTERVAL DAY TO SECOND
+
+        [Column("STOREID")]
+        public int? StoreID { get; set; }
+
+        [Column("NOTES")]
+        public string? Notes { get; set; }
     }
 }

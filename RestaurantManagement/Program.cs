@@ -22,6 +22,7 @@ builder.Services.AddScoped<StaffService>();
 builder.Services.AddScoped<InventoryService>();
 builder.Services.AddScoped<DepartmentService>();
 builder.Services.AddScoped<StoreService>();
+builder.Services.AddScoped<ScheduleService>();
 
 var app = builder.Build();
 
