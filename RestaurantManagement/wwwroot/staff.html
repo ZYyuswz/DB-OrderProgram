@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>员工管理 - 餐饮管理系统</title>
     <link rel="stylesheet" href="css/styles.css">
+    <!-- SheetJS库用于Excel导出 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
     <nav class="navbar">
@@ -25,7 +27,7 @@
                 <h2>员工管理</h2>
                 <div>
                     <button onclick="showAddStaffModal()" class="btn btn-primary" data-permission="staff">添加员工</button>
-                    <button onclick="exportData()" class="btn btn-info">导出数据</button>
+                    <button onclick="generateStatistics()" class="btn btn-info">生成统计</button>
                 </div>
             </div>
 
@@ -169,24 +171,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- 快速打卡区域 -->
-                <div class="card">
-                    <h3>快速打卡</h3>
-                    <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="quickCheckStaff">选择员工:</label>
-                            <select id="quickCheckStaff" class="form-control" style="width: 200px;">
-                                <option value="">请选择员工</option>
-                            </select>
-                        </div>
-                        <button onclick="quickCheckIn()" class="btn btn-success">上班打卡</button>
-                        <button onclick="quickCheckOut()" class="btn btn-warning">下班打卡</button>
-                        <div class="current-time">
-                            <i class="fas fa-clock"></i> 当前时间：<span id="currentTime"></span>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- 考勤记录Tab -->
@@ -322,9 +306,6 @@
                             <select id="statsDepartmentFilter" class="form-control">
                                 <option value="">全部部门</option>
                             </select>
-                        </div>
-                        <div class="form-group">
-                            <button onclick="loadAttendanceStatistics()" class="btn btn-primary">生成统计</button>
                         </div>
                     </div>
                 </div>
@@ -790,15 +771,29 @@
         async function loadStaff() {
             console.log('开始加载员工数据...');
             try {
+                console.log('正在调用API: /staff');
                 allStaff = await API.get('/staff');
                 console.log('员工数据加载成功:', allStaff);
+                console.log('员工数量:', allStaff.length);
+                
+                if (allStaff.length > 0) {
+                    console.log('第一个员工数据:', allStaff[0]);
+                    // 检查员工状态
+                    const activeStaff = allStaff.filter(s => (s.Status || s.status || s.STATUS) === '在职');
+                    console.log('在职员工数量:', activeStaff.length);
+                    if (activeStaff.length > 0) {
+                        console.log('第一个在职员工:', activeStaff[0]);
+                    }
+                }
+                
                 filteredStaff = [...allStaff];
                 renderStaffTable();
                 populateFilterSelects(); // 使用统一的函数填充员工相关选择器
                 updateStatistics();
             } catch (error) {
                 console.error('加载员工数据失败:', error);
-                Utils.showNotification('加载员工数据失败', 'error');
+                console.error('错误详情:', error.message);
+                Utils.showNotification('加载员工数据失败: ' + error.message, 'error');
             }
         }
 
@@ -1290,7 +1285,7 @@
         function populateFilterSelects() {
             console.log('开始填充员工相关的筛选器...', allStaff.length, '名员工');
             
-            // 填充快速打卡员工选择器
+            // 填充快速打卡员工选择器（考勤Tab）
             const quickCheckStaff = document.getElementById('quickCheckStaff');
             if (quickCheckStaff) {
                 quickCheckStaff.innerHTML = '<option value="">请选择员工</option>';
@@ -1447,6 +1442,26 @@
             }
         }
 
+        async function quickCheckOutTop() {
+            const staffId = document.getElementById('quickCheckStaffTop').value;
+            if (!staffId) {
+                Utils.showNotification('请选择员工', 'warning');
+                return;
+            }
+
+            try {
+                const response = await API.post('/staff/checkout', { staffId: parseInt(staffId) });
+                if (response.success) {
+                    Utils.showNotification(response.message || '签退成功', 'success');
+                } else {
+                    Utils.showNotification(response.message || '签退失败', 'error');
+                }
+            } catch (error) {
+                console.error('签退失败:', error);
+                Utils.showNotification('签退失败: ' + (error.message || '网络错误'), 'error');
+            }
+        }
+
         // 更新当前状态显示
         async function updateCurrentStatus(staffId) {
             try {
@@ -1480,17 +1495,67 @@
                 const today = new Date().getDay(); // 0=Sunday, 1=Monday, etc.
                 const workDay = today === 0 ? 7 : today; // Convert to 1-7 format
                 
+                console.log('获取排班信息:', staffId, workDay);
                 const response = await API.get(`/schedule/staff/${staffId}/${workDay}`);
+                console.log('排班信息响应:', response);
+                
                 const scheduleDiv = document.getElementById('todayScheduleInfo');
                 
                 if (response && response.length > 0) {
                     const schedule = response[0];
-                    const startTime = schedule.STARTTIME || schedule.startTime;
-                    const endTime = schedule.ENDTIME || schedule.endTime;
+                    console.log('排班详情:', schedule);
+                    console.log('所有属性:', Object.keys(schedule));
+                    
+                    // 尝试多种可能的字段名
+                    const startTime = schedule.STARTTIME || schedule.startTime || schedule.StartTime;
+                    const endTime = schedule.ENDTIME || schedule.endTime || schedule.EndTime;
+                    
+                    console.log('解析时间:', { startTime, endTime });
+                    console.log('开始时间类型:', typeof startTime, '值:', startTime);
+                    console.log('结束时间类型:', typeof endTime, '值:', endTime);
+                    
+                    // 格式化时间显示
+                    const formatTime = (time) => {
+                        if (!time) return 'N/A';
+                        
+                        // 如果是字符串格式的TimeSpan (如 "08:00:00")
+                        if (typeof time === 'string') {
+                            // 如果包含冒号，可能是 HH:MM:SS 格式
+                            if (time.includes(':')) {
+                                const parts = time.split(':');
+                                if (parts.length >= 2) {
+                                    return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`;
+                                }
+                            }
+                            return time;
+                        }
+                        
+                        // 如果是对象，可能是 TimeSpan 序列化后的格式
+                        if (typeof time === 'object' && time !== null) {
+                            // 检查是否有小时和分钟属性
+                            if (time.hours !== undefined && time.minutes !== undefined) {
+                                return `${String(time.hours).padStart(2, '0')}:${String(time.minutes).padStart(2, '0')}`;
+                            }
+                            // 检查是否有其他时间格式
+                            if (time.totalSeconds !== undefined) {
+                                const hours = Math.floor(time.totalSeconds / 3600);
+                                const minutes = Math.floor((time.totalSeconds % 3600) / 60);
+                                return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+                            }
+                            return JSON.stringify(time);
+                        }
+                        
+                        return time.toString();
+                    };
+                    
+                    const formattedStartTime = formatTime(startTime);
+                    const formattedEndTime = formatTime(endTime);
+                    
+                    console.log('格式化后时间:', { formattedStartTime, formattedEndTime });
                     
                     scheduleDiv.innerHTML = `
-                        <p><strong>上班时间:</strong> ${startTime}</p>
-                        <p><strong>下班时间:</strong> ${endTime}</p>
+                        <p><strong>上班时间:</strong> ${formattedStartTime}</p>
+                        <p><strong>下班时间:</strong> ${formattedEndTime}</p>
                         <p><strong>工作日:</strong> ${getWeekDayName(workDay)}</p>
                     `;
                 } else {
@@ -1598,7 +1663,8 @@
                     new Date(checkOutTime).toLocaleTimeString('zh-CN', {hour12: false}) : '-';
                 
                 // 格式化工作时长
-                const workHours = record.WORKHOURS || record.workHours;
+                const workHours = record.ACTUALWORKHOURS || record.actualWorkHours || 
+                                record.ActualWorkHours || record.WORKHOURS || record.workHours;
                 const formattedWorkHours = workHours ? 
                     parseFloat(workHours).toFixed(1) + '小时' : '-';
                 
@@ -1672,14 +1738,112 @@
             Utils.showNotification('编辑考勤记录功能待实现', 'info');
         }
 
-        function exportData() {
-            if (currentTab === 'staff') {
-                Utils.showNotification('导出员工数据功能待实现', 'info');
-            } else if (currentTab === 'attendance') {
-                Utils.showNotification('导出考勤记录功能待实现', 'info');
-            } else if (currentTab === 'statistics') {
-                Utils.showNotification('导出考勤统计功能待实现', 'info');
+        // 生成统计报表并导出为Excel
+        async function generateStatistics() {
+            try {
+                // 切换到考勤统计Tab
+                switchTab('statistics');
+                
+                // 显示加载提示
+                Utils.showNotification('正在生成统计报表...', 'info');
+                
+                // 先加载统计数据到页面
+                await loadAttendanceStatistics();
+                
+                // 获取考勤统计数据
+                const startDate = document.getElementById('statsStartDate').value;
+                const endDate = document.getElementById('statsEndDate').value;
+                const departmentId = document.getElementById('statsDepartmentFilter').value;
+
+                let url = '/staff/attendance/statistics?';
+                const params = new URLSearchParams();
+                
+                if (startDate) params.append('startDate', startDate);
+                if (endDate) params.append('endDate', endDate);
+                if (departmentId) params.append('departmentId', departmentId);
+                
+                url += params.toString();
+                
+                console.log('请求URL:', url);
+                const statisticsData = await API.get(url);
+                console.log('统计数据:', statisticsData);
+                
+                if (!statisticsData || statisticsData.length === 0) {
+                    Utils.showNotification('没有找到统计数据', 'warning');
+                    return;
+                }
+                
+                // 调试：打印第一条记录的所有属性
+                if (statisticsData.length > 0) {
+                    console.log('第一条记录的所有属性:', Object.keys(statisticsData[0]));
+                    console.log('第一条记录:', statisticsData[0]);
+                }
+                
+                // 生成Excel文件
+                generateExcelReport(statisticsData, startDate, endDate);
+                
+            } catch (error) {
+                console.error('生成统计报表失败:', error);
+                Utils.showNotification('生成统计报表失败: ' + error.message, 'error');
             }
+        }
+        
+        // 生成Excel报表
+        function generateExcelReport(data, startDate, endDate) {
+            // 创建工作簿
+            const wb = XLSX.utils.book_new();
+            
+            // 准备数据
+            const wsData = [
+                // 表头
+                ['员工姓名', '部门', '总打卡天数', '正常天数', '迟到天数', '早退天数', '缺勤天数', '总工时', '平均工时', '出勤率']
+            ];
+            
+            // 添加数据行
+            data.forEach(record => {
+                wsData.push([
+                    record.STAFFNAME || record.staffName || record.StaffName || '未知员工',
+                    record.DEPARTMENTNAME || record.departmentName || record.DepartmentName || '未知部门',
+                    record.TOTALDAYS || record.totalDays || record.TotalDays || 0,
+                    record.NORMALDAYS || record.normalDays || record.NormalDays || 0,
+                    record.LATEDAYS || record.lateDays || record.LateDays || 0,
+                    record.EARLYLEAVEDAYS || record.earlyLeaveDays || record.EarlyLeaveDays || 0,
+                    record.ABSENTDAYS || record.absentDays || record.AbsentDays || 0,
+                    (record.TOTALWORKHOURS || record.totalWorkHours || record.TotalWorkHours || 0).toFixed(1) + 'h',
+                    (record.AVGWORKHOURS || record.averageWorkHours || record.AverageWorkHours || 0).toFixed(1) + 'h',
+                    (record.ATTENDANCERATE || record.attendanceRate || record.AttendanceRate || 0).toFixed(1) + '%'
+                ]);
+            });
+            
+            // 创建工作表
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            
+            // 设置列宽
+            const colWidths = [
+                { wch: 12 }, // 员工姓名
+                { wch: 12 }, // 部门
+                { wch: 12 }, // 总打卡天数
+                { wch: 10 }, // 正常天数
+                { wch: 10 }, // 迟到天数
+                { wch: 10 }, // 早退天数
+                { wch: 10 }, // 缺勤天数
+                { wch: 10 }, // 总工时
+                { wch: 10 }, // 平均工时
+                { wch: 10 }  // 出勤率
+            ];
+            ws['!cols'] = colWidths;
+            
+            // 添加工作表到工作簿
+            XLSX.utils.book_append_sheet(wb, ws, '考勤统计');
+            
+            // 生成文件名
+            const dateRange = startDate && endDate ? `${startDate}_${endDate}` : new Date().toISOString().split('T')[0];
+            const fileName = `考勤统计报表_${dateRange}.xlsx`;
+            
+            // 下载文件
+            XLSX.writeFile(wb, fileName);
+            
+            Utils.showNotification('统计报表已生成并下载: ' + fileName, 'success');
         }
 
         function editAttendanceRecord(attendanceId) {

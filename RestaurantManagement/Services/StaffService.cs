@@ -133,16 +133,32 @@ namespace RestaurantManagement.Services
             string status = "正常";
             if (schedule != null)
             {
-                // 解析排班开始时间
-                var scheduledStartTime = ParseIntervalTime(schedule.STARTTIME?.ToString());
-                if (scheduledStartTime.HasValue)
+                try
                 {
-                    var currentTime = now.TimeOfDay;
-                    // 如果迟到超过30分钟，标记为迟到
-                    if (currentTime > scheduledStartTime.Value.Add(TimeSpan.FromMinutes(30)))
+                    // 解析排班开始时间 - 更安全的方式处理动态对象
+                    var startTimeObj = schedule.STARTTIME;
+                    string? startTimeValue = null;
+                    
+                    if (startTimeObj != null)
                     {
-                        status = "迟到";
+                        startTimeValue = startTimeObj.ToString();
                     }
+                    
+                    var scheduledStartTime = ParseIntervalTime(startTimeValue);
+                    if (scheduledStartTime.HasValue)
+                    {
+                        var currentTime = now.TimeOfDay;
+                        // 如果迟到超过30分钟，标记为迟到
+                        if (currentTime > scheduledStartTime.Value.Add(TimeSpan.FromMinutes(30)))
+                        {
+                            status = "迟到";
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"解析排班时间失败: {ex.Message}");
+                    // 如果解析失败，使用默认逻辑
                 }
             }
             else
@@ -217,24 +233,42 @@ namespace RestaurantManagement.Services
             // 基于排班判断早退
             if (schedule != null)
             {
-                var scheduledEndTime = ParseIntervalTime(schedule.ENDTIME?.ToString());
-                if (scheduledEndTime.HasValue)
+                try
                 {
-                    var currentTime = now.TimeOfDay;
-                    var scheduledStartTime = ParseIntervalTime(schedule.STARTTIME?.ToString());
-                    if (scheduledStartTime.HasValue)
+                    // 更安全的方式处理动态对象
+                    var endTimeObj = schedule.ENDTIME;
+                    var startTimeObj = schedule.STARTTIME;
+                    
+                    string? endTimeValue = null;
+                    string? startTimeValue = null;
+                    
+                    if (endTimeObj != null) endTimeValue = endTimeObj.ToString();
+                    if (startTimeObj != null) startTimeValue = startTimeObj.ToString();
+                    
+                    var scheduledEndTime = ParseIntervalTime(endTimeValue);
+                    if (scheduledEndTime.HasValue)
                     {
-                        var scheduledWorkHours = (scheduledEndTime.Value - scheduledStartTime.Value).TotalHours;
-                        if (currentTime < scheduledEndTime.Value.Subtract(TimeSpan.FromMinutes(30)) && 
-                            actualWorkHours < scheduledWorkHours * 0.8m)
+                        var currentTime = now.TimeOfDay;
+                        var scheduledStartTime = ParseIntervalTime(startTimeValue);
+                        if (scheduledStartTime.HasValue)
                         {
-                            currentStatus = "早退";
-                        }
-                        else if (currentStatus != "迟到") // 保持迟到状态
-                        {
-                            currentStatus = "正常";
+                            var scheduledWorkHours = (decimal)(scheduledEndTime.Value - scheduledStartTime.Value).TotalHours;
+                            if (currentTime < scheduledEndTime.Value.Subtract(TimeSpan.FromMinutes(30)) && 
+                                actualWorkHours < scheduledWorkHours * 0.8m)
+                            {
+                                currentStatus = "早退";
+                            }
+                            else if (currentStatus != "迟到") // 保持迟到状态
+                            {
+                                currentStatus = "正常";
+                            }
                         }
                     }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"解析排班时间失败: {ex.Message}");
+                    // 如果解析失败，使用默认逻辑
                 }
             }
             else
@@ -259,6 +293,8 @@ namespace RestaurantManagement.Services
                     STATUS = :Status
                 WHERE STAFFID = :StaffId AND WORKDATE = :WorkDate";
 
+            Console.WriteLine($"签退更新SQL: StaffId={staffId}, WorkDate={today}, ActualWorkHours={actualWorkHours}, Status={currentStatus}");
+
             var result = await connection.ExecuteAsync(sql, new
             {
                 CheckOutTime = now,
@@ -267,6 +303,8 @@ namespace RestaurantManagement.Services
                 StaffId = staffId,
                 WorkDate = today
             });
+            
+            Console.WriteLine($"签退更新结果: {result} 行受影响");
             return result > 0;
         }
 
@@ -336,7 +374,12 @@ namespace RestaurantManagement.Services
                     a.WORKDATE as WorkDate,
                     a.CHECKINTIME as CheckInTime,
                     a.CHECKOUTTIME as CheckOutTime,
-                    a.ACTUALWORKHOURS as ActualWorkHours,
+                    CASE 
+                        WHEN a.CHECKOUTTIME IS NOT NULL THEN a.ACTUALWORKHOURS
+                        WHEN a.CHECKINTIME IS NOT NULL THEN 
+                            ROUND((SYSDATE - a.CHECKINTIME) * 24, 2)
+                        ELSE NULL 
+                    END as ActualWorkHours,
                     a.STATUS as Status,
                     a.STOREID as StoreID,
                     s.STAFFNAME as StaffName,
