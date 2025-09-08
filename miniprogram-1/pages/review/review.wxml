@@ -1,0 +1,78 @@
+<!--review.wxml - 订单评价页面-->
+<view class="page-background"></view>
+<view class="container">
+  <!-- 订单信息卡片 -->
+  <view class="order-card">
+    <view class="order-header">
+      <text class="order-title">订单信息</text>
+      <text class="order-id">#{{orderInfo.orderId}}</text>
+    </view>
+    <view class="order-details">
+      <view class="detail-row">
+        <text class="label">下单时间：</text>
+        <text class="value">{{orderInfo.orderTime}}</text>
+      </view>
+      <view class="detail-row">
+        <text class="label">餐厅：</text>
+        <text class="value">{{orderInfo.storeName}}</text>
+      </view>
+      <view class="detail-row">
+        <text class="label">总价：</text>
+        <text class="value price">¥{{orderInfo.totalPrice}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 评分区域 -->
+  <view class="rating-section">
+    <view class="section-title">
+      <text class="title-text">总体评分</text>
+      <text class="rating-text">{{overallRating}}分</text>
+    </view>
+    
+    <!-- 五星评分 -->
+    <view class="stars-container">
+      <view 
+        class="star-item {{index < overallRating ? 'active' : ''}}" 
+        wx:for="{{5}}" 
+        wx:key="index"
+        data-rating="{{index + 1}}"
+        bindtap="setOverallRating"
+      >
+        <text class="star-icon">★</text>
+      </view>
+    </view>
+    
+    <text class="rating-desc">{{ratingDescriptions[overallRating - 1] || '请选择评分'}}</text>
+  </view>
+
+
+
+  <!-- 评价内容 -->
+  <view class="review-content">
+    <view class="section-title">
+      <text class="title-text">评价内容</text>
+      <text class="char-count">{{reviewContent.length}}/500</text>
+    </view>
+    <textarea 
+      class="review-textarea" 
+      placeholder="请分享您的用餐体验，帮助其他用户做出选择..."
+      maxlength="500"
+      value="{{reviewContent}}"
+      bindinput="onReviewInput"
+    ></textarea>
+  </view>
+
+
+
+  <!-- 提交按钮 -->
+  <view class="submit-section">
+    <button 
+      class="submit-btn {{canSubmit ? 'active' : 'disabled'}}" 
+      bindtap="submitReview"
+      disabled="{{!canSubmit}}"
+    >
+      提交评价
+    </button>
+  </view>
+</view>
