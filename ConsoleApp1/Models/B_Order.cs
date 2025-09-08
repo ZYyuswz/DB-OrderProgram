@@ -24,7 +24,7 @@ namespace DBManagement.Models
 
         [ForeignKey("Customer")]
         [Column("CUSTOMERID")]
-        public int? CustomerId { get; set; }
+        public long CustomerId { get; set; }
 
         [Column("TOTALPRICE", TypeName = "decimal(12,2)")]
         public decimal TotalPrice { get; set; } = 0;

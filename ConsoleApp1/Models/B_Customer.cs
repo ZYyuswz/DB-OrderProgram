@@ -43,7 +43,7 @@ namespace DBManagement.Models
 
         [ForeignKey("VIPLevel")]
         [Column("VIPLEVEL")]
-        public int? VIPLevelId { get; set; }
+        public int VIPLevel { get; set; }
 
         [Column("VIPPOINTS")]
         public int VIPPoints { get; set; } = 0;
