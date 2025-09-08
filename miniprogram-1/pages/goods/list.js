@@ -108,6 +108,7 @@ Page({
     return Object.values(categoryResult);
   },
 
+
   onPullDownRefresh: function () {
     console.log("用户下拉刷新了");
 
@@ -115,6 +116,7 @@ Page({
     this.cartsync();
     wx.stopPullDownRefresh(); // 即使失败也要停止 
   },
+
 
 // 增加商品数量
 increaseQuantity: function(e) {
@@ -157,7 +159,9 @@ createCache: function(dishId){
 
 deleteCache: function(dishId){
   let cacheId = 0;
+
   for (let [key, value] of this.cacheMap) {
+
     if (value === dishId) {
       cacheId = key;
       break;           
@@ -274,6 +278,7 @@ addToCart: function(dishId) {
         
         // 更新购物车
         const existingItem = cartItems.find(item => item.dishId == dishId);
+
         if (existingItem && category.id != 6) {
           existingItem.quantity += 1;
         } else {
@@ -395,6 +400,7 @@ cartsync: function () {
 
         // 在回调里操作 responseData
         let newDishId = responseData.map(item => item.dishId);
+
         this.clearCart();
         newDishId.forEach(item => {
           this.addToCart(item);  
@@ -412,6 +418,7 @@ cartsync: function () {
           this.removeFromCart(item);  
         });
         */
+
       }
     }
   });

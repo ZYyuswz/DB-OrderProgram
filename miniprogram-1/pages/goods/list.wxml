@@ -51,6 +51,7 @@
                   <view class="price-area">
                     <text class="price">¥{{dish.Price}}</text>
                     
+
                     <text  class="estimatedTime">
                       预计等候时间: {{dish.estimatedTime}}分钟
                     </text>
@@ -83,7 +84,7 @@
   </view>
   <view class="checkout-btn" bindtap="checkout">去结算</view>
 </view>
- 
+
 
 <!-- 菜品详情弹窗 -->
 <view class="dish-popup" wx:if="{{showDishPopup}}">
