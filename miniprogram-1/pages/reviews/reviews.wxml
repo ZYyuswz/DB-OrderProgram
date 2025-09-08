@@ -1,0 +1,69 @@
+<view class="reviews-container">
+  <!-- 评价统计 -->
+  <view class="stats-card">
+    <view class="stat-item">
+      <text class="stat-number">{{totalReviews}}</text>
+      <text class="stat-label">总评价数</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-number">{{averageRating}}</text>
+      <text class="stat-label">平均评分</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-number">{{helpfulCount}}</text>
+      <text class="stat-label">获赞数</text>
+    </view>
+  </view>
+
+  <!-- 评价列表 -->
+  <view class="reviews-list">
+    <block wx:for="{{reviews}}" wx:key="reviewId">
+      <view class="review-item">
+        <view class="review-header">
+          <image class="store-avatar" src="{{item.storeAvatar || '/images/store-default.png'}}" mode="aspectFill"></image>
+          <view class="store-info">
+            <text class="store-name">{{item.storeName}}</text>
+            <text class="review-time">{{item.reviewTime}}</text>
+          </view>
+          <view class="rating">
+            <text class="rating-text">{{item.rating}}分</text>
+            <text class="rating-stars">⭐</text>
+          </view>
+        </view>
+
+        <view class="review-content">
+          <text class="review-text">{{item.content}}</text>
+        </view>
+
+        <view class="review-footer">
+          <view class="order-info">
+            <text class="order-desc">订单: {{item.orderId}} • {{item.orderAmount}}元</text>
+          </view>
+          <view class="actions">
+            <view class="action-item" bindtap="toggleHelpful" data-index="{{index}}">
+              <text class="icon">👍</text>
+              <text class="count">{{item.helpfulCount}}</text>
+            </view>
+            <view class="action-item" bindtap="deleteReview" data-index="{{index}}">
+              <text class="icon">🗑️</text>
+              <text class="text">删除</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:if="{{reviews.length === 0}}" class="empty-state">
+    <image class="empty-icon" src="/images/empty-reviews.png" mode="aspectFit"></image>
+    <text class="empty-text">暂无评价记录</text>
+    <text class="empty-desc">去订单页面评价你的美食体验吧</text>
+    <button class="go-orders-btn" bindtap="goToOrders">查看订单</button>
+  </view>
+
+  <!-- 加载更多 -->
+  <view wx:if="{{hasMore && reviews.length > 0}}" class="load-more">
+    <text class="load-more-text" bindtap="loadMoreReviews">加载更多</text>
+  </view>
+</view>

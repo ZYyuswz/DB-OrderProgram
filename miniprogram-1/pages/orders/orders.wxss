@@ -1,0 +1,420 @@
+/* orders.wxss - 订单记录页面样式 */
+page {
+  background-color: #FFF8F3;
+}
+
+.container {
+  padding: 20rpx;
+  min-height: 100vh;
+}
+
+/* 调试信息样式 */
+.debug-section {
+  background-color: #fff3cd;
+  border: 1rpx solid #ffeaa7;
+  border-radius: 8rpx;
+  padding: 16rpx;
+  margin-bottom: 20rpx;
+}
+
+.debug-title {
+  display: block;
+  font-size: 24rpx;
+  color: #856404;
+  font-weight: bold;
+  margin-bottom: 8rpx;
+}
+
+.debug-content {
+  display: block;
+  font-size: 22rpx;
+  color: #856404;
+  font-family: monospace;
+}
+
+
+
+/* 订单列表 */
+.orders-list {
+  padding-bottom: 20rpx;
+}
+
+.order-item {
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s;
+}
+
+.order-item:active {
+  transform: scale(0.98);
+}
+
+/* 订单头部 */
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20rpx;
+}
+
+/* 可点击区域样式 */
+.clickable {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.clickable:active {
+  opacity: 0.7;
+}
+
+.order-info {
+  flex: 1;
+}
+
+.order-id {
+  display: block;
+  font-size: 28rpx;
+  color: #333;
+  font-weight: bold;
+  margin-bottom: 8rpx;
+}
+
+.order-time {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.order-status {
+  padding: 10rpx 20rpx;
+  border-radius: 30rpx;
+  font-size: 24rpx;
+  color: white;
+  background: #ccc;
+}
+
+.order-status.completed {
+  background: #4CAF50;
+}
+
+.order-status.pending {
+  background: #FF9800;
+}
+
+.order-status.processing {
+  background: #2196F3;
+}
+
+/* 餐厅信息 */
+.restaurant-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+  padding: 15rpx 20rpx;
+  background: #FFF8F3;
+  border-radius: 10rpx;
+}
+
+.store-name {
+  font-size: 28rpx;
+  color: #FF8C42;
+  font-weight: bold;
+  margin-right: 20rpx;
+}
+
+.table-number {
+  font-size: 24rpx;
+  color: #666;
+}
+
+/* 订单预览 */
+.order-preview {
+  margin-bottom: 20rpx;
+}
+
+.dishes-preview {
+  line-height: 1.6;
+}
+
+.dish-item {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.more-dishes {
+  font-size: 28rpx;
+  color: #999;
+}
+
+/* 订单底部 */
+.order-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1rpx solid #f0f0f0;
+  padding-top: 20rpx;
+}
+
+.total-price {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #FF8C42;
+}
+
+.order-actions {
+  display: flex;
+  gap: 15rpx;
+}
+
+.action-btn {
+  padding: 12rpx 24rpx;
+  border-radius: 30rpx;
+  font-size: 26rpx;
+  border: none;
+  line-height: 1;
+}
+
+.review-btn {
+  background: #FF8C42;
+  color: white;
+}
+
+.review-btn:active {
+  background: #E6753A;
+}
+
+.reviewed-btn {
+  background: #E0E0E0;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.reviewed-btn:disabled {
+  background: #E0E0E0;
+  color: #999;
+  opacity: 0.8;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 100rpx 40rpx;
+}
+
+.empty-icon {
+  width: 200rpx;
+  margin-bottom: 40rpx;
+  opacity: 0.6;
+}
+
+.empty-text {
+  display: block;
+  font-size: 32rpx;
+  color: #666;
+  margin-bottom: 15rpx;
+}
+
+.empty-desc {
+  display: block;
+  font-size: 28rpx;
+  color: #999;
+  margin-bottom: 40rpx;
+}
+
+.go-order-btn {
+  background: #FF8C42;
+  color: white;
+  border: none;
+  border-radius: 30rpx;
+  padding: 20rpx 40rpx;
+  font-size: 28rpx;
+}
+
+/* 加载状态 */
+.loading-state {
+  text-align: center;
+  padding: 40rpx;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+.load-more {
+  text-align: center;
+  padding: 30rpx;
+}
+
+.no-more-text {
+  font-size: 26rpx;
+  color: #ccc;
+}
+
+/* 订单详情弹窗 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 20rpx;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.close-btn {
+  font-size: 40rpx;
+  color: #999;
+  padding: 0 10rpx;
+}
+
+.detail-content {
+  max-height: calc(80vh - 100rpx);
+  overflow-y: auto;
+  padding: 30rpx;
+}
+
+.detail-section {
+  margin-bottom: 30rpx;
+}
+
+.section-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+  padding-bottom: 10rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 15rpx;
+}
+
+.label {
+  font-size: 26rpx;
+  color: #666;
+  width: 140rpx;
+}
+
+.value {
+  font-size: 26rpx;
+  color: #333;
+  flex: 1;
+}
+
+.status-text.completed {
+  color: #4CAF50;
+}
+
+.status-text.pending {
+  color: #FF9800;
+}
+
+.status-text.processing {
+  color: #2196F3;
+}
+
+/* 菜品详情 */
+.dishes-list {
+  background: #FFF8F3;
+  border-radius: 10rpx;
+  padding: 20rpx;
+}
+
+.dish-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15rpx;
+}
+
+.dish-detail:last-child {
+  margin-bottom: 0;
+}
+
+.dish-info {
+  flex: 1;
+}
+
+.dish-name {
+  display: block;
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 5rpx;
+}
+
+.dish-price {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.dish-subtotal {
+  font-size: 26rpx;
+  color: #FF8C42;
+  font-weight: bold;
+}
+
+/* 暂无菜品详情提示 */
+.no-details {
+  text-align: center;
+  padding: 40rpx 20rpx;
+}
+
+.no-details-text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+/* 价格汇总 */
+.price-summary {
+  background: #FFF8F3;
+  border-radius: 10rpx;
+  padding: 20rpx;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.summary-label {
+  font-size: 30rpx;
+  color: #333;
+  font-weight: bold;
+}
+
+.summary-price {
+  font-size: 32rpx;
+  color: #FF8C42;
+  font-weight: bold;
+}

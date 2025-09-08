@@ -1,0 +1,166 @@
+/* pages/order/order.wxss */
+/* pages/order/order.wxss */
+.container {
+  padding: 15px;
+  background-color: #f7f7f7;
+  min-height: 100vh;
+  /* 为底部付款栏留出空间 */
+  padding-bottom: 80px; 
+}
+
+.section {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+/* 桌号信息 */
+.table-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 16px;
+}
+
+.table-info .label {
+  color: #333;
+  font-weight: bold;
+}
+
+.table-info .value {
+  color: #888;
+}
+
+/* 订单详情 */
+.order-details {
+  padding: 0;
+}
+
+/* 商品滚动区域 */
+.order-scroll {
+  /* 设置一个最大高度，超出则滚动 */
+  max-height: 40vh; 
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+.order-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.order-item:last-child {
+  margin-bottom: 0;
+}
+
+.dish-pic {
+  width: 50px;
+  height: 50px;
+  border-radius: 5px;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.dish-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.dish-info .name {
+  font-size: 15px;
+  color: #333;
+}
+
+.dish-info .quantity {
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+}
+.dish-info .special-request {
+  font-size: 14px;
+  color: #999;
+  margin-top: 4px;
+}
+
+
+.price {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+
+/* 优惠券 */
+.coupon-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border-top: 1px solid #f2f2f2;
+}
+
+.coupon-section .label {
+  font-size: 15px;
+  color: #333;
+}
+
+.coupon-section .action {
+  display: flex;
+  align-items: center;
+  color: #999;
+}
+
+.coupon-section .arrow {
+  margin-left: 5px;
+  font-family: sans-serif; /* 使 > 符号看起来更像箭头 */
+}
+.label {
+  font-size: 28rpx;
+  margin-bottom: 10rpx;
+  display: block;
+}
+
+.input {
+  border: 1px solid #ccc;
+  border-radius: 8rpx;
+  padding: 10rpx;
+  font-size: 28rpx;
+}
+
+/* 底部付款栏 */
+.payment-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background-color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+  padding: 0 15px;
+  box-sizing: border-box;
+}
+
+.total-info {
+  font-size: 14px;
+  color: #333;
+}
+
+.total-price {
+  font-size: 20px;
+  font-weight: bold;
+  color: #ff4d4f;
+}
+
+.pay-btn {
+  background-image: linear-gradient(to right, #00c6ff, #0072ff);
+  color: #fff;
+  padding: 10px 30px;
+  border-radius: 20px;
+  font-size: 16px;
+  font-weight: bold;
+}

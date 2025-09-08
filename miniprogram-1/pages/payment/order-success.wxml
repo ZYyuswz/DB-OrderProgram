@@ -1,0 +1,19 @@
+<!--pages/payment/order-success.wxml-->
+<view class="container">
+  <view class="success-text">下单成功！</view>
+  
+  <scroll-view class="order-scroll" scroll-y>
+      <view class="order-item" wx:for="{{orderItems}}" wx:key="dishId">
+        <view class="dish-info">
+          <text class="name">{{item.dishName}}</text>
+                 
+        </view>
+        <text class="quantity">x{{item.quantity}}</text>  
+      </view>
+    </scroll-view>
+
+  <view class="btn-group">
+    <button bindtap="goToHome">返回首页</button>
+    <button bindtap="goToMenu">继续点餐</button>
+  </view>
+</view>

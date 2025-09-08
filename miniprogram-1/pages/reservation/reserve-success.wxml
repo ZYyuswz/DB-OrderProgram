@@ -1,0 +1,8 @@
+<!--pages/reservation/reserve-success.wxml-->
+<view class="container">
+  <view class="title">预约成功 🎉</view>
+  <view class="info">桌号：{{tableNumber}}</view>
+  <view class="info">区域：{{area}}</view>
+  <view class="info">预约编号：{{reservationID}}</view>
+  <button bindtap="goHome">返回首页</button>
+</view>

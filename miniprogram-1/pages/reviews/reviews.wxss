@@ -1,0 +1,193 @@
+.reviews-container {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding: 20rpx;
+}
+
+/* 统计卡片 */
+.stats-card {
+  background: white;
+  border-radius: 16rpx;
+  padding: 40rpx;
+  margin-bottom: 20rpx;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-number {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #FF8C42;
+  margin-bottom: 10rpx;
+}
+
+.stat-label {
+  font-size: 28rpx;
+  color: #666;
+}
+
+/* 评价列表 */
+.reviews-list {
+  margin-bottom: 30rpx;
+}
+
+.review-item {
+  background: white;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.store-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 12rpx;
+  margin-right: 20rpx;
+}
+
+.store-info {
+  flex: 1;
+}
+
+.store-name {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #333;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.review-time {
+  font-size: 26rpx;
+  color: #999;
+}
+
+.rating {
+  display: flex;
+  align-items: center;
+}
+
+.rating-text {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #FF8C42;
+  margin-right: 10rpx;
+}
+
+.rating-stars {
+  font-size: 32rpx;
+}
+
+.review-content {
+  margin-bottom: 20rpx;
+}
+
+.review-text {
+  font-size: 30rpx;
+  line-height: 1.6;
+  color: #333;
+}
+
+.review-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1rpx solid #f0f0f0;
+  padding-top: 20rpx;
+}
+
+.order-info {
+  flex: 1;
+}
+
+.order-desc {
+  font-size: 26rpx;
+  color: #999;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  margin-left: 30rpx;
+  padding: 10rpx 20rpx;
+  border-radius: 20rpx;
+  background: #f8f9fa;
+}
+
+.action-item:active {
+  background: #e9ecef;
+}
+
+.icon {
+  font-size: 32rpx;
+  margin-right: 8rpx;
+}
+
+.count, .text {
+  font-size: 28rpx;
+  color: #666;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 100rpx 40rpx;
+}
+
+.empty-icon {
+  width: 200rpx;
+  height: 200rpx;
+  margin-bottom: 30rpx;
+  opacity: 0.6;
+}
+
+.empty-text {
+  display: block;
+  font-size: 36rpx;
+  color: #999;
+  margin-bottom: 16rpx;
+}
+
+.empty-desc {
+  display: block;
+  font-size: 28rpx;
+  color: #ccc;
+  margin-bottom: 40rpx;
+}
+
+.go-orders-btn {
+  background: #FF8C42;
+  color: white;
+  border-radius: 50rpx;
+  font-size: 32rpx;
+  width: 280rpx;
+}
+
+/* 加载更多 */
+.load-more {
+  text-align: center;
+  padding: 40rpx;
+}
+
+.load-more-text {
+  color: #FF8C42;
+  font-size: 32rpx;
+}
