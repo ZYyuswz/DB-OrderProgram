@@ -38,7 +38,7 @@
         }
       },
     goToHome() {
-    
+      wx.setStorageSync('isAddDish',false)
       wx.reLaunch({
         url: '/pages/index/index' // 修改为你的首页路径
       });
