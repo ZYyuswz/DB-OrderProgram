@@ -143,6 +143,16 @@ namespace RestaurantManagement.Controllers
             return Ok(statistics);
         }
 
+        // 更新考勤记录
+        [HttpPut("attendance/{attendanceId}")]
+        public async Task<IActionResult> UpdateAttendanceRecord(int attendanceId, [FromBody] UpdateAttendanceRequest request)
+        {
+            var success = await _staffService.UpdateAttendanceRecordAsync(attendanceId, request);
+            if (!success)
+                return BadRequest(new { Success = false, Message = "更新考勤记录失败" });
+            return Ok(new { Success = true, Message = "考勤记录更新成功" });
+        }
+
         // 删除员工（物理删除）
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteStaff(int id)

@@ -260,9 +260,23 @@
                 <!-- 考勤记录列表 -->
                 <div class="card">
                     <h3>考勤记录</h3>
-                    <div class="records-info">
-                        <span id="recordsCount">共 0 条记录</span>
+                    
+                    <!-- 考勤记录信息栏 -->
+                    <div class="staff-info-bar">
+                        <div class="records-info">
+                            <span id="recordsCount">共 0 条记录</span>
+                        </div>
+                        <div class="page-size-selector">
+                            <label for="attendancePageSize">每页显示:</label>
+                            <select id="attendancePageSize" onchange="changeAttendancePageSize()" class="form-control">
+                                <option value="5">5条</option>
+                                <option value="10" selected>10条</option>
+                                <option value="20">20条</option>
+                                <option value="50">50条</option>
+                            </select>
+                        </div>
                     </div>
+                    
                     <div style="overflow-x: auto;">
                         <table class="table" id="attendanceTable">
                             <thead>
@@ -283,6 +297,26 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                    
+                    <!-- 考勤记录分页控件 -->
+                    <div class="pagination-container">
+                        <div class="pagination-info" id="attendancePaginationInfo">
+                            显示第 1-10 条，共 0 条记录
+                        </div>
+                        <div class="pagination-controls">
+                            <button id="attendanceFirstPageBtn" onclick="goToAttendanceFirstPage()" class="btn btn-sm btn-outline-secondary">首页</button>
+                            <button id="attendancePrevPageBtn" onclick="goToAttendancePrevPage()" class="btn btn-sm btn-outline-secondary">上一页</button>
+                            <div class="page-numbers" id="attendancePageNumbers"></div>
+                            <button id="attendanceNextPageBtn" onclick="goToAttendanceNextPage()" class="btn btn-sm btn-outline-secondary">下一页</button>
+                            <button id="attendanceLastPageBtn" onclick="goToAttendanceLastPage()" class="btn btn-sm btn-outline-secondary">末页</button>
+                        </div>
+                        <div class="page-jump">
+                            <span>跳转到第</span>
+                            <input type="number" id="attendancePageJumpInput" min="1" style="width: 60px;" class="form-control">
+                            <span>页</span>
+                            <button onclick="jumpToAttendancePage()" class="btn btn-sm btn-primary">跳转</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -398,6 +432,59 @@
                     </form>
                 </div>
             </div>
+
+            <!-- 编辑考勤记录模态框 -->
+            <div id="editAttendanceModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>编辑考勤记录</h3>
+                        <span class="close" onclick="Utils.hideModal('editAttendanceModal')">&times;</span>
+                    </div>
+                    <form id="attendanceForm">
+                        <div class="modal-body">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="attendanceStaffName">员工姓名:</label>
+                                    <input type="text" id="attendanceStaffName" class="form-control" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label for="attendanceWorkDate">工作日期:</label>
+                                    <input type="date" id="attendanceWorkDate" class="form-control" readonly>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="attendanceCheckInTime">签到时间:</label>
+                                    <input type="time" id="attendanceCheckInTime" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="attendanceCheckOutTime">签退时间:</label>
+                                    <input type="time" id="attendanceCheckOutTime" class="form-control">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="attendanceStatus">考勤状态:</label>
+                                    <select id="attendanceStatus" class="form-control" required>
+                                        <option value="正常">正常</option>
+                                        <option value="迟到">迟到</option>
+                                        <option value="早退">早退</option>
+                                        <option value="缺勤">缺勤</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="attendanceWorkHours">工作时长(小时):</label>
+                                    <input type="number" id="attendanceWorkHours" class="form-control" step="0.1" min="0">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" onclick="Utils.hideModal('editAttendanceModal')" class="btn btn-secondary">取消</button>
+                            <button type="submit" class="btn btn-primary">保存</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -497,8 +584,6 @@
     <script src="js/auth.js"></script>
     <script>
         // 排班管理功能实现
-        let allSchedules = [];
-
         // 加载员工列表到排班表单
         function populateScheduleStaffSelect() {
             const select = document.getElementById('scheduleStaff');
@@ -513,6 +598,7 @@
 
         // 显示新增排班模态框
         function showAddScheduleModal() {
+            currentScheduleId = null; // 重置为新增模式
             document.getElementById('scheduleModalTitle').textContent = '新增排班';
             Utils.resetForm(document.getElementById('scheduleForm'));
             populateScheduleStaffSelect();
@@ -561,8 +647,16 @@
                     };
                     
                     try {
-                        await API.post('/schedule', data);
-                        Utils.showNotification('排班已保存', 'success');
+                        if (currentScheduleId) {
+                            // 编辑模式 - 使用PUT请求
+                            await API.put(`/schedule/${currentScheduleId}`, data);
+                            Utils.showNotification('排班已更新', 'success');
+                            currentScheduleId = null; // 重置编辑状态
+                        } else {
+                            // 新增模式 - 使用POST请求
+                            await API.post('/schedule', data);
+                            Utils.showNotification('排班已保存', 'success');
+                        }
                         Utils.hideModal('addScheduleModal');
                         await loadScheduleCalendar();
                     } catch (error) {
@@ -622,6 +716,8 @@
                             <td>${startTime} ~ ${endTime}</td>
                             <td>${sch.NOTES || sch.notes || sch.Notes || ''}</td>
                             <td>
+                                <button onclick="editSchedule(${sch.SCHEDULEID || sch.scheduleId || sch.ScheduleID})" 
+                                        class="btn btn-sm btn-secondary" style="margin-right: 0.25rem;">编辑</button>
                                 <button onclick="deleteSchedule(${sch.SCHEDULEID || sch.scheduleId || sch.ScheduleID})" 
                                         class="btn btn-sm btn-danger">删除</button>
                             </td>
@@ -647,6 +743,60 @@
             return intervalStr.toString().substring(0, 5);
         }
 
+        // 编辑排班
+        async function editSchedule(scheduleId) {
+            try {
+                // 从allSchedules中找到要编辑的排班记录
+                const schedule = allSchedules.find(s => 
+                    (s.SCHEDULEID || s.scheduleId || s.ScheduleID) === scheduleId
+                );
+                
+                if (!schedule) {
+                    Utils.showNotification('未找到排班记录', 'error');
+                    return;
+                }
+                
+                // 设置为编辑模式
+                currentScheduleId = scheduleId;
+                document.getElementById('scheduleModalTitle').textContent = '编辑排班';
+                
+                // 填充表单数据
+                populateScheduleStaffSelect();
+                document.getElementById('scheduleStaff').value = schedule.STAFFID || schedule.staffId || schedule.StaffID;
+                document.getElementById('scheduleDate').value = schedule.WORKDATE || schedule.workDate || schedule.WorkDate;
+                
+                // 处理时间格式
+                const startTime = formatTimeForInput(schedule.STARTTIME || schedule.startTime || schedule.StartTime);
+                const endTime = formatTimeForInput(schedule.ENDTIME || schedule.endTime || schedule.EndTime);
+                
+                document.getElementById('scheduleStartTime').value = startTime;
+                document.getElementById('scheduleEndTime').value = endTime;
+                document.getElementById('scheduleNotes').value = schedule.NOTES || schedule.notes || schedule.Notes || '';
+                
+                Utils.showModal('addScheduleModal');
+                
+            } catch (error) {
+                console.error('编辑排班失败:', error);
+                Utils.showNotification('编辑排班失败', 'error');
+            }
+        }
+
+        // 格式化时间为input[type="time"]所需的格式
+        function formatTimeForInput(timeStr) {
+            if (!timeStr) return '';
+            
+            // 如果是 "0 08:30:00.000000" 格式，提取时间部分
+            if (typeof timeStr === 'string' && timeStr.includes(' ')) {
+                const parts = timeStr.split(' ');
+                if (parts.length >= 2) {
+                    return parts[1].substring(0, 5); // 取 HH:MM 部分
+                }
+            }
+            
+            // 如果是标准时间格式，返回前5位
+            return timeStr.toString().substring(0, 5);
+        }
+
         // 删除排班
         async function deleteSchedule(scheduleId) {
             if (!confirm('确定要删除这个排班吗？')) return;
@@ -659,14 +809,6 @@
                 console.error('删除排班失败:', error);
                 Utils.showNotification('删除排班失败', 'error');
             }
-        }
-
-        // 显示新增排班模态框（更新版）
-        function showAddScheduleModal() {
-            document.getElementById('scheduleModalTitle').textContent = '新增排班';
-            Utils.resetForm(document.getElementById('scheduleForm'));
-            populateScheduleStaffSelect();
-            Utils.showModal('addScheduleModal');
         }
 
         // Tab切换功能（合并版本，包含排班管理）
@@ -697,16 +839,26 @@
         let allStaff = [];
         let filteredStaff = [];
         let attendanceRecords = [];
+        let allAttendanceRecords = []; // 存储所有考勤记录用于编辑
         let currentStaffId = null;
         let allDepartments = [];
         let allStores = [];
         let currentTab = 'staff';
+        let allSchedules = [];
+        let currentScheduleId = null;
+        let currentAttendanceId = null;
 
         // 分页相关变量
         let currentPage = 1;
         let pageSize = 5; // 改为5条以便测试分页效果
         let totalPages = 1;
         let totalRecords = 0;
+
+        // 考勤记录分页相关变量
+        let attendanceCurrentPage = 1;
+        let attendancePageSize = 10;
+        let attendanceTotalPages = 1;
+        let attendanceTotalRecords = 0;
 
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
@@ -737,6 +889,12 @@
             document.getElementById('staffForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 handleStaffSubmit();
+            });
+            
+            // 考勤记录表单提交
+            document.getElementById('attendanceForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                handleAttendanceSubmit();
             });
         }
 
@@ -1147,6 +1305,62 @@
             } catch (error) {
                 console.error('保存员工信息失败:', error);
                 Utils.showNotification('保存员工信息失败', 'error');
+            }
+        }
+
+        // 处理考勤记录表单提交
+        async function handleAttendanceSubmit() {
+            if (!Utils.validateForm(document.getElementById('attendanceForm'))) {
+                Utils.showNotification('请填写完整信息', 'warning');
+                return;
+            }
+
+            if (!currentAttendanceId) {
+                Utils.showNotification('缺少考勤记录ID', 'error');
+                return;
+            }
+
+            try {
+                const workDate = document.getElementById('attendanceWorkDate').value;
+                const checkInTime = document.getElementById('attendanceCheckInTime').value;
+                const checkOutTime = document.getElementById('attendanceCheckOutTime').value;
+                const status = document.getElementById('attendanceStatus').value;
+                const workHours = document.getElementById('attendanceWorkHours').value;
+
+                // 构建完整的日期时间 - 避免时区转换问题
+                let checkInDateTime = null;
+                let checkOutDateTime = null;
+                
+                if (checkInTime) {
+                    // 直接构建本地时间字符串，避免时区转换
+                    checkInDateTime = `${workDate}T${checkInTime}:00`;
+                }
+                
+                if (checkOutTime) {
+                    // 直接构建本地时间字符串，避免时区转换
+                    checkOutDateTime = `${workDate}T${checkOutTime}:00`;
+                }
+
+                const attendanceData = {
+                    checkInTimeString: checkInDateTime,
+                    checkOutTimeString: checkOutDateTime,
+                    status: status,
+                    actualWorkHours: workHours ? parseFloat(workHours) : null
+                };
+
+                const response = await API.put(`/staff/attendance/${currentAttendanceId}`, attendanceData);
+                
+                if (response && response.Success) {
+                    Utils.showNotification('考勤记录更新成功', 'success');
+                    Utils.hideModal('editAttendanceModal');
+                    await loadAttendanceRecords(); // 刷新考勤记录列表
+                } else {
+                    Utils.showNotification(response?.Message || '考勤记录更新失败', 'error');
+                }
+
+            } catch (error) {
+                console.error('更新考勤记录失败:', error);
+                Utils.showNotification('更新考勤记录失败: ' + (error.message || '网络错误'), 'error');
             }
         }
 
@@ -1622,28 +1836,43 @@
                     });
                 }
 
-                renderAttendanceTable(attendanceRecords);
-                updateRecordsCount(attendanceRecords.length);
+                // 存储所有记录用于分页
+                allAttendanceRecords = attendanceRecords;
+                attendanceCurrentPage = 1; // 重置到第一页
+                renderAttendanceTable();
 
             } catch (error) {
                 console.error('加载考勤记录失败:', error);
                 Utils.showNotification('加载考勤记录失败: ' + (error.message || '网络错误'), 'error');
-                renderAttendanceTable([]);
-                updateRecordsCount(0);
+                allAttendanceRecords = [];
+                renderAttendanceTable();
             }
         }
 
         // 渲染考勤表格
-        function renderAttendanceTable(attendanceRecords) {
+        function renderAttendanceTable() {
             const tbody = document.getElementById('attendanceTableBody');
             tbody.innerHTML = '';
 
-            if (attendanceRecords.length === 0) {
+            // 更新总记录数
+            attendanceTotalRecords = allAttendanceRecords.length;
+            attendanceTotalPages = Math.ceil(attendanceTotalRecords / attendancePageSize);
+            
+            // 更新记录数量显示
+            updateAttendanceRecordsCount();
+
+            if (allAttendanceRecords.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="8" class="text-center">暂无考勤记录</td></tr>';
+                updateAttendancePaginationControls();
                 return;
             }
 
-            attendanceRecords.forEach(record => {
+            // 计算当前页的数据范围
+            const startIndex = (attendanceCurrentPage - 1) * attendancePageSize;
+            const endIndex = Math.min(startIndex + attendancePageSize, allAttendanceRecords.length);
+            const pageData = allAttendanceRecords.slice(startIndex, endIndex);
+
+            pageData.forEach(record => {
                 const row = document.createElement('tr');
                 
                 // 处理Oracle数据库返回的大写字段名
@@ -1665,8 +1894,16 @@
                 // 格式化工作时长
                 const workHours = record.ACTUALWORKHOURS || record.actualWorkHours || 
                                 record.ActualWorkHours || record.WORKHOURS || record.workHours;
-                const formattedWorkHours = workHours ? 
-                    parseFloat(workHours).toFixed(1) + '小时' : '-';
+                
+                // 修复工作时长显示逻辑
+                let formattedWorkHours = '0h';
+                if (workHours !== null && workHours !== undefined) {
+                    const hours = parseFloat(workHours);
+                    // 如果工作时长是正数且大于0，则显示实际时长，否则显示0h
+                    if (!isNaN(hours) && hours > 0) {
+                        formattedWorkHours = hours.toFixed(1) + 'h';
+                    }
+                }
                 
                 // 获取员工和部门信息
                 const staffName = record.STAFFNAME || record.staffName || '未知员工';
@@ -1689,14 +1926,126 @@
                 `;
                 tbody.appendChild(row);
             });
+
+            // 更新分页控件
+            updateAttendancePaginationControls();
         }
 
-        // 更新记录数量显示
-        function updateRecordsCount(count) {
+        // 更新考勤记录数量显示
+        function updateAttendanceRecordsCount() {
             const countElement = document.getElementById('recordsCount');
             if (countElement) {
-                countElement.textContent = `共 ${count} 条记录`;
+                countElement.textContent = `共 ${attendanceTotalRecords} 条记录`;
             }
+        }
+
+        // 更新考勤记录分页控件
+        function updateAttendancePaginationControls() {
+            // 更新分页信息
+            const startIndex = (attendanceCurrentPage - 1) * attendancePageSize + 1;
+            const endIndex = Math.min(attendanceCurrentPage * attendancePageSize, attendanceTotalRecords);
+            const paginationInfo = document.getElementById('attendancePaginationInfo');
+            if (paginationInfo) {
+                paginationInfo.textContent = `显示第 ${startIndex}-${endIndex} 条，共 ${attendanceTotalRecords} 条记录`;
+            }
+
+            // 更新按钮状态
+            const firstPageBtn = document.getElementById('attendanceFirstPageBtn');
+            const prevPageBtn = document.getElementById('attendancePrevPageBtn');
+            const nextPageBtn = document.getElementById('attendanceNextPageBtn');
+            const lastPageBtn = document.getElementById('attendanceLastPageBtn');
+            const pageJumpInput = document.getElementById('attendancePageJumpInput');
+
+            if (firstPageBtn) firstPageBtn.disabled = attendanceCurrentPage === 1;
+            if (prevPageBtn) prevPageBtn.disabled = attendanceCurrentPage === 1;
+            if (nextPageBtn) nextPageBtn.disabled = attendanceCurrentPage === attendanceTotalPages || attendanceTotalPages === 0;
+            if (lastPageBtn) lastPageBtn.disabled = attendanceCurrentPage === attendanceTotalPages || attendanceTotalPages === 0;
+            if (pageJumpInput) pageJumpInput.max = attendanceTotalPages;
+
+            // 生成页码按钮
+            generateAttendancePageNumbers();
+        }
+
+        // 生成考勤记录页码按钮
+        function generateAttendancePageNumbers() {
+            const pageNumbers = document.getElementById('attendancePageNumbers');
+            if (!pageNumbers) return;
+
+            pageNumbers.innerHTML = '';
+
+            if (attendanceTotalPages <= 1) return;
+
+            // 计算显示的页码范围
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, attendanceCurrentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(attendanceTotalPages, startPage + maxVisiblePages - 1);
+
+            // 调整开始页码
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            // 添加页码按钮
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `btn btn-sm ${i === attendanceCurrentPage ? 'btn-primary' : 'btn-outline-secondary'}`;
+                pageBtn.textContent = i;
+                pageBtn.onclick = () => goToAttendancePage(i);
+                pageNumbers.appendChild(pageBtn);
+            }
+        }
+
+        // 考勤记录分页导航函数
+        function goToAttendancePage(page) {
+            if (page < 1 || page > attendanceTotalPages) return;
+            attendanceCurrentPage = page;
+            renderAttendanceTable();
+        }
+
+        function goToAttendanceFirstPage() {
+            goToAttendancePage(1);
+        }
+
+        function goToAttendancePrevPage() {
+            if (attendanceCurrentPage > 1) {
+                attendanceCurrentPage--;
+                renderAttendanceTable();
+            }
+        }
+
+        function goToAttendanceNextPage() {
+            if (attendanceCurrentPage < attendanceTotalPages) {
+                attendanceCurrentPage++;
+                renderAttendanceTable();
+            }
+        }
+
+        function goToAttendanceLastPage() {
+            attendanceCurrentPage = attendanceTotalPages;
+            renderAttendanceTable();
+        }
+
+        function jumpToAttendancePage() {
+            const pageInput = document.getElementById('attendancePageJumpInput');
+            const page = parseInt(pageInput.value);
+            if (page && page >= 1 && page <= attendanceTotalPages) {
+                goToAttendancePage(page);
+                pageInput.value = '';
+            } else {
+                Utils.showNotification('请输入有效的页码', 'warning');
+            }
+        }
+
+        function changeAttendancePageSize() {
+            const pageSizeSelect = document.getElementById('attendancePageSize');
+            attendancePageSize = parseInt(pageSizeSelect.value);
+            attendanceCurrentPage = 1; // 重置到第一页
+            renderAttendanceTable();
+        }
+
+        // 更新记录数量显示（保持向后兼容）
+        function updateRecordsCount(count) {
+            updateAttendanceRecordsCount();
         }
 
         // 获取状态信息
@@ -1733,9 +2082,63 @@
             return days[day] || '未知';
         }
 
-        // 编辑考勤记录（待实现）
-        function editAttendanceRecord(attendanceId) {
-            Utils.showNotification('编辑考勤记录功能待实现', 'info');
+        // 编辑考勤记录
+        async function editAttendanceRecord(attendanceId) {
+            try {
+                // 从所有考勤记录中找到要编辑的记录
+                const record = allAttendanceRecords.find(r => 
+                    (r.ATTENDANCEID || r.attendanceID || r.AttendanceID) == attendanceId
+                );
+                
+                if (!record) {
+                    console.error('未找到考勤记录:', attendanceId, '可用记录:', allAttendanceRecords);
+                    Utils.showNotification('未找到考勤记录', 'error');
+                    return;
+                }
+                
+                console.log('找到考勤记录:', record);
+                currentAttendanceId = attendanceId;
+                
+                // 填充表单数据
+                const staffName = record.STAFFNAME || record.staffName || record.StaffName || '未知员工';
+                const workDate = record.WORKDATE || record.workDate || record.WorkDate;
+                const checkInTime = record.CHECKINTIME || record.checkInTime || record.CheckInTime;
+                const checkOutTime = record.CHECKOUTTIME || record.checkOutTime || record.CheckOutTime;
+                const status = record.STATUS || record.status || record.Status || '正常';
+                const workHours = record.ACTUALWORKHOURS || record.actualWorkHours || record.ActualWorkHours || 0;
+                
+                document.getElementById('attendanceStaffName').value = staffName;
+                
+                // 格式化日期
+                if (workDate) {
+                    const date = new Date(workDate);
+                    document.getElementById('attendanceWorkDate').value = date.toISOString().split('T')[0];
+                }
+                
+                // 格式化时间 - 避免时区转换问题
+                if (checkInTime) {
+                    const checkIn = new Date(checkInTime);
+                    const hours = checkIn.getHours().toString().padStart(2, '0');
+                    const minutes = checkIn.getMinutes().toString().padStart(2, '0');
+                    document.getElementById('attendanceCheckInTime').value = `${hours}:${minutes}`;
+                }
+                
+                if (checkOutTime) {
+                    const checkOut = new Date(checkOutTime);
+                    const hours = checkOut.getHours().toString().padStart(2, '0');
+                    const minutes = checkOut.getMinutes().toString().padStart(2, '0');
+                    document.getElementById('attendanceCheckOutTime').value = `${hours}:${minutes}`;
+                }
+                
+                document.getElementById('attendanceStatus').value = status;
+                document.getElementById('attendanceWorkHours').value = parseFloat(workHours || 0).toFixed(1);
+                
+                Utils.showModal('editAttendanceModal');
+                
+            } catch (error) {
+                console.error('编辑考勤记录失败:', error);
+                Utils.showNotification('编辑考勤记录失败: ' + error.message, 'error');
+            }
         }
 
         // 生成统计报表并导出为Excel
@@ -1846,10 +2249,6 @@
             Utils.showNotification('统计报表已生成并下载: ' + fileName, 'success');
         }
 
-        function editAttendanceRecord(attendanceId) {
-            Utils.showNotification('编辑考勤记录功能待实现', 'info');
-        }
-
         // 加载考勤统计
         async function loadAttendanceStatistics() {
             try {
@@ -1906,6 +2305,12 @@
                     attendanceRateClass += 'poor';
                 }
                 
+                // 处理工作时长显示
+                const totalWorkHoursNum = parseFloat(totalWorkHours) || 0;
+                const avgWorkHoursNum = parseFloat(avgWorkHours) || 0;
+                const formattedTotalHours = totalWorkHoursNum > 0 ? totalWorkHoursNum.toFixed(1) + 'h' : '0.0h';
+                const formattedAvgHours = avgWorkHoursNum > 0 ? avgWorkHoursNum.toFixed(1) + 'h' : '0.0h';
+                
                 row.innerHTML = `
                     <td>${staffName}</td>
                     <td>${departmentName}</td>
@@ -1914,8 +2319,8 @@
                     <td><span class="status-badge status-warning">${lateDays}</span></td>
                     <td><span class="status-badge status-orange">${earlyLeaveDays}</span></td>
                     <td><span class="status-badge status-danger">${absentDays}</span></td>
-                    <td>${parseFloat(totalWorkHours).toFixed(1)}h</td>
-                    <td>${parseFloat(avgWorkHours).toFixed(1)}h</td>
+                    <td>${formattedTotalHours}</td>
+                    <td>${formattedAvgHours}</td>
                     <td><span class="${attendanceRateClass}">${parseFloat(attendanceRate).toFixed(1)}%</span></td>
                 `;
                 tbody.appendChild(row);

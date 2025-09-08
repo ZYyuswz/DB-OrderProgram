@@ -47,9 +47,10 @@ namespace RestaurantManagement.Controllers
         }
 
         // 编辑排班
-        [HttpPut]
-        public async Task<IActionResult> Update([FromBody] Schedule schedule)
+        [HttpPut("{scheduleId}")]
+        public async Task<IActionResult> Update(int scheduleId, [FromBody] Schedule schedule)
         {
+            schedule.ScheduleID = scheduleId; // 确保设置正确的ID
             var success = await _scheduleService.UpdateScheduleAsync(schedule);
             return Ok(new { Success = success });
         }

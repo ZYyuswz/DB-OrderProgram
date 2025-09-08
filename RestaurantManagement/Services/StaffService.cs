@@ -375,10 +375,14 @@ namespace RestaurantManagement.Services
                     a.CHECKINTIME as CheckInTime,
                     a.CHECKOUTTIME as CheckOutTime,
                     CASE 
-                        WHEN a.CHECKOUTTIME IS NOT NULL THEN a.ACTUALWORKHOURS
+                        WHEN a.CHECKOUTTIME IS NOT NULL AND a.ACTUALWORKHOURS IS NOT NULL 
+                            AND a.ACTUALWORKHOURS >= 0 AND a.ACTUALWORKHOURS <= 24 THEN 
+                            a.ACTUALWORKHOURS
+                        WHEN a.CHECKOUTTIME IS NOT NULL AND a.CHECKINTIME IS NOT NULL THEN 
+                            LEAST(24, GREATEST(0, ROUND((a.CHECKOUTTIME - a.CHECKINTIME) * 24, 2)))
                         WHEN a.CHECKINTIME IS NOT NULL THEN 
-                            ROUND((SYSDATE - a.CHECKINTIME) * 24, 2)
-                        ELSE NULL 
+                            LEAST(24, GREATEST(0, ROUND((SYSDATE - a.CHECKINTIME) * 24, 2)))
+                        ELSE 0 
                     END as ActualWorkHours,
                     a.STATUS as Status,
                     a.STOREID as StoreID,
@@ -428,8 +432,14 @@ namespace RestaurantManagement.Services
                     SUM(CASE WHEN a.STATUS = '迟到' THEN 1 ELSE 0 END) as LATEDAYS,
                     SUM(CASE WHEN a.STATUS = '早退' THEN 1 ELSE 0 END) as EARLYLEAVEDAYS,
                     SUM(CASE WHEN a.STATUS = '缺勤' THEN 1 ELSE 0 END) as ABSENTDAYS,
-                    NVL(SUM(a.ACTUALWORKHOURS), 0) as TOTALWORKHOURS,
-                    NVL(AVG(a.ACTUALWORKHOURS), 0) as AVGWORKHOURS,
+                    NVL(SUM(CASE 
+                        WHEN a.ACTUALWORKHOURS IS NULL OR a.ACTUALWORKHOURS < 0 OR a.ACTUALWORKHOURS > 24 THEN 0
+                        ELSE a.ACTUALWORKHOURS
+                    END), 0) as TOTALWORKHOURS,
+                    NVL(ROUND(AVG(CASE 
+                        WHEN a.ACTUALWORKHOURS IS NULL OR a.ACTUALWORKHOURS < 0 OR a.ACTUALWORKHOURS > 24 THEN 0
+                        ELSE a.ACTUALWORKHOURS
+                    END), 1), 0) as AVGWORKHOURS,
                     CASE 
                         WHEN COUNT(a.ATTENDANCEID) = 0 THEN 0
                         ELSE ROUND((COUNT(a.ATTENDANCEID) - SUM(CASE WHEN a.STATUS = '缺勤' THEN 1 ELSE 0 END)) * 100.0 / COUNT(a.ATTENDANCEID), 2)
@@ -504,6 +514,31 @@ namespace RestaurantManagement.Services
 
             var sql = "DELETE FROM PUB.STAFF WHERE STAFFID = :StaffId";
             var result = await connection.ExecuteAsync(sql, new { StaffId = staffId });
+            return result > 0;
+        }
+
+        // 更新考勤记录
+        public async Task<bool> UpdateAttendanceRecordAsync(int attendanceId, UpdateAttendanceRequest request)
+        {
+            using var connection = _dbService.CreateConnection();
+            
+            var sql = @"
+                UPDATE PUB.ATTENDANCE 
+                SET CHECKINTIME = :CheckInTime,
+                    CHECKOUTTIME = :CheckOutTime,
+                    STATUS = :Status,
+                    ACTUALWORKHOURS = :ActualWorkHours
+                WHERE ATTENDANCEID = :AttendanceId";
+            
+            var result = await connection.ExecuteAsync(sql, new 
+            { 
+                CheckInTime = request.CheckInTime,
+                CheckOutTime = request.CheckOutTime,
+                Status = request.Status,
+                ActualWorkHours = request.ActualWorkHours,
+                AttendanceId = attendanceId
+            });
+            
             return result > 0;
         }
     }

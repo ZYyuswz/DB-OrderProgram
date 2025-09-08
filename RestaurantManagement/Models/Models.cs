@@ -14,6 +14,39 @@ namespace RestaurantManagement.Models
         public int StaffId { get; set; }
     }
 
+    // 更新考勤记录请求模型
+    public class UpdateAttendanceRequest
+    {
+        private DateTime? _checkInTime;
+        private DateTime? _checkOutTime;
+        
+        public DateTime? CheckInTime 
+        { 
+            get => _checkInTime;
+            set => _checkInTime = value;
+        }
+        
+        public DateTime? CheckOutTime 
+        { 
+            get => _checkOutTime;
+            set => _checkOutTime = value;
+        }
+        
+        // 用于接收字符串格式的时间
+        public string? CheckInTimeString 
+        { 
+            set => _checkInTime = string.IsNullOrEmpty(value) ? null : DateTime.Parse(value);
+        }
+        
+        public string? CheckOutTimeString 
+        { 
+            set => _checkOutTime = string.IsNullOrEmpty(value) ? null : DateTime.Parse(value);
+        }
+        
+        public string Status { get; set; } = string.Empty;
+        public decimal? ActualWorkHours { get; set; }
+    }
+
     // 开台请求模型
     public class OpenTableRequest
     {
