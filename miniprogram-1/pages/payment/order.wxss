@@ -40,9 +40,12 @@
 /* 商品滚动区域 */
 .order-scroll {
   /* 设置一个最大高度，超出则滚动 */
-  max-height: 40vh; 
+
+  max-height: 30vh; 
   padding: 15px;
   box-sizing: border-box;
+  height: 30vh;
+
 }
 
 .order-item {
@@ -52,7 +55,9 @@
 }
 
 .order-item:last-child {
-  margin-bottom: 0;
+
+  margin-bottom: 10;
+
 }
 
 .dish-pic {

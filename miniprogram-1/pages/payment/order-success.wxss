@@ -13,6 +13,9 @@
   max-height: 40vh; 
   padding: 15px;
   box-sizing: border-box;
+
+  height: 40vh;
+
 }
 
 .order-item {

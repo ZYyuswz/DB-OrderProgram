@@ -109,6 +109,15 @@ Page({
   },
 
 
+  onPullDownRefresh: function () {
+    console.log("用户下拉刷新了");
+
+    // 模拟请求数据
+    this.cartsync();
+    wx.stopPullDownRefresh(); // 即使失败也要停止 
+  },
+
+
 // 增加商品数量
 increaseQuantity: function(e) {
   const dishId = e.currentTarget.dataset.id;
@@ -150,7 +159,9 @@ createCache: function(dishId){
 
 deleteCache: function(dishId){
   let cacheId = 0;
-  for (let [key, value] of map) {
+
+  for (let [key, value] of this.cacheMap) {
+
     if (value === dishId) {
       cacheId = key;
       break;           
@@ -267,7 +278,7 @@ addToCart: function(dishId) {
         
         // 更新购物车
         const existingItem = cartItems.find(item => item.dishId == dishId);
-        console.log("更新购物车",category);
+
         if (existingItem && category.id != 6) {
           existingItem.quantity += 1;
         } else {
@@ -390,13 +401,24 @@ cartsync: function () {
         // 在回调里操作 responseData
         let newDishId = responseData.map(item => item.dishId);
 
+        this.clearCart();
+        newDishId.forEach(item => {
+          this.addToCart(item);  
+        });
+        /*
         // 计算差集
-        let difference = newDishId.filter(item => !oldDishId.includes(item));
+        let needToAdd = newDishId.filter(item => !oldDishId.includes(item));
+        let needToRemove = oldDishId.filter(item => !newDishId.includes(item));
 
         // 遍历差集并添加
-        difference.forEach(item => {
-          this.addToCart(item);  // 注意用 this 调用组件/页面的方法
+        needToAdd.forEach(item => {
+          this.addToCart(item);  
         });
+        needToRemove.forEach(item => {
+          this.removeFromCart(item);  
+        });
+        */
+
       }
     }
   });

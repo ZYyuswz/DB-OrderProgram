@@ -16,6 +16,10 @@ Page({
     try {
       const items = wx.getStorageSync('order_items');
       const price = wx.getStorageSync('order_total_price');
+
+      this.data.tableId = wx.getStorageSync('tableId') || 1;
+      this.data.customerId = wx.getStorageSync('customerId') || 1;
+
       console.log(items,price);
       if (items && price) {
         this.setData({
@@ -117,7 +121,9 @@ Page({
         // HTTP状态码200或201通常代表成功
         if (res.statusCode === 200 || res.statusCode === 201) {
           console.log('订单提交成功，后端返回:', res.data);
-          this.deleteCache();         
+
+          this.putStatus();         
+
             // 订单创建成功后，再根据需求发起GET请求获取总价
             if(isAddDish){wx.redirectTo({ url: '/pages/payment/order-success'});return;}
           that.getTotalPriceFromServer(res.data.data);         
@@ -143,14 +149,27 @@ Page({
     });
   },
 
+  
+  putStatus:function () {
+    wx.request({
+      url: 'http://localhost:5002/api/cache/status/'+ this.data.tableId,
+      method: 'PUT',   
+        success: (res) => {        
+          if (res.statusCode === 200) {
+            console.log("更新缓存状态成功");
+          }
+        }
+    })
+  },
+
   deleteCache:function () {
     wx.request({
-      url: 'http://localhost:5002/api/table/tableId/'+ this.data.tableId,
+      url: 'http://localhost:5002/api/cache/table/'+ this.data.tableId,
       method: 'DELETE',   
         success: (res) => {        
           if (res.statusCode === 200) {
-            responseData = res.data.data;
-            console.log("删除缓存成功",responseData);
+            console.log("删除缓存成功");
+
           }
         }
     })
