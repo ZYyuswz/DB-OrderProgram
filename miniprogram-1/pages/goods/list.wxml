@@ -3,7 +3,7 @@
   <!-- 顶部搜索区域 -->
   <van-sticky>
     <view class="header">
-      <text class = "tableId"> 桌号：{{tableId}}</text>
+      <text class = "tableId"> 桌号：{{tableNumber}}</text>
       <image class="show-type" src="/images/icon/list{{listType}}.png" bindtap="changeShowType"></image>
     </view>
   </van-sticky>

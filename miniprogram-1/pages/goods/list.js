@@ -3,6 +3,7 @@
 Page({
   data: {
     tableId : 1,
+    tableNumber : '',
     categories: [], // 分类数组
     activeCategory: null, // 当前激活分类
     toView: '',
@@ -56,11 +57,11 @@ Page({
     // 初始化购物车
     this.updateCartSummary();  
     this.data.isAddDish = wx.getStorageSync('isAddDish') || false; 
-    this.data.tableId = wx.getStorageSync('tableId') || 1;
+    this.tableIndex = ['A00','A01','A02','B01','C01'];
+    this.data.tableId = parseInt(wx.getStorageSync('tableId')) || 1;
+    this.setData({tableNumber : this.tableIndex[this.data.tableId]});
+    wx.setStorageSync('tableNumber', this.data.tableNumber);
     this.cacheMap = new Map();
-    /*const socketTask = wx.connectSocket({
-      url: 'wss://example.com/socket', // 替换成你的 ws 地址
-    }); */  
   },
   getTransformedDishData: function (rawData) {
     const categoryMap = {
@@ -381,91 +382,97 @@ clearCart: function() {
   });
 },
 
-cartsync: function () {
-  // 从 map 中取旧的 dishId（Set 变成数组）
-  let oldDishId = Array.from(this.cacheMap.values());
+// 修复后的 cartsync 函数 - 返回 Promise 确保异步操作完成
+cartsync: function() {
+  return new Promise((resolve, reject) => {
+    wx.request({
+      url: 'http://localhost:5002/api/cache/' + this.data.tableId,
+      method: 'GET',
+      success: (res) => {
+        if (res.statusCode === 200) {
+          let responseData = res.data.data;
+          console.log("同步后的购物车", responseData);
 
-  wx.request({
-    url: 'http://localhost:5002/api/cache/' + this.data.tableId,
-    method: 'GET',
-    success: (res) => {
-      if (res.statusCode === 200) {
-        let responseData = res.data.data;
-        console.log("同步后的购物车", responseData);
-
-        // 在回调里操作 responseData
-        let newDishId = responseData.map(item => item.dishId);
-        this.clearCart();
-        newDishId.forEach(item => {
-          this.addToCart(item);  
-        });
-        /*
-        // 计算差集
-        let needToAdd = newDishId.filter(item => !oldDishId.includes(item));
-        let needToRemove = oldDishId.filter(item => !newDishId.includes(item));
-
-        // 遍历差集并添加
-        needToAdd.forEach(item => {
-          this.addToCart(item);  
-        });
-        needToRemove.forEach(item => {
-          this.removeFromCart(item);  
-        });
-        */
+          // 在回调里操作 responseData
+          let newDishId = responseData.map(item => item.dishId);
+          this.clearCart();
+          
+          // 如果不需要等待每个addToCart完成，可以使用Promise.all
+          const addPromises = newDishId.map(item => this.addToCart(item));
+          
+          Promise.all(addPromises).then(() => {
+            resolve(); // 所有添加操作完成后resolve
+          }).catch(reject);
+        } else {
+          reject(new Error("同步购物车失败"));
+        }
+      },
+      fail: (err) => {
+        reject(err);
       }
-    }
+    });
   });
 },
 
+// 修复后的 checkout 函数 - 使用 async/await 确保顺序执行
+async checkout() {
+  try {
+    // 等待购物车同步完成
+    await this.cartsync();
+    
+    const cartItems = this.data.cartItems;
+    const requiredItems = ["辣度选择"]; // 必选项名称列表
+    console.log("结算", cartItems);
+    
+    // 检查购物车是否包含所有必选项
+    const missingItems = requiredItems.filter(itemName => 
+      !cartItems.some(cartItem => cartItem.dishName === itemName)
+    );
+    
+    console.log("判断必选", this.data.isAddDish, missingItems);
+    if (missingItems.length > 0 && !this.data.isAddDish) {
+      wx.showToast({
+        title: `请先进行：${missingItems.join('、')}`,
+        icon: 'none',
+        duration: 2000
+      });
 
+      // 滚动到页面底部（假设必选项在最后）
+      this.setData({
+        toView: 'category' + this.data.categories[this.data.categories.length - 1].id
+      });
+      return; // 阻止继续结算
+    }
 
-// 结算
-checkout: function() {
-  this.cartsync();
-  const cartItems = this.data.cartItems;
-  const requiredItems = ["辣度选择"]; // 必选项名称列表
-  console.log("结算",cartItems);
-  // 检查购物车是否包含所有必选项
-  const missingItems = requiredItems.filter(itemName => 
-    !cartItems.some(cartItem => cartItem.dishName === itemName)
-  );
-  console.log("判断必选",this.data.isAddDish);
-  if (missingItems.length > 0 && !this.data.isAddDish) {
-    wx.showToast({
-      title: `请先进行：${missingItems.join('、')}`,
-      icon: 'none',
-      duration: 2000
+    // 检查购物车是否为空
+    if (this.data.cartItems.length === 0) {
+      wx.showToast({
+        title: '购物车是空的',
+        icon: 'none'
+      });
+      return; // 阻止跳转
+    }
+    
+    // 1. 将购物车数据和总价存入本地缓存
+    try {
+      wx.setStorageSync('order_items', this.data.cartItems);
+      console.log(this.data.cartItems);
+      wx.setStorageSync('order_total_price', this.data.totalPrice);
+    } catch (e) {
+      console.error('存储订单数据失败', e);
+    }
+
+    // 2. 跳转到新的订单确认页面
+    wx.navigateTo({
+      url: '/pages/payment/order' // 新页面的路径
     });
-
-    // 滚动到页面底部（假设必选项在最后）
-    this.setData({
-      toView: 'category' + this.data.categories[this.data.categories.length - 1].id
-    });
-    return; // 阻止继续结算
-  }
-
-  // 检查购物车是否为空
-  if (this.data.cartItems.length === 0) {
+  } catch (error) {
+    console.error("结算过程中出错:", error);
     wx.showToast({
-      title: '购物车是空的',
+      title: '结算失败，请重试',
       icon: 'none'
     });
-    return; // 阻止跳转
   }
-  
-  // 1. 将购物车数据和总价存入本地缓存
-  try {
-    wx.setStorageSync('order_items', this.data.cartItems);
-    console.log(this.data.cartItems);
-    wx.setStorageSync('order_total_price', this.data.totalPrice);
-  } catch (e) {
-    console.error('存储订单数据失败', e);
-  }
-
-  // 2. 跳转到新的订单确认页面
-  wx.navigateTo({
-    url: '/pages/payment/order' // 新页面的路径
-  });
 },
  
   // 绑定点击左侧分类
