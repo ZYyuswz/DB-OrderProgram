@@ -195,5 +195,60 @@ namespace ConsoleApp1.Services
                 return false;
             }
         }
+
+/// <summary>
+/// 更新评价点赞数
+/// </summary>
+public async Task<bool> UpdateReviewHelpfulCountAsync(int reviewId, bool isHelpful)
+{
+    try
+    {
+        using var connection = new OracleConnection(_connectionString);
+        await connection.OpenAsync();
+        
+        // 这里需要根据实际数据库表结构来编写SQL
+        // 假设有一个 HelpfulCount 字段来存储点赞数
+        var sql = @"UPDATE PUB.CustomerReview 
+                   SET HelpfulCount = HelpfulCount + :changeValue 
+                   WHERE ReviewID = :reviewId";
+        
+        using var command = new OracleCommand(sql, connection);
+        command.Parameters.Add(":changeValue", OracleDbType.Int32).Value = isHelpful ? 1 : -1;
+        command.Parameters.Add(":reviewId", OracleDbType.Int32).Value = reviewId;
+        
+        int rowsAffected = await command.ExecuteNonQueryAsync();
+        return rowsAffected > 0;
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, $"更新评价 {reviewId} 点赞数失败");
+        return false;
+    }
+}
+
+/// <summary>
+/// 删除评价
+/// </summary>
+public async Task<bool> DeleteReviewAsync(int reviewId)
+{
+    try
+    {
+        using var connection = new OracleConnection(_connectionString);
+        await connection.OpenAsync();
+        
+        var sql = @"DELETE FROM PUB.CustomerReview WHERE ReviewID = :reviewId";
+        
+        using var command = new OracleCommand(sql, connection);
+        command.Parameters.Add(":reviewId", OracleDbType.Int32).Value = reviewId;
+        
+        int rowsAffected = await command.ExecuteNonQueryAsync();
+        return rowsAffected > 0;
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, $"删除评价 {reviewId} 失败");
+        return false;
+    }
+}
     }
 }
