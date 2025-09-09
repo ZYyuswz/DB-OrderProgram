@@ -2,6 +2,7 @@
 <view class="container">
   <!-- 会员卡片 -->
   <view class="member-card">
+  <view class="member-card-accent" style="background: linear-gradient(90deg, {{memberInfo.currentLevelInfo.color}}, rgba(255,255,255,0));"></view>
     <view class="member-header">
       <view class="member-level-badge" style="background: {{memberInfo.currentLevelInfo.color}}">
         <text class="level-icon">{{memberInfo.currentLevelInfo.icon}}</text>
@@ -33,86 +34,75 @@
       </view>
       <view class="progress-bar">
         <view class="progress-fill" style="width: {{memberInfo.progressToNextLevel}}%"></view>
+        <text class="progress-percent">{{memberInfo.progressToNextLevel}}%</text>
       </view>
-      <text class="progress-text">{{memberInfo.progressToNextLevel}}%</text>
     </view>
   </view>
 
-  <!-- 我的数据统计 -->
-  <view class="stats-section">
-    <view class="section-header">
-      <text class="section-title">我的数据</text>
-    </view>
-    <view class="stats-grid">
-      <view class="stats-item">
-        <text class="stats-number">{{stats.totalOrders}}</text>
-        <text class="stats-label">总订单</text>
-      </view>
-      <view class="stats-item">
-        <text class="stats-number">¥{{stats.averageOrderAmount}}</text>
-        <text class="stats-label">平均消费</text>
-      </view>
-      <view class="stats-item">
-        <text class="stats-number">{{stats.monthlyOrders}}</text>
-        <text class="stats-label">本月订单</text>
-      </view>
-      <view class="stats-item">
-        <text class="stats-number">¥{{stats.monthlyConsumption}}</text>
-        <text class="stats-label">本月消费</text>
-      </view>
-    </view>
-  </view>
+  
 
   <!-- 会员等级体系 -->
   <view class="levels-section">
-    <view class="section-header">
-      <text class="section-title">会员等级体系</text>
+    <view class="section-title">
+      <text>会员等级体系</text>
     </view>
-    <view class="levels-list">
-      <view 
-        class="level-item {{item.levelCode === memberInfo.currentLevel ? 'current' : ''}}"
-        wx:for="{{allLevels}}" 
-        wx:key="levelCode"
-        data-level="{{item}}"
-        bindtap="showLevelDetail"
-      >
-        <view class="level-icon">{{item.levelIcon}}</view>
-        <view class="level-info">
-          <text class="level-name">{{item.levelName}}</text>
-          <text class="level-threshold">
+    <scroll-view class="levels-scroll" scroll-x="true" show-scrollbar="{{false}}">
+      <view class="levels-row">
+        <view 
+          class="level-card {{item.levelCode === memberInfo.currentLevel ? 'current' : ''}}"
+          wx:for="{{allLevels}}" 
+          wx:key="levelCode"
+          data-level="{{item}}"
+          bindtap="showLevelDetail"
+          style="background: {{item.levelColor}}"
+        >
+          <view class="level-card-top">
+            <text class="level-card-icon">{{item.levelIcon}}</text>
+            <view class="level-chip" wx:if="{{item.levelCode === memberInfo.currentLevel}}">当前</view>
+          </view>
+          <view class="level-card-name">{{item.levelName}}</view>
+          <view class="level-card-threshold">
             消费满 ¥{{item.minConsumption}}
             <text wx:if="{{item.maxConsumption}}"> - ¥{{item.maxConsumption}}</text>
-          </text>
-        </view>
-        <view class="level-badge" wx:if="{{item.levelCode === memberInfo.currentLevel}}">
-          <text>当前等级</text>
+          </view>
         </view>
       </view>
-    </view>
+    </scroll-view>
   </view>
 
   <!-- 会员特权 -->
   <view class="privileges-section" wx:if="{{memberInfo.privileges.length > 0}}">
-    <view class="section-header">
-      <text class="section-title">我的特权</text>
+    <view class="section-title">
+      <text>我的特权</text>
     </view>
     <view class="privileges-list">
       <view class="privilege-item" wx:for="{{memberInfo.privileges}}" wx:key="privilegeType">
         <view class="privilege-icon">{{item.privilegeIcon}}</view>
-        <view class="privilege-info">
+        <view class="privilege-content">
           <text class="privilege-name">{{item.privilegeName}}</text>
           <text class="privilege-desc">{{item.privilegeDesc}}</text>
         </view>
-        <view class="privilege-value">{{item.privilegeValue}}</view>
+  <view class="privilege-value" style="border-color: {{memberInfo.currentLevelInfo.color}}; color: {{memberInfo.currentLevelInfo.color}}">{{item.privilegeValue}}</view>
+      </view>
+    </view>
+  </view>
+  <view class="privileges-section" wx:else>
+    <view class="section-title">
+      <text>我的特权</text>
+    </view>
+    <view class="privileges-list">
+      <view class="privilege-item">
+        <view class="privilege-icon">ℹ️</view>
+        <view class="privilege-content">
+          <text class="privilege-name">暂无特权</text>
+          <text class="privilege-desc">提升会员等级可解锁更多权益</text>
+        </view>
       </view>
     </view>
   </view>
 
   <!-- 加载中状态 -->
-  <view class="loading-container" wx:if="{{loading}}">
-    <view class="loading-content">
-      <view class="loading-spinner"></view>
-      <text class="loading-text">加载中...</text>
-    </view>
+  <view class="loading-state" wx:if="{{loading}}">
+    <text class="loading-text">加载中...</text>
   </view>
 </view>

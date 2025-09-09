@@ -139,90 +139,51 @@ Page({
 
   // 处理特权数据字段映射
   processPrivileges(privileges, currentLevel) {
-    if (!Array.isArray(privileges) || privileges.length === 0) {
-      console.log('⚠️ 特权数据为空或不是数组，使用默认数据:', privileges);
-      
-      // 根据当前等级返回默认特权
-      return this.getDefaultPrivileges(currentLevel);
-    }
-    
-    return privileges.map(privilege => ({
-      privilegeType: privilege.PrivilegeType || privilege.privilegeType || '',
-      privilegeName: privilege.PrivilegeName || privilege.privilegeName || '',
-      privilegeDesc: privilege.PrivilegeDesc || privilege.privilegeDesc || '',
-      privilegeValue: privilege.PrivilegeValue || privilege.privilegeValue || '',
-      privilegeIcon: privilege.PrivilegeIcon || privilege.privilegeIcon || '🎁'
-    }));
+    // 需求变更：只展示折扣特权，忽略后端返回的其他特权项
+    // 按会员等级生成唯一一条“折扣特权”
+    const discount = this.getDiscountByLevel(currentLevel);
+    return [
+      {
+        privilegeType: 'discount',
+        privilegeName: '会员折扣',
+        privilegeDesc: '根据您的会员等级享受专属折扣',
+        privilegeValue: discount.display, // 例如：9.5折 / 8.0折 / 7.5折
+        privilegeIcon: '💰'
+      }
+    ];
+  },
+
+  // 根据等级获取折扣（仅用于展示）
+  getDiscountByLevel(level) {
+    // 折扣映射：单位为“折”（x.x折），同时附带百分比便于后续可能用途
+    const map = {
+      bronze: { fold: 9.5, percent: 95 },
+      silver: { fold: 9.0, percent: 90 },
+      gold: { fold: 8.5, percent: 85 },
+      platinum: { fold: 8.0, percent: 80 },
+      diamond: { fold: 7.5, percent: 75 }
+    };
+  const key = (level || 'bronze').toString().toLowerCase();
+  const d = map[key] || map['bronze'];
+    return {
+      ...d,
+      display: `${d.fold}折`
+    };
   },
 
   // 获取默认特权数据
   getDefaultPrivileges(level) {
-    const defaultPrivileges = {
-      'bronze': [
-        {
-          privilegeType: 'discount',
-          privilegeName: '新人优惠',
-          privilegeDesc: '享受9.5折优惠',
-          privilegeValue: '95%',
-          privilegeIcon: '💰'
-        },
-        {
-          privilegeType: 'points',
-          privilegeName: '积分奖励',
-          privilegeDesc: '消费1元获得1积分',
-          privilegeValue: '1:1',
-          privilegeIcon: '⭐'
-        }
-      ],
-      'silver': [
-        {
-          privilegeType: 'discount',
-          privilegeName: '银卡优惠',
-          privilegeDesc: '享受9折优惠',
-          privilegeValue: '90%',
-          privilegeIcon: '💰'
-        },
-        {
-          privilegeType: 'points',
-          privilegeName: '积分奖励',
-          privilegeDesc: '消费1元获得1.2积分',
-          privilegeValue: '1:1.2',
-          privilegeIcon: '⭐'
-        },
-        {
-          privilegeType: 'service',
-          privilegeName: '优先服务',
-          privilegeDesc: '享受优先排队服务',
-          privilegeValue: '优先',
-          privilegeIcon: '🚀'
-        }
-      ],
-      'gold': [
-        {
-          privilegeType: 'discount',
-          privilegeName: '金卡优惠',
-          privilegeDesc: '享受8.5折优惠',
-          privilegeValue: '85%',
-          privilegeIcon: '💰'
-        },
-        {
-          privilegeType: 'points',
-          privilegeName: '积分奖励',
-          privilegeDesc: '消费1元获得1.5积分',
-          privilegeValue: '1:1.5',
-          privilegeIcon: '⭐'
-        },
-        {
-          privilegeType: 'service',
-          privilegeName: 'VIP服务',
-          privilegeDesc: '享受专属客服服务',
-          privilegeValue: '专属',
-          privilegeIcon: '👑'
-        }
-      ]
-    };
-    
-    return defaultPrivileges[level] || defaultPrivileges['bronze'];
+    // 为保持兼容，仍保留该方法，但现在仅返回单条折扣特权
+    const d = this.getDiscountByLevel(level);
+    return [
+      {
+        privilegeType: 'discount',
+        privilegeName: '会员折扣',
+        privilegeDesc: `享受${d.display}优惠`,
+        privilegeValue: d.display,
+        privilegeIcon: '�'
+      }
+    ];
   },
 
   // 加载所有会员等级
