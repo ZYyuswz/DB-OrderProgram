@@ -190,6 +190,7 @@ Page({
         if (res.statusCode === 200) {
           console.log(res.data)
           console.log(`后端确认总价为: ${res.data.data.finalPrice}`);
+          wx.setStorageSync('finalPrice',res.data.data.finalPrice);
           wx.showToast({
             title: '下单成功！',
             icon: 'success',

@@ -22,9 +22,9 @@
 
     <!-- 优惠券区域 -->
     <view class="coupon-section">
-      <text class="label">优惠券</text>
+      <text class="label">积分</text>
       <view class="action">
-        <text class="value">暂无可用</text>
+        <text class="value">100</text>
         <text class="arrow">></text>
       </view>
     </view>
