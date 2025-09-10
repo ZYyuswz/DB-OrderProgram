@@ -382,7 +382,7 @@ clearCart: function() {
   });
 },
 
-// 修复后的 cartsync 函数 - 返回 Promise 确保异步操作完成
+// 修改后的 cartsync 函数 - 使用 Promise 和 setTimeout 确保同步操作完成
 cartsync: function() {
   return new Promise((resolve, reject) => {
     wx.request({
@@ -397,14 +397,18 @@ cartsync: function() {
           let newDishId = responseData.map(item => item.dishId);
           this.clearCart();
           
-          // 如果不需要等待每个addToCart完成，可以使用Promise.all
-          const addPromises = newDishId.map(item => this.addToCart(item));
+          // 同步执行所有 addToCart 操作
+          newDishId.forEach(item => {
+            this.addToCart(item);
+          });
           
-          Promise.all(addPromises).then(() => {
+          // 使用 setTimeout 等待所有同步操作完成
+          // 这是因为 setData 是异步的，需要时间更新视图
+          setTimeout(() => {
             resolve(); // 所有添加操作完成后resolve
-          }).catch(reject);
+          }, 100); // 适当的延迟确保所有 setData 完成
         } else {
-          reject(new Error("同步购物车失败"));
+          reject(new Error("同步购物车失败，状态码: " + res.statusCode));
         }
       },
       fail: (err) => {
