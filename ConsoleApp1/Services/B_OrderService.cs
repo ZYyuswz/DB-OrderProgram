@@ -90,7 +90,7 @@ namespace DBManagement.Service
         }
 
         // 创建订单及订单详情
-        public (bool success, string message, int order_id) CreateOrder(Order order, List<OrderDetail> orderDetails)
+        public (bool success, string message, int order_id) CreateOrder(Order order, List<DBManagement.Models.OrderDetail> orderDetails)
         {
             try
             {
@@ -134,7 +134,7 @@ namespace DBManagement.Service
             }
         }
 
-        public (bool success, string message) ContinueOrder(int tableId, List<OrderDetail> orderDetails)
+        public (bool success, string message) ContinueOrder(int tableId, List<DBManagement.Models.OrderDetail> orderDetails)
         {
             try
             {
