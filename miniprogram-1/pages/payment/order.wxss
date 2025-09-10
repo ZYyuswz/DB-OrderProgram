@@ -40,10 +40,10 @@
 /* 商品滚动区域 */
 .order-scroll {
   /* 设置一个最大高度，超出则滚动 */
-  max-height: 30vh; 
+  max-height: 50vh; 
   padding: 15px;
   box-sizing: border-box;
-  height: 30vh;
+  height: 50vh;
 }
 
 .order-item {

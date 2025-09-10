@@ -20,16 +20,17 @@
       </view>
     </scroll-view>
 
-    <!-- 优惠券区域 -->
+    <!-- 优惠券区域 
     <view class="coupon-section">
       <text class="label">积分</text>
       <view class="action">
         <text class="value">100</text>
         <text class="arrow">></text>
       </view>
-    </view>
+    </view>   -->
   </view>
 </view>
+
 
 <!-- 下方：固定的付款栏 -->
 <view class="payment-bar">

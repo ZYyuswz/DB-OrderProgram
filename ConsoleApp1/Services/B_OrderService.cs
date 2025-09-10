@@ -41,7 +41,7 @@ namespace DBManagement.Service
         };
 
 
-        public decimal CalculatePrice(long customerId, decimal totalPrice)
+        public decimal CalculatePrice(int? customerId, decimal totalPrice)
         {
             try
             {
