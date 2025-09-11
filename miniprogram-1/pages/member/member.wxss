@@ -3,17 +3,17 @@
 /* 页面容器 */
 .container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20rpx;
+  background: linear-gradient(160deg, #f6f7fb 0%, #eef2f7 100%);
+  padding: 24rpx;
 }
 
 /* 会员卡片 */
 .member-card {
-  background: white;
-  border-radius: 30rpx;
-  padding: 40rpx;
-  margin-bottom: 30rpx;
-  box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.1);
+  background: #fff;
+  border-radius: 28rpx;
+  padding: 36rpx;
+  margin-bottom: 28rpx;
+  box-shadow: 0 16rpx 48rpx rgba(17, 24, 39, 0.08);
   position: relative;
   overflow: hidden;
 }
@@ -28,6 +28,14 @@
   background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.3));
   border-radius: 50%;
   transform: translate(50%, -50%);
+}
+
+.member-card-accent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 10rpx;
+  width: 100%;
 }
 
 /* 会员头部 */
@@ -133,7 +141,8 @@
   background: #e9ecef;
   border-radius: 6rpx;
   overflow: hidden;
-  margin-bottom: 15rpx;
+  margin-bottom: 8rpx;
+  position: relative;
 }
 
 .progress-fill {
@@ -143,11 +152,12 @@
   transition: width 0.3s ease;
 }
 
-.progress-text {
-  text-align: center;
-  font-size: 24rpx;
-  color: #666;
-  display: block;
+.progress-percent {
+  position: absolute;
+  right: 10rpx;
+  top: -34rpx;
+  font-size: 22rpx;
+  color: #999;
 }
 
 /* 最高等级提示 */
@@ -233,8 +243,10 @@
 
 .privilege-value {
   font-size: 26rpx;
-  color: #FF8C42;
-  font-weight: bold;
+  font-weight: 700;
+  border: 2rpx solid #FF8C42;
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
 }
 
 /* 消费统计 */
@@ -246,24 +258,27 @@
   background: white;
   border-radius: 0 0 20rpx 20rpx;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: stretch;
 }
 
 .stat-item {
   flex: 1;
-  min-width: 50%;
   text-align: center;
-  padding: 40rpx 20rpx;
+  padding: 40rpx 10rpx;
   border-right: 1rpx solid #f0f0f0;
-  border-bottom: 1rpx solid #f0f0f0;
 }
 
 .stat-item:nth-child(2n) {
-  border-right: none;
+  /* 单行布局，不需要特殊处理 */
 }
 
 .stat-item:nth-child(n+3) {
-  border-bottom: none;
+  /* 单行布局，不需要底部分隔线 */
+}
+
+.stat-item:last-child {
+  border-right: none;
 }
 
 .stat-number {
@@ -302,92 +317,64 @@
   margin-bottom: 30rpx;
 }
 
-.levels-list {
-  background: white;
-  border-radius: 0 0 20rpx 20rpx;
+/* 横向滚动卡片样式 */
+.levels-scroll {
+  background: transparent;
+  padding: 20rpx 0 10rpx;
 }
 
-.level-item {
+.levels-row {
   display: flex;
-  align-items: center;
-  padding: 30rpx;
-  border-bottom: 1rpx solid #f0f0f0;
-  transition: background-color 0.2s ease;
+  flex-direction: row;
 }
 
-.level-item:last-child {
-  border-bottom: none;
-}
-
-.level-item:active {
-  background: #f8f9fa;
-}
-
-.level-item.current {
-  background: linear-gradient(90deg, rgba(255, 140, 66, 0.1), rgba(255, 179, 102, 0.1));
-}
-
-.level-badge {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: 50%;
-  background: #f0f0f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 25rpx;
-}
-
-.level-item.current .level-badge {
-  background: linear-gradient(135deg, #FF8C42, #FFB366);
-}
-
-.level-icon {
-  font-size: 32rpx;
-}
-
-.level-item.current .level-icon {
-  filter: brightness(0) invert(1);
-}
-
-.level-info {
-  flex: 1;
-}
-
-.level-name {
-  display: block;
-  font-size: 30rpx;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 8rpx;
-}
-
-.level-item.current .level-name {
-  color: #FF8C42;
-}
-
-.level-threshold {
-  font-size: 24rpx;
-  color: #666;
-}
-
-.level-status {
-  width: 100rpx;
-  text-align: center;
-}
-
-.status-text {
-  font-size: 22rpx;
-  color: #FF8C42;
-  font-weight: bold;
-  background: rgba(255, 140, 66, 0.1);
-  padding: 8rpx 15rpx;
+.level-card {
+  width: 420rpx;
+  min-height: 180rpx;
+  margin-right: 20rpx;
   border-radius: 20rpx;
+  color: #fff;
+  padding: 24rpx;
+  box-shadow: 0 10rpx 30rpx rgba(0,0,0,0.12);
+  transform: translateZ(0);
 }
 
-.status-icon {
+.level-card:last-child {
+  margin-right: 0;
+}
+
+.level-card.current {
+  box-shadow: 0 16rpx 36rpx rgba(255, 140, 66, 0.35);
+  position: relative;
+}
+
+.level-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.level-card-icon {
+  font-size: 44rpx;
+}
+
+.level-chip {
+  font-size: 22rpx;
+  padding: 6rpx 14rpx;
+  border-radius: 16rpx;
+  background: rgba(0,0,0,0.25);
+}
+
+.level-card-name {
   font-size: 32rpx;
-  color: #52c41a;
+  font-weight: 700;
+  margin-top: 12rpx;
+}
+
+.level-card-threshold {
+  font-size: 24rpx;
+  opacity: 0.9;
+  margin-top: 6rpx;
 }
 
 /* 加载状态 */
@@ -404,12 +391,12 @@
 /* 响应式设计 */
 @media screen and (max-width: 350px) {
   .stats-grid {
-    flex-direction: column;
+  flex-direction: row;
+  flex-wrap: nowrap;
   }
   
   .stat-item {
-    min-width: 100%;
-    border-right: none;
-    border-bottom: 1rpx solid #f0f0f0;
+  min-width: auto;
+  border-bottom: none;
   }
 }
