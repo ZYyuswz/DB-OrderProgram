@@ -10,6 +10,7 @@ Page({
     // 用于存储需要提交到后端的数据
     storeId: 1, // 假设店铺ID为1，实际应从全局或缓存获取
     customerId: 1, // 假设顾客ID为1，实际应在用户登录后获取
+    points : 0,
   },
 
   onLoad: function (options) {
@@ -23,7 +24,9 @@ Page({
       this.setData({tableNumber : wx.getStorageSync('tableNumber')});
       //测试时不用，正式运行时取消掉
       // this.data.customerId = wx.getStorageSync('userInfo').phone || 1;
-      console.log(this.data.tableId,this.data.storeId);
+      let userinfo = wx.getStorageSync('userInfo')
+      this.setData({ points : userinfo.points} ?? 100);
+      console.log("积分为",userinfo.points);
       console.log(items,price);
       if (items && price) {
         this.setData({
@@ -173,7 +176,7 @@ Page({
           }
         }
     })
-  },
+  },  
 
   /**
    * 发起GET请求，从后端获取并确认总价
