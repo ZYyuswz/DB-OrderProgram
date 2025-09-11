@@ -1,45 +1,92 @@
+import API from '../../utils/api.js';
+
 Page({
   data: {
     userInfo: {
-      nickname: '',
+      customerId: 0,
+      customerName: '',
       phone: '',
       email: '',
-      avatar: '',
-      memberLevelName: '',
-      points: 0
+      vipLevelName: '普通会员'
     },
     originalUserInfo: {},
-    isFormChanged: false
+    isFormChanged: false,
+    loading: false
   },
 
   onLoad() {
     this.loadUserInfo();
   },
 
-  // 加载用户信息
-  loadUserInfo() {
-    const userInfo = wx.getStorageSync('userInfo') || {};
-    const defaultInfo = {
-      nickname: '用户' + Math.floor(Math.random() * 10000),
-      phone: '',
-      email: '',
-      avatar: '/images/default-avatar.png',
-      memberLevelName: '普通会员',
-      points: 0
-    };
+  // 获取用户ID
+  getCustomerId() {
+    const userInfo = wx.getStorageSync('userInfo');
+    if (userInfo && userInfo.customerId) {
+      return userInfo.customerId;
+    }
+    // 如果没有客户ID，使用默认客户ID=1进行测试
+    return 1;
+  },
 
-    const mergedInfo = { ...defaultInfo, ...userInfo };
+  // 加载用户信息
+  async loadUserInfo() {
+    if (this.data.loading) return;
     
-    this.setData({
-      userInfo: mergedInfo,
-      originalUserInfo: { ...mergedInfo }
-    });
+    try {
+      this.setData({ loading: true });
+      
+      const customerId = this.getCustomerId();
+      console.log('🔄 开始加载用户信息，客户ID:', customerId);
+      
+      // 从数据库获取用户信息
+      const customerInfo = await API.getCustomerProfile(customerId);
+      console.log('✅ 获取到用户信息:', customerInfo);
+      
+      if (customerInfo) {
+        const processedInfo = {
+          customerId: customerInfo.CustomerId || customerInfo.customerId || customerId,
+          customerName: customerInfo.CustomerName || customerInfo.customerName || '',
+          phone: customerInfo.Phone || customerInfo.phone || '',
+          email: customerInfo.Email || customerInfo.email || '',
+          vipLevelName: customerInfo.VipLevelName || customerInfo.vipLevelName || '普通会员'
+        };
+        
+        this.setData({
+          userInfo: processedInfo,
+          originalUserInfo: { ...processedInfo },
+          loading: false
+        });
+      } else {
+        // 如果没有找到用户信息，使用默认信息
+        const defaultInfo = {
+          customerId: customerId,
+          customerName: '未设置',
+          phone: '',
+          email: '',
+          vipLevelName: '普通会员'
+        };
+        
+        this.setData({
+          userInfo: defaultInfo,
+          originalUserInfo: { ...defaultInfo },
+          loading: false
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ 加载用户信息失败:', error);
+      this.setData({ loading: false });
+      wx.showToast({
+        title: '加载用户信息失败',
+        icon: 'none'
+      });
+    }
   },
 
   // 输入处理
-  onNicknameInput(e) {
+  onCustomerNameInput(e) {
     this.setData({
-      'userInfo.nickname': e.detail.value,
+      'userInfo.customerName': e.detail.value,
       isFormChanged: true
     });
   },
@@ -58,35 +105,21 @@ Page({
     });
   },
 
-  // 更换头像
-  changeAvatar() {
-    wx.chooseImage({
-      count: 1,
-      sizeType: ['compressed'],
-      sourceType: ['album', 'camera'],
-      success: (res) => {
-        const tempFilePath = res.tempFilePaths[0];
-        this.setData({
-          'userInfo.avatar': tempFilePath,
-          isFormChanged: true
-        });
-        
-        // 这里可以上传图片到服务器
-        wx.showToast({
-          title: '头像已更新',
-          icon: 'success'
-        });
-      }
-    });
-  },
-
   // 保存个人信息
-  saveProfile() {
+  async saveProfile() {
     if (!this.data.isFormChanged) return;
 
     const { userInfo } = this.data;
     
     // 简单验证
+    if (!userInfo.customerName.trim()) {
+      wx.showToast({
+        title: '请输入昵称',
+        icon: 'none'
+      });
+      return;
+    }
+
     if (userInfo.phone && !/^1[3-9]\d{9}$/.test(userInfo.phone)) {
       wx.showToast({
         title: '请输入正确的手机号',
@@ -103,23 +136,54 @@ Page({
       return;
     }
 
-    // 保存到本地存储
-    wx.setStorageSync('userInfo', userInfo);
-    
-    wx.showToast({
-      title: '保存成功',
-      icon: 'success'
-    });
+    try {
+      wx.showLoading({
+        title: '保存中...'
+      });
 
-    this.setData({
-      isFormChanged: false,
-      originalUserInfo: { ...userInfo }
-    });
+      // 调用后端API更新用户信息
+      const updateInfo = {
+        CustomerName: userInfo.customerName,
+        Phone: userInfo.phone || null,
+        Email: userInfo.email || null
+      };
 
-    // 更新全局数据
-    const app = getApp();
-    if (app.globalData) {
-      app.globalData.userInfo = userInfo;
+      await API.updateCustomerProfile(userInfo.customerId, updateInfo);
+
+      // 更新本地存储
+      const storageUserInfo = wx.getStorageSync('userInfo') || {};
+      const updatedStorageInfo = {
+        ...storageUserInfo,
+        customerName: userInfo.customerName,
+        phone: userInfo.phone,
+        email: userInfo.email
+      };
+      wx.setStorageSync('userInfo', updatedStorageInfo);
+
+      wx.hideLoading();
+      wx.showToast({
+        title: '保存成功',
+        icon: 'success'
+      });
+
+      this.setData({
+        isFormChanged: false,
+        originalUserInfo: { ...userInfo }
+      });
+
+      // 更新全局数据
+      const app = getApp();
+      if (app.globalData) {
+        app.globalData.userInfo = updatedStorageInfo;
+      }
+
+    } catch (error) {
+      wx.hideLoading();
+      console.error('保存用户信息失败:', error);
+      wx.showToast({
+        title: '保存失败，请重试',
+        icon: 'none'
+      });
     }
   },
 

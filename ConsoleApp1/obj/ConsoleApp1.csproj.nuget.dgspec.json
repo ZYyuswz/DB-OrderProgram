@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "D:\\All Projects\\GithubDesktop Clone\\DB-OrderProgram\\ConsoleApp1\\ConsoleApp1.csproj": {}
+    "/Users/lalala/Files/Code/GitHub/DB-OrderProgram/ConsoleApp1/ConsoleApp1.csproj": {}
   },
   "projects": {
-    "D:\\All Projects\\GithubDesktop Clone\\DB-OrderProgram\\ConsoleApp1\\ConsoleApp1.csproj": {
+    "/Users/lalala/Files/Code/GitHub/DB-OrderProgram/ConsoleApp1/ConsoleApp1.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\All Projects\\GithubDesktop Clone\\DB-OrderProgram\\ConsoleApp1\\ConsoleApp1.csproj",
+        "projectUniqueName": "/Users/lalala/Files/Code/GitHub/DB-OrderProgram/ConsoleApp1/ConsoleApp1.csproj",
         "projectName": "ConsoleApp1",
-        "projectPath": "D:\\All Projects\\GithubDesktop Clone\\DB-OrderProgram\\ConsoleApp1\\ConsoleApp1.csproj",
-        "packagesPath": "C:\\Users\\DELL\\.nuget\\packages\\",
-        "outputPath": "D:\\All Projects\\GithubDesktop Clone\\DB-OrderProgram\\ConsoleApp1\\obj\\",
+        "projectPath": "/Users/lalala/Files/Code/GitHub/DB-OrderProgram/ConsoleApp1/ConsoleApp1.csproj",
+        "packagesPath": "/Users/lalala/.nuget/packages/",
+        "outputPath": "/Users/lalala/Files/Code/GitHub/DB-OrderProgram/ConsoleApp1/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\DELL\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "/Users/lalala/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -45,31 +45,31 @@
           "dependencies": {
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
-              "version": "[9.0.7, )"
+              "version": "[8.0.10, )"
             },
             "Microsoft.Extensions.Configuration": {
               "target": "Package",
-              "version": "[9.0.7, )"
+              "version": "[8.0.1, )"
             },
             "Microsoft.Extensions.Configuration.Json": {
               "target": "Package",
-              "version": "[9.0.7, )"
+              "version": "[8.0.1, )"
             },
             "Microsoft.Extensions.DependencyInjection": {
               "target": "Package",
-              "version": "[9.0.7, )"
+              "version": "[8.0.1, )"
             },
             "Microsoft.Extensions.Logging": {
               "target": "Package",
-              "version": "[9.0.7, )"
+              "version": "[8.0.1, )"
             },
             "Microsoft.Extensions.Logging.Console": {
               "target": "Package",
-              "version": "[9.0.7, )"
+              "version": "[8.0.1, )"
             },
             "Oracle.EntityFrameworkCore": {
               "target": "Package",
-              "version": "[9.23.90, )"
+              "version": "[8.23.50, )"
             },
             "Oracle.ManagedDataAccess.Core": {
               "target": "Package",
@@ -77,7 +77,7 @@
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
-              "version": "[6.5.0, )"
+              "version": "[6.6.2, )"
             }
           },
           "imports": [
@@ -99,7 +99,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.412/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.414/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

@@ -227,6 +227,41 @@ class APIManager {
       }
     }
   
+    // 获取客户基本信息
+    async getCustomerProfile(customerId) {
+      try {
+        const response = await this.request(`/customer/${customerId}`);
+        
+        // 检查是否是404标记
+        if (response && response.__is404) {
+          if (this.debugMode) {
+            console.log(`客户 ${customerId} 不存在`);
+          }
+          return null;
+        }
+        
+        return response;
+      } catch (error) {
+        console.error('获取客户信息失败:', error);
+        throw error;
+      }
+    }
+
+    // 更新客户基本信息
+    async updateCustomerProfile(customerId, updateInfo) {
+      try {
+        const response = await this.request(`/customer/${customerId}`, {
+          method: 'PUT',
+          data: updateInfo
+        });
+        
+        return response;
+      } catch (error) {
+        console.error('更新客户信息失败:', error);
+        throw error;
+      }
+    }
+
     // 切换调试模式
     setDebugMode(enabled) {
       this.debugMode = enabled;
