@@ -98,19 +98,9 @@ Page({
     }, 1000); // 模拟网络请求延迟
   },
 
-  // 注册功能（暂时只是提示）
-  handleRegister() {
-    wx.showToast({
-      title: '注册功能待开发',
-      icon: 'none'
-    });
-  },
-
-  // 忘记密码
-  handleForgotPassword() {
-    wx.showToast({
-      title: '找回密码功能待开发',
-      icon: 'none'
+  goToRegister() {
+    wx.navigateTo({
+      url: '/pages/register/register'
     });
   },
 

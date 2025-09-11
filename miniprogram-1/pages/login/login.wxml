@@ -55,9 +55,9 @@
       </button>
 
       <!-- 功能链接 -->
-      <view class="form-links">
-        <text class="link-text" bindtap="handleForgotPassword">忘记密码？</text>
-        <text class="link-text" bindtap="handleRegister">注册账户</text>
+      <view class="register-link">
+        <text>没有账号？</text>
+        <text class="link" bindtap="goToRegister">立即注册</text>
       </view>
     </view>
   </view>

@@ -25,6 +25,8 @@ builder.Services.AddScoped<ReviewService>();
 builder.Services.AddScoped<PointsService>();
 builder.Services.AddScoped<MemberService>();
 builder.Services.AddScoped<QRCodeService>();
+builder.Services.AddScoped<CustomerController>();
+builder.Services.AddScoped<DatabaseService>();
 
 // 配置CORS以支持小程序跨域请求
 builder.Services.AddCors(options =>

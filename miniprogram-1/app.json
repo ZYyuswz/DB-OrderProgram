@@ -9,7 +9,8 @@
     "pages/member/member",
     "pages/logs/logs",
     "pages/profile/profile",
-    "pages/reviews/reviews"
+    "pages/reviews/reviews",
+    "pages/register/register"
   ],
   "window": {
     "navigationBarTextStyle": "black",
