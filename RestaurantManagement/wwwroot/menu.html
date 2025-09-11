@@ -375,7 +375,7 @@
                     else if (priceRangeFilter === '100+') priceMatch = price > 100;
                 }
 
-                // 名称搜索
+                // 名称搜索+++
                 const nameMatch = !dishSearch || dish.DishName.toLowerCase().includes(dishSearch);
 
                 return categoryMatch && availabilityMatch && priceMatch && nameMatch;

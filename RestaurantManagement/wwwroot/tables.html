@@ -891,12 +891,12 @@
                         <div class="form-group" style="flex: 1;">
                             <label for="dishCategoryFilter">菜品分类:</label>
                             <select id="dishCategoryFilter" class="form-control" onchange="filterDishes()">
-                                <option value="">全部分类</option>
+                                <option value="all">全部分类</option>
                             </select>
                         </div>
                         <div class="form-group" style="flex: 1;">
                             <label for="dishSearchInput">搜索菜品:</label>
-                            <input type="text" id="dishSearchInput" class="form-control" placeholder="输入菜品名称搜索" oninput="filterDishes()">
+                            <input type="text" id="dishSearchInput" class="form-control" placeholder="输入菜品名称搜索" onkeyup="filterDishes()">
                         </div>
                     </div>
                 </div>
@@ -978,7 +978,7 @@
             
             console.log('staff:',staff);
 
-            staff.filter(s => s.Status === '在职').forEach(s => {
+            staff.filter(s => s.Status === '在职' && s.Position === '服务员').forEach(s => {
                 const option = document.createElement('option');
                 option.value = s.StaffID;
                 option.textContent = s.StaffName;
@@ -997,7 +997,7 @@
                 const tableStatusClass = statusInfo.class.replace('status-', ''); // 移除 status- 前缀
                 tableItem.className = `table-item ${tableStatusClass}`;
                 console.log("桌台对象：", tables);
-                tableItem.onclick = () => handleTableClick(tables[0]);
+                tableItem.onclick = () => handleTableClick(table);
 
                 tableItem.innerHTML = `
                     <div class="table-number">桌台 ${table.TableID}</div>
@@ -1200,9 +1200,6 @@
                             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                                 <button onclick="addDish(${currentOrder.OrderID})" class="btn btn-primary">
                                     <i class="icon-add"></i> 加菜
-                                </button>
-                                <button onclick="printOrder(${currentOrder.OrderID})" class="btn btn-secondary">
-                                    <i class="icon-print"></i> 打印
                                 </button>
                                 <button onclick="checkoutOrder(${currentOrder.OrderID})" class="btn btn-success">
                                     <i class="icon-checkout"></i> 结账 (${Utils.formatCurrency(totalAmount)})
@@ -1611,15 +1608,33 @@
                 console.log(`按分类过滤: ${beforeFilter} -> ${filteredDishes.length}`);
             }
 
+            // if (searchQuery) {
+            //     const beforeFilter = filteredDishes.length;
+            //     filteredDishes = filteredDishes.filter(dish => {
+            //         const dishName = dish.dishName || dish.DISHNAME || '';
+            //         const description = dish.description || dish.DESCRIPTION || '';
+            //         return dishName.toLowerCase().includes(searchQuery) ||
+            //                description.toLowerCase().includes(searchQuery);
+            //     });
+            //     console.log(`按搜索过滤: ${beforeFilter} -> ${filteredDishes.length}`);
+            // }
             if (searchQuery) {
                 const beforeFilter = filteredDishes.length;
                 filteredDishes = filteredDishes.filter(dish => {
-                    const dishName = dish.dishName || dish.DISHNAME || '';
-                    const description = dish.description || dish.DESCRIPTION || '';
-                    return dishName.toLowerCase().includes(searchQuery) ||
-                           description.toLowerCase().includes(searchQuery);
+                    const dishName = (dish.DishName || '').toLowerCase();
+                    const description = (dish.Description || '').toLowerCase();
+                    return dishName.includes(searchQuery.toLowerCase()) ||
+                        description.includes(searchQuery.toLowerCase());
                 });
-                console.log(`按搜索过滤: ${beforeFilter} -> ${filteredDishes.length}`);
+                // 高亮显示
+                filteredDishes = filteredDishes.map(dish => {
+                    let dishName = dish.DishName || '';
+                    let description = dish.Description || '';
+                    const reg = new RegExp(searchQuery, 'gi');
+                    dishName = dishName.replace(reg, match => `<span style="color:#28a745;font-weight:bold">${match}</span>`);
+                    description = description.replace(reg, match => `<span style="color:#28a745;font-weight:bold">${match}</span>`);
+                    return { ...dish, DishName: dishName, Description: description };
+                });
             }
 
             console.log('最终过滤后菜品数量:', filteredDishes.length);
@@ -1680,7 +1695,27 @@
         }
 
         function filterDishes() {
+            const categoryFilter = document.getElementById('dishCategoryFilter').value;
+            const dishSearch = document.getElementById('dishSearchInput').value.trim().toLowerCase();
+            console.log(categoryFilter)
+            console.log(dishSearch)
+
+            filteredDishes = availableDishes.filter(dish => {
+                // // 分类过滤
+                const categoryMatch = categoryFilter === 'all' || dish.CategoryID.toString() === categoryFilter;
+
+                // 名称搜索+++
+                const nameMatch = !dishSearch || dish.DishName.toLowerCase().includes(dishSearch);
+
+                return categoryMatch && nameMatch;
+            });
+
             renderDishesGrid();
+            updateSelectedDishesDisplay();
+        }
+
+        function renderDishGrid() {
+        
         }
 
         function updateDishQuantity(dishId, newQuantity) {

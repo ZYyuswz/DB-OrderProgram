@@ -146,7 +146,6 @@
                 <h2>订单管理</h2>
                 <div>
                     <button onclick="refreshOrders()" class="btn btn-secondary">刷新数据</button>
-                    <button onclick="exportOrders()" class="btn btn-primary">导出报表</button>
                 </div>
             </div>
 
@@ -190,10 +189,8 @@
                             <option value="all">全部状态</option>
                             <option value="待处理">待处理</option>
                             <option value="制作中">制作中</option>
-                            <option value="已完成">已完成</option>
                             <option value="进行中">进行中</option>
                             <option value="已结账">已结账</option>
-                            <option value="已取消">已取消</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -212,7 +209,6 @@
                     </div>
                     <div class="form-group" style="display: flex; align-items: end; gap: 0.5rem;">
                         <button onclick="clearAllFilters()" class="btn btn-secondary" style="height: fit-content;">清空筛选</button>
-                        <button onclick="quickSearch()" class="btn btn-primary" style="height: fit-content;">快速搜索</button>
                     </div>
                 </div>
                 
@@ -433,9 +429,6 @@
                         ${(order.OrderStatus === '进行中' || order.OrderStatus === '制作中') ? `
                             <button onclick="showAddDishModal(${order.OrderID})" class="btn btn-secondary" style="margin-right: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">加菜</button>
                             <button onclick="checkoutOrder(${order.OrderID})" class="btn btn-success" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">结账</button>
-                        ` : ''}
-                        ${(order.OrderStatus === '进行中' || order.OrderStatus === '制作中') ? `
-                            <button onclick="cancelOrder(${order.OrderID})" class="btn btn-danger" style="margin-left: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">取消</button>
                         ` : ''}
                     </td>
                 `;
@@ -966,7 +959,6 @@
                     <div class="order-actions" style="margin-bottom: 1.5rem; text-align: center; padding: 1rem; background-color: #f1f3f4; border-radius: 0.5rem;">
                         ${canModify ? `<button onclick="showAddDishModal(${orderId})" class="btn btn-primary" style="margin: 0 0.5rem;"><i class="icon">+</i> 加菜</button>` : ''}
                         ${canCheckout ? `<button onclick="checkoutOrder(${orderId})" class="btn btn-success" style="margin: 0 0.5rem;"><i class="icon">💳</i> 结账</button>` : ''}
-                        <button onclick="printOrderReceipt(${orderId})" class="btn btn-secondary" style="margin: 0 0.5rem;"><i class="icon">🖨️</i> 打印小票</button>
                         ${canModify ? `<button onclick="updateOrderStatus(${orderId})" class="btn btn-warning" style="margin: 0 0.5rem;"><i class="icon">📝</i> 更新状态</button>` : ''}
                         <button onclick="refreshOrderDetails(${orderId})" class="btn btn-info" style="margin: 0 0.5rem;"><i class="icon">🔄</i> 刷新</button>
                     </div>
@@ -1031,7 +1023,6 @@
                 const modalFooter = document.querySelector('#orderDetailModal .modal-footer');
                 modalFooter.innerHTML = `
                     <button onclick="Utils.hideModal('orderDetailModal')" class="btn btn-secondary">关闭</button>
-                    <button onclick="printOrderReceipt(${orderId})" class="btn btn-primary"><i class="icon">🖨️</i> 打印小票</button>
                 `;
                 
                 Utils.showModal('orderDetailModal');

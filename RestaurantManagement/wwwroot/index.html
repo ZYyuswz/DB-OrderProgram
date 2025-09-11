@@ -158,10 +158,9 @@
         }
 
         function updateTableStats(tables) {
-            const availableCount = tables.filter(t => t.status === '空闲').length;
-            const occupiedCount = tables.filter(t => t.status === '占用').length;
-            const cleaningCount = tables.filter(t => t.status === '清洁中').length;
-
+            const availableCount = tables.filter(t => t.Status === '空闲').length;
+            const occupiedCount = tables.filter(t => t.Status === '占用').length;
+            const cleaningCount = tables.filter(t => t.Status === '清洁中').length;
             document.getElementById('available-tables').textContent = availableCount;
             document.getElementById('occupied-tables').textContent = occupiedCount;
             document.getElementById('cleaning-tables').textContent = cleaningCount;
