@@ -462,7 +462,6 @@
                     <td><span class="status-badge ${statusInfo.class}">${statusInfo.text}</span></td>
                     <td>
                         <button onclick="editInventory(${item.MaterialID})" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 0.25rem;">编辑</button>
-                        <button onclick="adjustStock(${item.MaterialID})" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">调整库存</button>
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -569,7 +568,7 @@
                 const today = new Date();
                 const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
                 const monthlyPurchases = await API.get(`/inventory/purchases?startDate=${firstDay.toISOString().split('T')[0]}&endDate=${today.toISOString().split('T')[0]}`);
-                const monthlyTotal = monthlyPurchases.reduce((sum, p) => sum + p.totalAmount, 0);
+                const monthlyTotal = monthlyPurchases.reduce((sum, p) => sum + (p.TotalAmount || p.totalAmount || 0), 0);
                 document.getElementById('monthly-purchases').textContent = Utils.formatCurrency(monthlyTotal);
             } catch (error) {
                 console.error('获取本月采购统计失败:', error);
@@ -720,17 +719,62 @@
                 return;
             }
 
+            const parseNotes = (notes) => {
+                if (!notes) return {};
+                const result = {};
+                String(notes).split(';').forEach(part => {
+                    const [k, v] = part.split('=');
+                    if (!k) return;
+                    const key = k.trim();
+                    const val = (v || '').trim();
+                    if (key === 'Quantity') result.Quantity = parseFloat(val);
+                    if (key === 'UnitPrice') result.UnitPrice = parseFloat(val);
+                    if (key === 'MaterialID') result.MaterialID = parseInt(val);
+                });
+                return result;
+            };
+
+            const getField = (obj, variants) => {
+                for (const name of variants) {
+                    if (obj[name] !== undefined && obj[name] !== null) return obj[name];
+                    const upper = name.toUpperCase();
+                    if (obj[upper] !== undefined && obj[upper] !== null) return obj[upper];
+                    const lower = name.toLowerCase();
+                    if (obj[lower] !== undefined && obj[lower] !== null) return obj[lower];
+                }
+                return undefined;
+            };
+
             purchaseRecords.forEach(record => {
+                const notes = getField(record, ['Notes']);
+                const extra = parseNotes(notes);
+                const materialId = extra.MaterialID || getField(record, ['MaterialID']);
+                const material = materialId ? allInventory.find(i => i.MaterialID === materialId) : null;
+
+                const purchaseId = getField(record, ['PurchaseID', 'Id']);
+                const supplierName = getField(record, ['SupplierName']) || '-';
+                const status = getField(record, ['Status']) || '已完成';
+
+                const qty = Number.isFinite(extra.Quantity) ? extra.Quantity : (getField(record, ['Quantity']) ?? '-');
+                const unitPrice = Number.isFinite(extra.UnitPrice) ? extra.UnitPrice : (getField(record, ['UnitPrice']) || 0);
+                const totalAmount = getField(record, ['TotalAmount']) || (Number.isFinite(qty) && Number.isFinite(unitPrice) ? qty * unitPrice : 0);
+
+                const itemName = material ? material.MaterialName : (getField(record, ['ItemName']) || '-');
+                const unitLabel = material ? material.Unit : (getField(record, ['Unit']) || '');
+
+                const purchaseDateRaw = getField(record, ['PurchaseDate']);
+                const dateStr = purchaseDateRaw ? Utils.formatDate(purchaseDateRaw) : '-';
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${record.PurchaseID}</td>
-                    <td>${record.ItemName || '-'}</td>
-                    <td>${record.Quantity || '-'}${record.Unit || ''}</td>
-                    <td>${Utils.formatCurrency(record.UnitPrice || 0)}</td>
-                    <td>${Utils.formatCurrency(record.TotalAmount)}</td>
-                    <td>${record.SupplierName}</td>
-                    <td>${Utils.formatDate(record.PurchaseDate)}</td>
-                    <td><span class="status-badge success">${record.Status || '已完成'}</span></td>
+                    <td>${purchaseId ?? '-'}</td>
+                    <td>${itemName}</td>
+                    <td>${qty || '-'}${unitLabel}</td>
+                    <td>${Utils.formatCurrency(unitPrice || 0)}</td>
+                    <td>${Utils.formatCurrency(totalAmount || 0)}</td>
+                    <td>${supplierName}</td>
+                    <td>${dateStr}</td>
+                    <td><span class="status-badge success">${status}</span></td>
                 `;
                 tbody.appendChild(row);
             });
@@ -764,14 +808,42 @@
             }
 
             try {
+                const materialId = parseInt(document.getElementById('purchaseItemID').value);
+                const supplierId = parseInt(document.getElementById('purchaseSupplierID').value);
+                const quantity = parseFloat(document.getElementById('purchaseQuantity').value);
+                const unitPrice = parseFloat(document.getElementById('purchaseUnitPrice').value);
+
+                if (!Number.isInteger(materialId) || materialId <= 0) {
+                    Utils.showNotification('请选择有效的物料', 'warning');
+                    return;
+                }
+                if (!Number.isInteger(supplierId) || supplierId <= 0) {
+                    Utils.showNotification('请选择有效的供应商', 'warning');
+                    return;
+                }
+                if (!Number.isFinite(quantity) || quantity <= 0) {
+                    Utils.showNotification('请输入有效的采购数量', 'warning');
+                    return;
+                }
+                if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+                    Utils.showNotification('请输入有效的单价', 'warning');
+                    return;
+                }
+
+                const total = quantity * unitPrice;
+                if (!Number.isFinite(total) || total < 0) {
+                    Utils.showNotification('总金额计算无效', 'warning');
+                    return;
+                }
+                document.getElementById('purchaseTotal').value = total.toFixed(2);
+
                 const purchaseData = {
-                    MaterialID: parseInt(document.getElementById('purchaseItemID').value),
-                    SupplierID: parseInt(document.getElementById('purchaseSupplierID').value),
-                    Quantity: parseFloat(document.getElementById('purchaseQuantity').value),
-                    UnitPrice: parseFloat(document.getElementById('purchaseUnitPrice').value),
-                    TotalAmount: parseFloat(document.getElementById('purchaseTotal').value),
-                    PurchaseDate: new Date().toISOString(),
-                    Status: '待入库'
+                    SupplierID: supplierId,
+                    TotalAmount: parseFloat(total.toFixed(2)),
+                    StaffID: 1,
+                    StoreID: 1,
+                    Status: '待收货',
+                    Notes: `MaterialID=${materialId};Quantity=${quantity};UnitPrice=${unitPrice}`
                 };
 
                 await API.post('/inventory/purchases', purchaseData);

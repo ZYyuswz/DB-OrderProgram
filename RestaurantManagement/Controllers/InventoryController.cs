@@ -120,10 +120,30 @@ namespace RestaurantManagement.Controllers
         [HttpPost("purchases")]
         public async Task<IActionResult> CreatePurchaseRecord([FromBody] PurchaseRecord purchase)
         {
-            purchase.PurchaseDate = DateTime.Now;
-            purchase.Status = "待入库";
-            var purchaseId = await _inventoryService.CreatePurchaseRecordAsync(purchase);
-            return Ok(new { PurchaseId = purchaseId });
+            try
+            {
+                if (purchase == null)
+                {
+                    return BadRequest(new { error = "请求体为空" });
+                }
+                if (purchase.SupplierID <= 0)
+                {
+                    return BadRequest(new { error = "供应商ID无效" });
+                }
+
+                Console.WriteLine($"[CreatePurchaseRecord] 收到请求: {System.Text.Json.JsonSerializer.Serialize(purchase)}");
+
+                purchase.PurchaseDate = DateTime.Now;
+                purchase.Status = string.IsNullOrWhiteSpace(purchase.Status) ? "待收货" : purchase.Status;
+                var purchaseId = await _inventoryService.CreatePurchaseRecordAsync(purchase);
+                Console.WriteLine($"[CreatePurchaseRecord] 创建成功, PurchaseID={purchaseId}");
+                return Ok(new { PurchaseId = purchaseId });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[CreatePurchaseRecord] 发生异常: {ex.Message}\n{ex.StackTrace}");
+                return BadRequest(new { error = ex.Message });
+            }
         }
 
         [HttpPost("purchases/{id}/confirm")]

@@ -253,6 +253,8 @@ namespace RestaurantManagement.Models
         public int SupplierID { get; set; }
         public DateTime PurchaseDate { get; set; }
         public decimal TotalAmount { get; set; }
+        public int? StaffID { get; set; }
+        public int? StoreID { get; set; }
         public string Status { get; set; } = string.Empty; // 待入库、已入库、已取消
         public string? Notes { get; set; }
     }

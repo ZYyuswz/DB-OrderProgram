@@ -24,7 +24,22 @@ async function apiRequest(url, options = {}) {
         const response = await fetch(API_BASE + url, config);
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            let errorMessage = `HTTP error! status: ${response.status}`;
+            try {
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const errorBody = await response.json();
+                    if (errorBody && (errorBody.error || errorBody.message)) {
+                        errorMessage += ` - ${errorBody.error || errorBody.message}`;
+                    }
+                } else {
+                    const text = await response.text();
+                    if (text) errorMessage += ` - ${text}`;
+                }
+            } catch (_) {
+                // ignore parse error
+            }
+            throw new Error(errorMessage);
         }
 
         // 检查响应是否有内容

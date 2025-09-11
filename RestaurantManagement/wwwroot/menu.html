@@ -320,7 +320,6 @@
                             ${dish.IsAvailable ? '可售' : '停售'}
                         </span>
                         <div>
-                            <button onclick="viewDishDetails(${dish.DishID})" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; margin-right: 0.25rem;">详情</button>
                             <button onclick="toggleDishAvailability(${dish.DishID}, ${!dish.IsAvailable})" class="btn ${dish.IsAvailable ? 'btn-warning' : 'btn-success'}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
                                 ${dish.IsAvailable ? '下架' : '上架'}
                             </button>

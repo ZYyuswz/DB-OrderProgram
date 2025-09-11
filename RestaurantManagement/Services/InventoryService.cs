@@ -36,13 +36,13 @@ namespace RestaurantManagement.Services
             return await connection.QueryAsync<RawMaterial>(sql);
         }
 
-        // 添加原材�?
+        // 添加原材料
         public async Task<bool> AddMaterialAsync(RawMaterial material)
         {
             using var connection = _dbService.CreateConnection();
             var sql = @"
                 INSERT INTO PUB.RawMaterial (MaterialName, Unit, CurrentStock, MinStock, UnitPrice, SupplierID)
-                VALUES (:itemName, :unit, :currentStock, :minStock, :unitPrice, 1)";
+                VALUES (:MaterialName, :Unit, :CurrentStock, :MinStock, :UnitPrice, :SupplierID)";
             var result = await connection.ExecuteAsync(sql, material);
             return result > 0;
         }
@@ -130,7 +130,16 @@ namespace RestaurantManagement.Services
         {
             using var connection = _dbService.CreateConnection();
             var sql = @"
-                SELECT pr.*, s.SupplierName
+                SELECT 
+                    pr.PurchaseID AS PurchaseID,
+                    pr.SupplierID AS SupplierID,
+                    pr.PurchaseDate AS PurchaseDate,
+                    pr.TotalAmount AS TotalAmount,
+                    pr.StaffID AS StaffID,
+                    pr.StoreID AS StoreID,
+                    pr.Status AS Status,
+                    pr.Notes AS Notes,
+                    s.SupplierName AS SupplierName
                 FROM PUB.PurchaseRecord pr
                 INNER JOIN PUB.Supplier s ON pr.SupplierID = s.SupplierID
                 ORDER BY pr.PurchaseDate DESC";
@@ -141,22 +150,29 @@ namespace RestaurantManagement.Services
         public async Task<int> CreatePurchaseRecordAsync(PurchaseRecord purchase)
         {
             using var connection = _dbService.CreateConnection();
-            var sql = @"
-                INSERT INTO PUB.PurchaseRecord (SupplierID, PurchaseDate, TotalAmount, Status, Notes)
-                VALUES (:SupplierID, :PurchaseDate, :TotalAmount, :Status, :Notes)
-                RETURNING PurchaseID INTO :PurchaseID";
-            
-            var parameters = new 
+
+            // 生成新的主键（若无触发器/序列则使用 MAX+1 方案）
+            var idSql = "SELECT NVL(MAX(PurchaseID), 0) + 1 FROM PUB.PurchaseRecord";
+            var newId = await connection.QuerySingleAsync<int>(idSql);
+
+            var insertSql = @"
+                INSERT INTO PUB.PurchaseRecord (PurchaseID, SupplierID, PurchaseDate, TotalAmount, StaffID, StoreID, Status, Notes)
+                VALUES (:PurchaseID, :SupplierID, :PurchaseDate, :TotalAmount, :StaffID, :StoreID, :Status, :Notes)";
+
+            var param = new 
             {
+                PurchaseID = newId,
                 purchase.SupplierID,
                 purchase.PurchaseDate,
                 purchase.TotalAmount,
+                StaffID = purchase.StaffID ?? 1,
+                StoreID = purchase.StoreID ?? 1,
                 purchase.Status,
-                purchase.Notes
+                Notes = purchase.Notes ?? string.Empty
             };
-            
-            var result = await connection.QuerySingleAsync<int>(sql, parameters);
-            return result;
+
+            await connection.ExecuteAsync(insertSql, param);
+            return newId;
         }
 
         // 确认入库
@@ -164,12 +180,12 @@ namespace RestaurantManagement.Services
         {
             using var connection = _dbService.CreateConnection();
             
-            // 更新采购记录状�?
-            var updatePurchase = "UPDATE PUB.PurchaseRecord SET Status = '已入�? WHERE PurchaseID = :PurchaseId";
+            // 更新采购记录状?
+            var updatePurchase = "UPDATE PUB.PurchaseRecord SET Status = '已入? WHERE PurchaseID = :PurchaseId";
             await connection.ExecuteAsync(updatePurchase, new { PurchaseId = purchaseId });
 
-            // TODO: 这里需要根据采购详情更新库�?
-            // 实际实现中需要从 PurchaseDetail 表获取采购的具体材料和数�?
+            // TODO: 这里需要根据采购详情更新库?
+            // 实际实现中需要从 PurchaseDetail 表获取采购的具体材料和数?
 
             return true;
         }
