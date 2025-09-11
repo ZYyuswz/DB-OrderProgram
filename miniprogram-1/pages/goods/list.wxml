@@ -1,6 +1,6 @@
 <!-- pages/goods/list.wxml -->
 <view class="container">
-  <!-- 顶部搜索区域 -->
+  <!-- 顶部区域 -->
   <van-sticky>
     <view class="header">
       <text class = "tableId"> 桌号：{{tableNumber}}</text>
@@ -20,7 +20,6 @@
         bindtap="switchCategory"
       >
         <text class="category-name">{{item.name}}</text>
-        <!-- <text class="category-count" wx:if="{{item.goods.length > 0}}">{{item.goods.length}}</text> -->
       </view>
     </scroll-view>
     
@@ -49,8 +48,7 @@
                 <view class="info-bottom">
                   <!-- 价格和销量区域 -->
                   <view class="price-area">
-                    <text class="price">¥{{dish.Price}}</text>
-                    
+                    <text class="price">¥{{dish.Price}}</text>                   
                     <text  class="estimatedTime">
                       预计等候时间: {{dish.estimatedTime}}分钟
                     </text>
@@ -61,8 +59,7 @@
                     <text class="quantity">{{dish.quantity || 0}}</text>
                     <text class="plus-btn" catchtap="increaseQuantity" data-id="{{dish.dishId}}">+</text>
                   </view>
-                </view>
-                
+                </view>               
               </view>
             </view>
           </view>
