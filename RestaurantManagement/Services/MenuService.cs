@@ -108,8 +108,8 @@ namespace RestaurantManagement.Services
         {
             using var connection = _dbService.CreateConnection();
             var sql = @"
-                INSERT INTO PUB.Category (CategoryName, Description, SortOrder)
-                VALUES (:CategoryName, :Description, :SortOrder)";
+                INSERT INTO PUB.Category (CategoryID, CategoryName, SortOrder, IsActive)
+                VALUES (:CategoryID, :CategoryName, :SortOrder, 'Y')";
             var result = await connection.ExecuteAsync(sql, category);
             return result > 0;
         }
@@ -121,7 +121,19 @@ namespace RestaurantManagement.Services
             var sql = @"
                 INSERT INTO PUB.Dish (DishName, CategoryID, Price, Description, ImageURL, IsAvailable, CreatedTime)
                 VALUES (:DishName, :CategoryID, :Price, :Description, :ImageURL, :IsAvailable, :CreatedTime)";
-            var result = await connection.ExecuteAsync(sql, dish);
+            // 将布尔值转换为字符（Y/N）以匹配数据库字段类型
+            var availabilityValue = dish.IsAvailable ? "Y" : "N";
+            var parameters = new
+            {
+                dish.DishName,
+                dish.CategoryID,
+                dish.Price,
+                dish.Description,
+                dish.ImageURL,
+                IsAvailable = availabilityValue,
+                CreatedTime = DateTime.Now
+            };
+            var result = await connection.ExecuteAsync(sql, parameters);
             return result > 0;
         }
 
@@ -134,7 +146,19 @@ namespace RestaurantManagement.Services
                 SET DishName = :DishName, CategoryID = :CategoryID, Price = :Price, 
                     Description = :Description, ImageURL = :ImageURL, IsAvailable = :IsAvailable
                 WHERE DishID = :DishID";
-            var result = await connection.ExecuteAsync(sql, dish);
+            // 将布尔值转换为字符（Y/N）以匹配数据库字段类型
+            var availabilityValue = dish.IsAvailable ? "Y" : "N";
+            var parameters = new
+            {
+                dish.DishName,
+                dish.CategoryID,
+                dish.Price,
+                dish.Description,
+                dish.ImageURL,
+                IsAvailable = availabilityValue,
+                dish.DishID
+            };
+            var result = await connection.ExecuteAsync(sql, parameters);
             return result > 0;
         }
 
@@ -143,7 +167,9 @@ namespace RestaurantManagement.Services
         {
             using var connection = _dbService.CreateConnection();
             var sql = "UPDATE PUB.Dish SET IsAvailable = :IsAvailable WHERE DishID = :DishId";
-            var result = await connection.ExecuteAsync(sql, new { IsAvailable = isAvailable, DishId = dishId });
+            // 将布尔值转换为字符（Y/N）以匹配数据库字段类型
+            var availabilityValue = isAvailable ? "Y" : "N";
+            var result = await connection.ExecuteAsync(sql, new { IsAvailable = availabilityValue, DishId = dishId });
             return result > 0;
         }
 
@@ -151,6 +177,15 @@ namespace RestaurantManagement.Services
         public async Task<bool> DeleteDishAsync(int dishId)
         {
             return await UpdateDishAvailabilityAsync(dishId, false);
+        }
+
+        // 删除分类（硬删除 - 从数据库中删除记录）
+        public async Task<bool> DeleteCategoryAsync(int categoryId)
+        {
+            using var connection = _dbService.CreateConnection();
+            var sql = "DELETE FROM PUB.CATEGORY WHERE CATEGORYID = :CategoryId";
+            var result = await connection.ExecuteAsync(sql, new { CategoryId = categoryId });
+            return result > 0;
         }
 
         // 获取菜品配方

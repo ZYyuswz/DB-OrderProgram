@@ -116,6 +116,15 @@ namespace RestaurantManagement.Controllers
             return Ok();
         }
 
+        [HttpDelete("categories/{id}")]
+        public async Task<IActionResult> DeleteCategory(int id)
+        {
+            var result = await _menuService.DeleteCategoryAsync(id);
+            if (!result)
+                return BadRequest();
+            return Ok();
+        }
+
         [HttpGet("dishes/{id}/recipe")]
         public async Task<IActionResult> GetDishRecipe(int id)
         {

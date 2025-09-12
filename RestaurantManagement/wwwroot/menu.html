@@ -5,6 +5,70 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>菜单管理 - 餐饮管理系统</title>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* 菜品卡片图片样式优化 */
+        .dish-item {
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .dish-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .dish-item .dish-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 0;
+            display: block;
+        }
+        
+        .dish-item .dish-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            padding: 0.75rem;
+            padding-bottom: 0.25rem;
+            margin: 0;
+        }
+        
+        .dish-item .dish-price {
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 1.2rem;
+            padding: 0 0.75rem;
+            margin: 0;
+        }
+        
+        .dish-item .dish-description {
+            padding: 0.5rem 0.75rem;
+            color: #666;
+            font-size: 0.9rem;
+            flex: 1;
+            line-height: 1.4;
+        }
+        
+        .dish-item > div:last-child {
+            padding: 0.75rem;
+            padding-top: 0.5rem;
+            margin-top: auto;
+        }
+        
+        /* 确保网格布局正确 */
+        .dish-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar">
@@ -32,20 +96,16 @@
             <!-- 统计卡片 -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-number" id="total-categories">0</div>
-                    <div class="stat-label">菜品分类</div>
+                    <div class="stat-label">菜品分类：<span class="stat-number" id="total-categories">0</span></div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number" id="total-dishes">0</div>
-                    <div class="stat-label">菜品总数</div>
+                    <div class="stat-label">菜品总数：<span class="stat-number" id="total-dishes">0</span></div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number" id="available-dishes">0</div>
-                    <div class="stat-label">可售菜品</div>
+                    <div class="stat-label">可售菜品：<span class="stat-number" id="available-dishes">0</span></div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number" id="avg-price">¥0</div>
-                    <div class="stat-label">平均价格</div>
+                    <div class="stat-label">平均价格：<span class="stat-number" id="avg-price">¥0</span></div>
                 </div>
             </div>
 
@@ -59,7 +119,6 @@
                                 <th>分类ID</th>
                                 <th>分类名称</th>
                                 <th>描述</th>
-                                <th>排序</th>
                                 <th>菜品数量</th>
                                 <th>操作</th>
                             </tr>
@@ -126,16 +185,18 @@
             <form id="categoryForm">
                 <div class="modal-body">
                     <div class="form-group">
+                        <label for="categoryId">分类ID:</label>
+                        <input type="number" id="categoryId" class="form-control" min="1" required>
+                        <small class="form-text text-muted">分类的唯一标识符，请确保不与现有分类重复</small>
+                    </div>
+                    <div class="form-group">
                         <label for="categoryName">分类名称:</label>
                         <input type="text" id="categoryName" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label for="categoryDescription">分类描述:</label>
-                        <textarea id="categoryDescription" class="form-control" rows="3"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="categorySortOrder">排序序号:</label>
-                        <input type="number" id="categorySortOrder" class="form-control" min="1" value="1">
+                        <label for="sortOrder">排序序号:</label>
+                        <input type="number" id="sortOrder" class="form-control" min="0" value="0" required>
+                        <small class="form-text text-muted">用于控制分类在菜单中的显示顺序</small>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -222,13 +283,13 @@
         let currentCategoryId = null;
 
         // 页面加载时初始化
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             // 初始化权限控制
             const user = Auth.init();
             if (!user) return;
             
-            loadCategories();
-            loadDishes();
+            await loadDishes();
+            await loadCategories();
             setupEventListeners();
         });
 
@@ -275,23 +336,24 @@
             tbody.innerHTML = '';
 
             if (categories.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666;">暂无分类数据</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #666;">暂无分类数据</td></tr>';
                 return;
             }
 
             categories.forEach(category => {
-                const dishCount = dishes.filter(d => d.CategoryID == category.CategoryID).length;
+                const dishCount = filteredDishes.filter(d => d.CategoryID == category.CategoryID).length;
+                console.log("dishes:", filteredDishes)
+                console.log(filteredDishes.filter(d => d.CategoryID == category.CategoryID))
                 const row = document.createElement('tr');
+                console.log("category:", category, "dishCount:", dishCount);
                 
                 row.innerHTML = `
                     <td>${category.CategoryID}</td>
                     <td>${category.CategoryName}</td>
                     <td>${category.Description || '-'}</td>
-                    <td>${category.SortOrder}</td>
                     <td>${dishCount}</td>
                     <td>
-                        <button onclick="editCategory(${category.CategoryID})" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">编辑</button>
-                        <button onclick="deleteCategory(${category.CategoryID})" class="btn btn-danger" style="margin-left: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">删除</button>
+                        <button onclick="deleteCategory(${category.CategoryID})" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">删除</button>
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -313,11 +375,15 @@
                 
                 const categoryName = categories.find(c => c.CategoryID === dish.CategoryID)?.CategoryName || '未分类';
                 
+                // 构建菜品图片路径：./images/dish/ID-{dishid}.png
+                const dishImagePath = `./images/dish/ID-${dish.DishID}.png`;
+                console.log("Rendering dish:", dish, "CategoryID:", dish.CategoryID);
+                
                 dishItem.innerHTML = `
-                    ${dish.ImageURL ? `<img src="${dish.ImageURL}" alt="${dish.DishName}" class="dish-image" onerror="this.src='images/default-dish.png'">` : '<div class="dish-image" style="background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999;">暂无图片</div>'}
+                    <img src="${dishImagePath}" alt="${dish.DishName}" class="dish-image" onerror="this.src='./images/default-dish.png'">
                     <div class="dish-name">${dish.DishName}</div>
                     <div class="dish-price">${Utils.formatCurrency(dish.Price)}</div>
-                    <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">分类: ${categoryName}</div>
+                    <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem; padding: 0 0.75rem;">分类: ${categoryName}</div>
                     <div class="dish-description">${dish.Description || '暂无描述'}</div>
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <span class="status-badge ${dish.IsAvailable ? 'status-available' : 'status-cleaning'}">
@@ -404,6 +470,7 @@
             currentCategoryId = null;
             document.getElementById('categoryModalTitle').textContent = '添加菜品分类';
             Utils.resetForm(document.getElementById('categoryForm'));
+            
             Utils.showModal('addCategoryModal');
         }
 
@@ -422,27 +489,45 @@
             }
 
             try {
+                const categoryId = parseInt(document.getElementById('categoryId').value);
+                const categoryName = document.getElementById('categoryName').value;
+                const sortOrder = parseInt(document.getElementById('sortOrder').value);
+
+                // 检查分类ID是否已存在
+                const existingCategoryById = categories.find(c => c.CategoryID === categoryId);
+                if (existingCategoryById) {
+                    Utils.showNotification(`分类ID "${categoryId}" 已存在，请使用其他ID`, 'error');
+                    return;
+                }
+
+                // 检查分类名称是否已存在
+                const existingCategory = categories.find(c => c.CategoryName === categoryName);
+                if (existingCategory) {
+                    Utils.showNotification(`分类名称 "${categoryName}" 已存在，请使用其他名称`, 'error');
+                    return;
+                }
+
                 const categoryData = {
-                    categoryName: document.getElementById('categoryName').value,
-                    description: document.getElementById('categoryDescription').value || null,
-                    sortOrder: parseInt(document.getElementById('categorySortOrder').value)
+                    CategoryID: categoryId,
+                    CategoryName: categoryName,
+                    SortOrder: sortOrder,
+                    IsActive: 'Y'
                 };
 
-                if (currentCategoryId) {
-                    categoryData.categoryID = currentCategoryId;
-                    await API.put(`/menu/categories/${currentCategoryId}`, categoryData);
-                    Utils.showNotification('分类更新成功', 'success');
-                } else {
-                    await API.post('/menu/categories', categoryData);
-                    Utils.showNotification('分类添加成功', 'success');
-                }
+                // 添加模式
+                await API.post('/menu/categories', categoryData);
+                Utils.showNotification('分类添加成功', 'success');
 
                 Utils.hideModal('addCategoryModal');
                 await loadCategories();
 
             } catch (error) {
                 console.error('保存分类失败:', error);
-                Utils.showNotification('保存分类失败', 'error');
+                if (error.message.includes('500')) {
+                    Utils.showNotification('服务器错误，请检查分类ID或名称是否重复或联系管理员', 'error');
+                } else {
+                    Utils.showNotification('保存分类失败', 'error');
+                }
             }
         }
 
@@ -480,21 +565,8 @@
             }
         }
 
-        async function editCategory(categoryId) {
-            const category = categories.find(c => c.categoryID === categoryId);
-            if (!category) return;
-
-            currentCategoryId = categoryId;
-            document.getElementById('categoryModalTitle').textContent = '编辑菜品分类';
-            document.getElementById('categoryName').value = category.categoryName;
-            document.getElementById('categoryDescription').value = category.description || '';
-            document.getElementById('categorySortOrder').value = category.sortOrder;
-            
-            Utils.showModal('addCategoryModal');
-        }
-
         async function deleteCategory(categoryId) {
-            const dishCount = dishes.filter(d => d.categoryID === categoryId).length;
+            const dishCount = dishes.filter(d => d.CategoryID === categoryId).length;
             if (dishCount > 0) {
                 Utils.showNotification('该分类下还有菜品，无法删除', 'warning');
                 return;
@@ -515,38 +587,38 @@
         }
 
         async function viewDishDetails(dishId) {
-            const dish = dishes.find(d => d.dishID === dishId);
+            const dish = dishes.find(d => d.DishID === dishId);
             if (!dish) return;
 
             try {
                 const recipe = await API.get(`/menu/dishes/${dishId}/recipe`);
-                const categoryName = categories.find(c => c.categoryID === dish.categoryID)?.categoryName || '未分类';
+                const categoryName = categories.find(c => c.CategoryID === dish.CategoryID)?.CategoryName || '未分类';
 
-                document.getElementById('dishDetailTitle').textContent = `菜品详情 - ${dish.dishName}`;
+                document.getElementById('dishDetailTitle').textContent = `菜品详情 - ${dish.DishName}`;
+                
+                // 构建菜品图片路径：./images/dish/ID-{dishid}.png
+                const dishImagePath = `./images/dish/ID-${dish.DishID}.png`;
                 
                 let detailsHTML = `
                     <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
                         <div>
-                            ${dish.imageURL ? 
-                                `<img src="${dish.imageURL}" alt="${dish.dishName}" style="width: 100%; border-radius: 8px;" onerror="this.src='images/default-dish.png'">` : 
-                                '<div style="width: 100%; height: 200px; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #999; border-radius: 8px;">暂无图片</div>'
-                            }
+                            <img src="${dishImagePath}" alt="${dish.DishName}" style="width: 100%; border-radius: 8px;" onerror="this.src='./images/default-dish.png'">
                         </div>
                         <div>
-                            <h4>${dish.dishName}</h4>
+                            <h4>${dish.DishName}</h4>
                             <div style="margin: 1rem 0;">
                                 <div style="margin-bottom: 0.5rem;"><strong>分类:</strong> ${categoryName}</div>
-                                <div style="margin-bottom: 0.5rem;"><strong>价格:</strong> <span style="color: #e74c3c; font-size: 1.3rem; font-weight: bold;">${Utils.formatCurrency(dish.price)}</span></div>
+                                <div style="margin-bottom: 0.5rem;"><strong>价格:</strong> <span style="color: #e74c3c; font-size: 1.3rem; font-weight: bold;">${Utils.formatCurrency(dish.Price)}</span></div>
                                 <div style="margin-bottom: 0.5rem;"><strong>状态:</strong> 
-                                    <span class="status-badge ${dish.isAvailable ? 'status-available' : 'status-cleaning'}">
-                                        ${dish.isAvailable ? '可售' : '停售'}
+                                    <span class="status-badge ${dish.IsAvailable ? 'status-available' : 'status-cleaning'}">
+                                        ${dish.IsAvailable ? '可售' : '停售'}
                                     </span>
                                 </div>
-                                <div style="margin-bottom: 0.5rem;"><strong>创建时间:</strong> ${Utils.formatDateTime(dish.createdTime)}</div>
+                                <div style="margin-bottom: 0.5rem;"><strong>创建时间:</strong> ${Utils.formatDateTime(dish.CreatedTime)}</div>
                             </div>
                             <div>
                                 <strong>描述:</strong>
-                                <p style="margin-top: 0.5rem; color: #666;">${dish.description || '暂无描述'}</p>
+                                <p style="margin-top: 0.5rem; color: #666;">${dish.Description || '暂无描述'}</p>
                             </div>
                         </div>
                     </div>
@@ -591,19 +663,19 @@
         function editCurrentDish() {
             if (!currentDishId) return;
             
-            const dish = dishes.find(d => d.dishID === currentDishId);
+            const dish = dishes.find(d => d.DishID === currentDishId);
             if (!dish) return;
 
             Utils.hideModal('dishDetailModal');
             
             // 填充编辑表单
             document.getElementById('dishModalTitle').textContent = '编辑菜品';
-            document.getElementById('dishName').value = dish.dishName;
-            document.getElementById('dishCategory').value = dish.categoryID;
-            document.getElementById('dishPrice').value = dish.price;
-            document.getElementById('dishDescription').value = dish.description || '';
-            document.getElementById('dishImageURL').value = dish.imageURL || '';
-            document.getElementById('dishIsAvailable').checked = dish.isAvailable;
+            document.getElementById('dishName').value = dish.DishName;
+            document.getElementById('dishCategory').value = dish.CategoryID;
+            document.getElementById('dishPrice').value = dish.Price;
+            document.getElementById('dishDescription').value = dish.Description || '';
+            document.getElementById('dishImageURL').value = dish.ImageURL || '';
+            document.getElementById('dishIsAvailable').checked = dish.IsAvailable;
             
             Utils.showModal('addDishModal');
         }

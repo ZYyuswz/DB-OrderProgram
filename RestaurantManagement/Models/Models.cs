@@ -147,8 +147,8 @@ namespace RestaurantManagement.Models
     {
         public int CategoryID { get; set; }
         public string CategoryName { get; set; } = string.Empty;
-        public string? Description { get; set; }
         public int SortOrder { get; set; }
+        public string IsActive { get; set; } = "Y";
     }
 
     // 员工
