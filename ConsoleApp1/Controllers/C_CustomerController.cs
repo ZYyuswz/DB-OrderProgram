@@ -23,7 +23,7 @@ namespace ConsoleApp1.Controllers
             _customerService = customerService;
         }
 
-        #region 
+        #region 客户档案管理
 
         /// <summary>
         /// 获取客户基本信息
@@ -145,7 +145,7 @@ namespace ConsoleApp1.Controllers
         }
 
         /// <summary>
-        /// 客户登录
+        /// 客户登录（使用手机号）
         /// </summary>
         [HttpPost("login")]
         public async Task<ActionResult<object>> Login([FromBody] LoginRequest request)
@@ -174,7 +174,54 @@ namespace ConsoleApp1.Controllers
                             customerId = customer.CustomerID,
                             nickname = customer.CustomerName,
                             phone = customer.Phone,
-                            memberLevel = "普通会员",
+                            memberLevel = GetVipLevelName(customer.VIPLevel ?? 0),
+                            points = customer.VIPPoints,
+                            totalConsumption = customer.TotalConsumption
+                        }
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "客户登录失败");
+                return StatusCode(500, new { 
+                    success = false, 
+                    message = "登录失败，系统错误" 
+                });
+            }
+        }
+
+        /// <summary>
+        /// 使用用户名登录
+        /// </summary>
+        [HttpPost("login-by-username")]
+        public async Task<ActionResult<object>> LoginByUsername([FromBody] LoginByUsernameRequest request)
+        {
+            try
+            {
+                _logger.LogInformation($"客户登录请求: 用户名={request.Username}");
+
+                // 验证用户 credentials
+                var customer = await ValidateCredentialsByUsernameAsync(request.Username, request.Password);
+                
+                if (customer == null)
+                {
+                    return BadRequest(new { 
+                        success = false, 
+                        message = "用户名或密码错误" 
+                    });
+                }
+
+                // 返回用户信息
+                return Ok(new { 
+                    success = true, 
+                    message = "登录成功",
+                    data = new {
+                        userInfo = new {
+                            customerId = customer.CustomerID,
+                            nickname = customer.CustomerName,
+                            phone = customer.Phone,
+                            memberLevel = GetVipLevelName(customer.VIPLevel ?? 0),
                             points = customer.VIPPoints,
                             totalConsumption = customer.TotalConsumption
                         }
@@ -277,7 +324,7 @@ namespace ConsoleApp1.Controllers
             };
         }
 
-        // 新增功能的私有方法
+        // 检查手机号是否已注册
         private async Task<bool> IsPhoneRegisteredAsync(string phone)
         {
             try
@@ -300,6 +347,7 @@ namespace ConsoleApp1.Controllers
             }
         }
 
+        // 创建客户记录
         private async Task<int> CreateCustomerAsync(RegisterRequest request)
         {
             try
@@ -317,8 +365,8 @@ namespace ConsoleApp1.Controllers
                 
                 using var command = new OracleCommand(sql, connection);
                 
-                // 生成默认用户名
-                var customerName = "用户" + request.Phone.Substring(7);
+                // 生成默认用户名（使用手机号后4位）
+                var customerName = "用户" + request.Phone.Substring(request.Phone.Length - 4);
                 
                 command.Parameters.Add(":CustomerName", OracleDbType.Varchar2).Value = customerName;
                 command.Parameters.Add(":Phone", OracleDbType.Varchar2).Value = request.Phone;
@@ -342,6 +390,7 @@ namespace ConsoleApp1.Controllers
             }
         }
 
+        // 使用手机号验证凭证
         private async Task<Customer> ValidateCredentialsAsync(string phone, string password)
         {
             try
@@ -350,7 +399,7 @@ namespace ConsoleApp1.Controllers
                 await connection.OpenAsync();
                 
                 var sql = @"SELECT CustomerID, CustomerName, Phone, Password, 
-                                  VIPPoints, TotalConsumption 
+                                  VIPPoints, TotalConsumption, VIPLevel 
                            FROM PUB.Customer 
                            WHERE Phone = :phone AND Password = :password";
                 
@@ -368,7 +417,8 @@ namespace ConsoleApp1.Controllers
                         CustomerName = reader.GetString(reader.GetOrdinal("CustomerName")),
                         Phone = reader.GetString(reader.GetOrdinal("Phone")),
                         VIPPoints = reader.GetInt32(reader.GetOrdinal("VIPPoints")),
-                        TotalConsumption = reader.GetDecimal(reader.GetOrdinal("TotalConsumption"))
+                        TotalConsumption = reader.GetDecimal(reader.GetOrdinal("TotalConsumption")),
+                        VIPLevel = reader.IsDBNull(reader.GetOrdinal("VIPLevel")) ? null : reader.GetInt32(reader.GetOrdinal("VIPLevel"))
                     };
                 }
                 
@@ -381,6 +431,48 @@ namespace ConsoleApp1.Controllers
             }
         }
 
+        // 使用用户名验证凭证
+        private async Task<Customer> ValidateCredentialsByUsernameAsync(string username, string password)
+        {
+            try
+            {
+                using var connection = new OracleConnection(_databaseService.GetConnectionString("OracleConnection"));
+                await connection.OpenAsync();
+                
+                var sql = @"SELECT CustomerID, CustomerName, Phone, Password, 
+                                  VIPPoints, TotalConsumption, VIPLevel 
+                           FROM PUB.Customer 
+                           WHERE CustomerName = :username AND Password = :password";
+                
+                using var command = new OracleCommand(sql, connection);
+                command.Parameters.Add(":username", OracleDbType.Varchar2).Value = username;
+                command.Parameters.Add(":password", OracleDbType.Varchar2).Value = HashPassword(password);
+                
+                using var reader = await command.ExecuteReaderAsync();
+                
+                if (await reader.ReadAsync())
+                {
+                    return new Customer
+                    {
+                        CustomerID = reader.GetInt32(reader.GetOrdinal("CustomerID")),
+                        CustomerName = reader.GetString(reader.GetOrdinal("CustomerName")),
+                        Phone = reader.GetString(reader.GetOrdinal("Phone")),
+                        VIPPoints = reader.GetInt32(reader.GetOrdinal("VIPPoints")),
+                        TotalConsumption = reader.GetDecimal(reader.GetOrdinal("TotalConsumption")),
+                        VIPLevel = reader.IsDBNull(reader.GetOrdinal("VIPLevel")) ? null : reader.GetInt32(reader.GetOrdinal("VIPLevel"))
+                    };
+                }
+                
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "验证用户凭证失败");
+                throw;
+            }
+        }
+
+        // 根据用户名和手机号查询客户
         private async Task<Customer> GetCustomerByUsernameAndPhoneAsync(string username, string phone)
         {
             try
@@ -417,6 +509,7 @@ namespace ConsoleApp1.Controllers
             }
         }
 
+        // 更新客户密码
         private async Task<bool> UpdateCustomerPasswordAsync(int customerId, string newPassword)
         {
             try
@@ -442,6 +535,7 @@ namespace ConsoleApp1.Controllers
             }
         }
 
+        // 密码哈希
         private string HashPassword(string password)
         {
             // 简单实现，生产环境应该使用更安全的加密方式
@@ -487,11 +581,20 @@ namespace ConsoleApp1.Controllers
     }
 
     /// <summary>
-    /// 登录请求模型
+    /// 登录请求模型（手机号）
     /// </summary>
     public class LoginRequest
     {
         public string Phone { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// 登录请求模型（用户名）
+    /// </summary>
+    public class LoginByUsernameRequest
+    {
+        public string Username { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
     }
 

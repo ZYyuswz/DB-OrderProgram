@@ -43,16 +43,19 @@ Page({
       });
 
       if (result.success) {
+        // 生成默认用户名（使用手机号后4位）
+        const username = "用户" + phone.substring(phone.length - 4);
+        
         wx.showToast({ 
           title: '注册成功', 
           icon: 'success',
           duration: 2000
         });
 
-        // 延迟跳转
+        // 延迟跳转，传递用户名
         setTimeout(() => {
           wx.navigateTo({ 
-            url: '/pages/login/login?phone=' + phone
+            url: '/pages/login/login?username=' + username
           });
         }, 2000);
       } else {

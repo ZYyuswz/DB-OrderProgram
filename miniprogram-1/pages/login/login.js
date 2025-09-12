@@ -1,4 +1,4 @@
-// login.js
+// pages/login/login.js
 Page({
   data: {
     username: '',
@@ -96,11 +96,11 @@ Page({
     }
   },
 
-  // API请求：登录
+  // API请求：登录（使用用户名）
   async requestLogin(data) {
     return new Promise((resolve, reject) => {
       wx.request({
-        url: 'http://localhost:5002/api/customer/login',
+        url: 'http://localhost:5002/api/customer/login-by-username',
         method: 'POST',
         data: data,
         header: {
@@ -146,14 +146,14 @@ Page({
   },
 
   onShow() {
-    // 页面显示时检查是否有注册成功传递的手机号
+    // 页面显示时检查是否有注册成功传递的用户名
     const pages = getCurrentPages();
     const currentPage = pages[pages.length - 1];
     const options = currentPage.options;
     
-    if (options.phone) {
+    if (options.username) {
       this.setData({
-        username: options.phone
+        username: options.username
       });
     }
   }
