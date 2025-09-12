@@ -51,14 +51,6 @@ Page({
     this.loadUserInfo();
   },
 
-<<<<<<< Updated upstream
-  // 加载用户信息
-  loadUserInfo() {
-    const userInfo = wx.getStorageSync('userInfo');
-    const isLogin = wx.getStorageSync('isLogin');
-    
-    if (isLogin && userInfo) {
-=======
   // 获取用户ID
   getCustomerId() {
     // 增加详细的调试信息
@@ -157,18 +149,14 @@ Page({
       this.setData({ loading: false });
       
       // 显示错误时使用默认信息
->>>>>>> Stashed changes
+
       this.setData({
         userInfo: userInfo
       });
       // 加载最新的会员信息
       this.loadMemberInfo();
-    } else {
-      // 未登录，跳转到登录页面
-      wx.redirectTo({
-        url: '/pages/login/login'
-      });
-    }
+    } 
+    
   },
 
   // 加载会员信息
