@@ -13,7 +13,7 @@ namespace DBManagement.Models
     {
         [Key]
         [Column("CUSTOMERID")]
-        public int CustomerId { get; set; }
+        public long CustomerId { get; set; }
 
         [Required]
         [Column("CUSTOMERNAME")]
@@ -41,7 +41,6 @@ namespace DBManagement.Models
         [Column("TOTALCONSUMPTION", TypeName = "decimal(12,2)")]
         public decimal TotalConsumption { get; set; } = 0;
 
-        [ForeignKey("VIPLevel")]
         [Column("VIPLEVEL")]
         public int VIPLevel { get; set; }
 
