@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/Users/lalala/Files/Code/GitHub/DB-OrderProgram/ConsoleApp1/ConsoleApp1.csproj": {}
+    "C:\\Users\\jiang\\Desktop\\数据库课程设计\\DB-OrderProgram\\ConsoleApp1\\ConsoleApp1.csproj": {}
   },
   "projects": {
-    "/Users/lalala/Files/Code/GitHub/DB-OrderProgram/ConsoleApp1/ConsoleApp1.csproj": {
+    "C:\\Users\\jiang\\Desktop\\数据库课程设计\\DB-OrderProgram\\ConsoleApp1\\ConsoleApp1.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/lalala/Files/Code/GitHub/DB-OrderProgram/ConsoleApp1/ConsoleApp1.csproj",
+        "projectUniqueName": "C:\\Users\\jiang\\Desktop\\数据库课程设计\\DB-OrderProgram\\ConsoleApp1\\ConsoleApp1.csproj",
         "projectName": "ConsoleApp1",
-        "projectPath": "/Users/lalala/Files/Code/GitHub/DB-OrderProgram/ConsoleApp1/ConsoleApp1.csproj",
-        "packagesPath": "/Users/lalala/.nuget/packages/",
-        "outputPath": "/Users/lalala/Files/Code/GitHub/DB-OrderProgram/ConsoleApp1/obj/",
+        "projectPath": "C:\\Users\\jiang\\Desktop\\数据库课程设计\\DB-OrderProgram\\ConsoleApp1\\ConsoleApp1.csproj",
+        "packagesPath": "C:\\Users\\jiang\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\jiang\\Desktop\\数据库课程设计\\DB-OrderProgram\\ConsoleApp1\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/lalala/.nuget/NuGet/NuGet.Config"
+          "C:\\Users\\jiang\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
@@ -37,7 +37,8 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        }
+        },
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
         "net8.0": {
@@ -91,6 +92,24 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.18, 8.0.18]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[8.0.18, 8.0.18]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.18, 8.0.18]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.18, 8.0.18]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -99,7 +118,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.414/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.303/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

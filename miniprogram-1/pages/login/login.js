@@ -68,11 +68,37 @@ Page({
           duration: 1500
         });
 
-        // 登录成功后跳转到主界面
+        // 登录成功后跳转：优先回到登录前的目标页（含二维码参数）
         setTimeout(() => {
-          wx.switchTab({
-            url: '/pages/index/index'
-          });
+          try {
+            const pending = wx.getStorageSync('pendingRedirect');
+            if (pending && pending.page) {
+              const page = pending.page;
+              const options = pending.options || {};
+
+              const tabBarPages = [
+                '/pages/index/index',
+                '/pages/goods/list',
+                '/pages/reservation/reservation',
+                '/pages/account/account'
+              ];
+
+              const query = Object.keys(options).map(k => `${k}=${encodeURIComponent(options[k])}`).join('&');
+              const urlWithQuery = query ? `${page}?${query}` : page;
+
+              if (tabBarPages.includes(page)) {
+                // 不清理 pendingRedirect，留给落地页读取并清理
+                wx.switchTab({ url: page });
+              } else {
+                wx.reLaunch({ url: urlWithQuery });
+                try { wx.removeStorageSync('pendingRedirect'); } catch (e2) {}
+              }
+              return;
+            }
+          } catch (e) {}
+
+          // 默认回到首页
+          wx.switchTab({ url: '/pages/index/index' });
         }, 1500);
       } else {
         // 登录失败
@@ -134,15 +160,30 @@ Page({
     });
   },
 
-  onLoad() {
-    // 检查是否已经登录
-    const isLogin = wx.getStorageSync('isLogin');
-    if (isLogin) {
-      // 如果已登录，直接跳转到主界面
-      wx.switchTab({
-        url: '/pages/index/index'
-      });
-    }
+  onLoad(options) {
+    // 不再自动跳过；若是二维码进入，则缓存参数用于登录后回跳
+    try {
+      let qrOptions = options || {};
+      if (wx.getEnterOptionsSync) {
+        const enter = wx.getEnterOptionsSync();
+        if (enter) {
+          qrOptions = { ...(qrOptions || {}), ...(enter.query || {}), scene: enter.scene, q: enter.query ? enter.query.q : undefined };
+        }
+      }
+      if (wx.getLaunchOptionsSync) {
+        const launch = wx.getLaunchOptionsSync();
+        if (launch) {
+          qrOptions = { ...(qrOptions || {}), ...(launch.query || {}), scene: launch.scene, q: launch.query ? launch.query.q : undefined };
+        }
+      }
+      const hasQrParams = qrOptions && (qrOptions.tableNumber || qrOptions.storeId || qrOptions.scene || qrOptions.q);
+      if (hasQrParams) {
+        wx.setStorageSync('pendingRedirect', {
+          page: '/pages/index/index',
+          options: qrOptions
+        });
+      }
+    } catch (e) {}
   },
 
   onShow() {
