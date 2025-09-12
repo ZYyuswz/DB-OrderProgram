@@ -26,7 +26,7 @@ Page({
       // this.data.customerId = wx.getStorageSync('userInfo').phone || 1;
       let userinfo = wx.getStorageSync('userInfo')
       this.setData({ points : userinfo.points} ?? 100);
-      console.log("积分为",userinfo.points);
+      console.log("积分为",userinfo);
       console.log(items,price);
       if (items && price) {
         this.setData({

@@ -149,7 +149,8 @@ createCache: function(dishId){
     data: {"tableId": this.data.tableId,"dishId": dishId},
       success: (res) => {        
         if (res.statusCode === 200) {
-          let cacheId = res.data.data.cacheId;
+          console.log(res.data);
+          let cacheId = res.data.data;
           this.cacheMap.set(cacheId,dishId);
         }
       }
@@ -158,6 +159,7 @@ createCache: function(dishId){
 
 deleteCache: function(dishId){
   let cacheId = 0;
+  console.log(this.cacheMap);
   for (let [key, value] of this.cacheMap) {
     if (value === dishId) {
       cacheId = key;
