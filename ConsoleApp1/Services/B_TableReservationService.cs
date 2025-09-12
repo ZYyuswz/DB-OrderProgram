@@ -20,15 +20,18 @@ public class TableReservationService
 
         if (table == null)
             return (false, "没有可用桌台", null);
+        int maxId = _db.TableReservation.Max(r => (int?)r.ReservationID) ?? 0;
+        int newId = maxId + 1;
 
         // 2. 创建预约项
         var reservation = new TableReservation
         {
+            ReservationID = newId,
             // ReservationID 由数据库序列自动生成
             TableID = table.TableId,
             CustomerID = req.CustomerID,
-            CustomerName = req.CustomerName,
-            ContactPhone = req.ContactPhone,
+            //CustomerName = req.CustomerName,
+            //ContactPhone = req.ContactPhone,
             PartySize = req.PartySize,
             ReservationTime = req.ReservationTime,
             ExpectedDuration = req.ExpectedDuration,
