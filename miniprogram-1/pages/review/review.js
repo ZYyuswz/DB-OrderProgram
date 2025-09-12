@@ -21,6 +21,7 @@ Page({
   loadOrderInfo(orderId) {
     // 这里应该从本地存储或API获取订单信息
     // 暂时使用模拟数据
+    console.log("传递的订单ID:", orderId, order);
     const orderInfo = {
       orderId: orderId,
       orderTime: '2024-01-20 18:30:00',

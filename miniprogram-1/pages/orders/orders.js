@@ -224,7 +224,33 @@ Page({
       showDetail: true
     });
   },
-
+// 跳转到评价页面
+goToReview(e) {
+    const orderId = e.currentTarget.dataset.orderid;
+    const order = this.data.orders.find(o => o.orderId === orderId);
+    
+    if (!order) {
+      wx.showToast({
+        title: '订单信息获取失败',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    // 检查订单是否已评价
+    if (order.hasReview) {
+      wx.showToast({
+        title: '该订单已评价',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    // 跳转到评价页面，传递订单ID
+    wx.navigateTo({
+      url: `/pages/review/review?orderId=${orderId}`
+    });
+  },
   // 关闭详情弹窗
   closeDetail() {
     this.setData({
