@@ -1,8 +1,10 @@
 ﻿// OrderService 是一个服务层类，主要负责处理与 “Order” 相关的业务逻辑和数据处理
 // 通俗讲就是OrderController需要的方法
+using ConsoleApp1.Models;
 using DBManagement.Models;
 using DBManagement.Utils;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 namespace DBManagement.Service
 {
     public class OrderService
@@ -27,8 +29,68 @@ namespace DBManagement.Service
             return orders;
         }
 
+        // VIP折扣数组
+        private static readonly decimal[] VIPDiscounts = new decimal[]
+        {
+            1.00m,   // 0不使用
+            0.99m,   // 等级1
+            0.98m,   // 等级2
+            0.97m,   // 等级3
+            0.96m,   // 等级4
+            0.95m    // 等级5
+        };
+
+
+        public decimal CalculatePrice(int? customerId, decimal totalPrice)
+        {
+            try
+            {
+                // 1. 查询客户积分
+                var customer = _db.Customers
+                    .FirstOrDefault(c => c.CustomerId == customerId);
+                if (customer == null)
+                { 
+                    return totalPrice;
+                }
+                int vipPoints = customer.VIPPoints;
+                int declineMoney = vipPoints / 100; // 每100积分抵1元
+                if (declineMoney > totalPrice)
+                {
+                    declineMoney = (int)totalPrice; // 抵扣金额不能超过总价
+                }
+
+                // 2. 根据积分计算折扣
+                int viplevel = customer.VIPLevel;
+                decimal discount = VIPDiscounts[viplevel];
+
+                // 3. 计算最终价格
+                decimal finalPrice = (totalPrice - declineMoney)* discount;
+                // 4. 更新会员积分（减少使用的积分）
+                if (declineMoney > 0)
+                {
+                    customer.VIPPoints -= declineMoney*100;
+                    // 确保积分不为负数
+                    if (customer.VIPPoints < 0)
+                    {
+                        customer.VIPPoints = 0;
+                    }
+                    // 更新数据库
+                    _db.Customers.Update(customer);
+                    _db.SaveChanges();
+                }
+
+                return finalPrice;
+            }
+            catch (Exception ex)
+            {
+                // 记录日志或处理异常
+                Console.WriteLine($"计算价格时出错: {ex.Message}");
+                return totalPrice;
+            }
+        }
+
         // 创建订单及订单详情
-        public (bool success, string message, int order_id) CreateOrder(Order order, List<OrderDetail> orderDetails)
+        public (bool success, string message, int order_id) CreateOrder(Order order, List<DBManagement.Models.OrderDetail> orderDetails)
         {
             try
             {
@@ -53,14 +115,12 @@ namespace DBManagement.Service
                     order.OrderDetails.Add(detail);
                 }
 
-                //// 设置订单的详情集合
-                //order.OrderDetails = orderDetails;
-
                 // 计算订单总价（所有明细小计之和）
                 order.TotalPrice = order.OrderDetails.Sum(d => d.Subtotal);
 
-                // 先设置finalPrice为0，后续可根据实际情况更新
-                order.FinalPrice = 0;
+                // 计算订单最终价格，调用函数
+                order.FinalPrice = CalculatePrice(order.CustomerId,order.TotalPrice);
+
 
                 // 只需要添加主订单，关联的详情会自动处理
                 _db.Orders.Add(order);
@@ -74,7 +134,7 @@ namespace DBManagement.Service
             }
         }
 
-        public (bool success, string message) ContinueOrder(int tableId, List<OrderDetail> orderDetails)
+        public (bool success, string message) ContinueOrder(int tableId, List<DBManagement.Models.OrderDetail> orderDetails)
         {
             try
             {

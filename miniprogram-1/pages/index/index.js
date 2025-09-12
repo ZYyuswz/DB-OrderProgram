@@ -26,6 +26,9 @@ Page({
     // 页面加载逻辑
     console.log('点餐页面加载 - 此页面预留给其他组开发');
 
+    wx.setStorageSync('isAddDish',false)
+
+
     // 如果存在登录前保存的参数，优先使用
     let pageOptions = options || {};
     try {
@@ -35,6 +38,7 @@ Page({
         wx.removeStorageSync('pendingRedirect');
       }
     } catch (e) {}
+
 
     // 检查是否从二维码进入
     this.checkQRCodeParams(pageOptions);
@@ -132,6 +136,9 @@ Page({
       console.log('桌台号:', tableNumber);
       console.log('店铺ID:', storeId);
       
+      wx.setStorageSync('tableId', tableNumber)
+      wx.setStorageSync('storeId', storeId)
+
       // 显示桌台信息
       this.showTableInfo();
       
