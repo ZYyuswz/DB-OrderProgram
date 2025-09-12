@@ -65,6 +65,6 @@
 
   <!-- 底部提交 -->
   <view class="fixed-submit">
-    <button class="btn-primary" type="primary" bindtap="onSubmit">提交预定</button>
+    <button class="btn-primary" type="primary" catchtap="onSubmit">提交预定</button>
   </view>
 </view>
