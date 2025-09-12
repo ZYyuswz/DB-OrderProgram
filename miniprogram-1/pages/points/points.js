@@ -50,12 +50,12 @@ Page({
         const customerId = 1;
         const balance = await API.getCustomerPointsBalance(customerId);
         this.setData({
-          pointsBalance: balance.currentPoints || balance.CurrentPoints || 0
+          pointsBalance: balance.pointsBalance || balance.PointsBalance || balance.currentPoints || balance.CurrentPoints || 0
         });
       } else {
         const balance = await API.getCustomerPointsBalance(userInfo.customerId);
         this.setData({
-          pointsBalance: balance.currentPoints || balance.CurrentPoints || 0
+          pointsBalance: balance.pointsBalance || balance.PointsBalance || balance.currentPoints || balance.CurrentPoints || 0
         });
       }
     } catch (error) {
