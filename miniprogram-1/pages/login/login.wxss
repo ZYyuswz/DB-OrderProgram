@@ -112,6 +112,9 @@ page {
   margin: 40rpx 0;
   box-shadow: 0 8rpx 20rpx rgba(255, 140, 66, 0.3);
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .login-btn:active {

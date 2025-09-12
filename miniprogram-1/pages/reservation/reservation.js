@@ -1,6 +1,6 @@
 Page({
   data: {
-    shops: ["店铺A", "店铺B", "店铺C"],
+    shops: ["店铺A"],
     shopIndex: 0,
 
     date: "2025-08-10",

@@ -103,4 +103,7 @@
   background: linear-gradient(90deg, #FF8C42, #FFB366);
   color: #fff;
   box-shadow: 0 10rpx 24rpx rgba(255, 140, 66, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
