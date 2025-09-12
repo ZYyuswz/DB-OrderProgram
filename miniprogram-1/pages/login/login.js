@@ -23,6 +23,11 @@ Page({
   // 登录功能
   handleLogin() {
     const { username, password } = this.data;
+     // 先清空所有旧缓存
+    wx.removeStorageSync('userInfo');
+    wx.removeStorageSync('token');
+    wx.removeStorageSync('customerId');
+    wx.removeStorageSync('isLogin');
 
     // 表单验证
     if (!username.trim()) {
@@ -44,6 +49,7 @@ Page({
     // 显示加载状态
     this.setData({ loading: true });
 
+<<<<<<< Updated upstream
     // 模拟登录验证（纯前端，无后端验证）
     setTimeout(() => {
       // 验证演示账户
@@ -70,6 +76,34 @@ Page({
         wx.setStorageSync('userInfo', userInfo);
         wx.setStorageSync('isLogin', true);
 
+=======
+    try {
+        const loginResult = await this.requestLogin({
+          username: username,
+          password: password
+        });
+    
+        console.log('🔍 完整的登录返回结果:', loginResult);
+        console.log('🔍 loginResult.data 结构:', loginResult.data);
+        console.log('🔍 loginResult.token:', loginResult.token);
+    
+        if (loginResult.success) {
+            // 正确的数据提取方式
+            const userInfo = loginResult.data.userInfo; // 从 data.userInfo 获取
+            const customerId = userInfo.customerId;     // 从 userInfo.customerId 获取
+            const token = loginResult.token || '';      // token 为 undefined
+            // 保存到缓存
+            wx.setStorageSync('userInfo', userInfo);
+            wx.setStorageSync('isLogin', true);
+            wx.setStorageSync('token', token);          // 这里会存储空字符串
+            wx.setStorageSync('customerId', customerId);
+          
+            console.log('✅ 用户信息已更新到缓存:', {
+              userInfo: userInfo,
+              token: token,
+              customerId: customerId
+            });
+>>>>>>> Stashed changes
         this.setData({ loading: false });
 
         wx.showToast({
@@ -85,7 +119,7 @@ Page({
           });
         }, 1500);
       } else {
-        // 登录失败
+        // 登录失败 
         this.setData({ loading: false });
         
         wx.showToast({

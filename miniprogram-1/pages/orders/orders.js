@@ -84,27 +84,104 @@ Page({
     }
   },
 
+<<<<<<< Updated upstream
   // 调用后端API获取订单数据
+=======
+  // 为所有订单加载菜品详情
+  async loadOrderDetailsForAll(orders) {
+    try {
+      const ordersWithDetails = [];
+      
+      for (const order of orders) {
+        try {
+          // 获取订单详情
+          const details = await API.getOrderDetails(order.orderId || order.OrderID);
+          
+          // 检查订单是否已评价
+          const reviewStatus = await API.checkOrderReviewStatus(order.orderId || order.OrderID);
+          
+          // 处理详情数据，确保字段名正确，并过滤掉"辣度选择"菜品
+          const processedDetails = (details || [])
+            .filter(detail => {
+              const dishName = detail.DishName || detail.dishName || '';
+              // 过滤掉"辣度选择"相关的菜品
+              const excludeKeywords = ['辣度选择', '辣度', '选择', 'SpicyLevel', 'spicyLevel'];
+              return !excludeKeywords.some(keyword => dishName.includes(keyword));
+            })
+            .map(detail => ({
+              dishName: detail.DishName || detail.dishName || '未知菜品',
+              unitPrice: detail.UnitPrice || detail.unitPrice || 0,
+              quantity: detail.Quantity || detail.quantity || 0,
+              subtotal: detail.Subtotal || detail.subtotal || 0,
+              specialRequests: detail.SpecialRequests || detail.specialRequests || ''
+            }));
+          
+          // 合并订单信息和详情
+          ordersWithDetails.push({
+            ...order,
+            details: processedDetails,
+            hasReview: !!reviewStatus, // 是否已评价
+            reviewData: reviewStatus // 评价数据
+          });
+          
+        } catch (error) {
+          // 现在404不会抛出错误，所以这里只处理真正的错误
+          console.error(`获取订单 ${order.orderId || order.OrderID} 详情失败:`, error);
+          // 如果获取详情失败，仍然保留订单基本信息
+          ordersWithDetails.push({
+            ...order,
+            details: [],
+            hasReview: false,
+            reviewData: null
+          });
+        }
+      }
+      
+      console.log('所有订单详情加载完成:', ordersWithDetails);
+      return ordersWithDetails;
+      
+    } catch (error) {
+      console.error('批量加载订单详情失败:', error);
+      // 如果批量加载失败，返回原始订单数据
+      return orders.map(order => ({ 
+        ...order, 
+        details: [],
+        hasReview: false,
+        reviewData: null
+      }));
+    }
+  },
+
+>>>>>>> Stashed changes
   async fetchOrdersFromAPI() {
     try {
-      // 获取当前用户ID（假设存储在userInfo中）
       const userInfo = this.data.userInfo;
+      let customerId;
       if (!userInfo || !userInfo.customerId) {
+<<<<<<< Updated upstream
         // 如果没有客户ID，使用默认客户ID=1进行测试
         const customerId = 1;
         const orders = await API.getCustomerOrders(customerId, this.data.page, this.data.pageSize);
         
         return this.formatOrdersData(orders);
+=======
+        customerId = 1; // 默认
+        console.warn('⚠️ 未找到用户 customerId，使用默认 1');
+      } else {
+        customerId = userInfo.customerId;
+>>>>>>> Stashed changes
       }
-
-      const orders = await API.getCustomerOrders(userInfo.customerId, this.data.page, this.data.pageSize);
-      return this.formatOrdersData(orders);
+      
+      console.log(`🚀 调用 API: getCustomerOrders(${customerId}, ${this.data.page}, ${this.data.pageSize})`);
+      const orders = await API.getCustomerOrders(customerId, this.data.page, this.data.pageSize);
+      
+      console.log('📦 API 响应状态:', orders.length > 0 ? '有数据' : '空数组');
+      console.log('📦 完整响应:', orders); // 打印整个响应
+      
+      const formattedOrders = this.formatOrdersData(orders);
+      return formattedOrders;
     } catch (error) {
-      console.error('获取订单数据失败:', error);
-      wx.showToast({
-        title: '获取订单数据失败',
-        icon: 'none'
-      });
+      console.error('💥 API 错误详情:', error.response || error); // 打印更多错误
       throw error;
     }
   },

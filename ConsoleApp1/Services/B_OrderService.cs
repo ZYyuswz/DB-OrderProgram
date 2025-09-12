@@ -34,10 +34,10 @@ namespace DBManagement.Service
         {
             1.00m,   // 0不使用
             0.99m,   // 等级1
-            0.98m,   // 等级2
-            0.97m,   // 等级3
-            0.96m,   // 等级4
-            0.95m    // 等级5
+            0.95m,   // 等级2
+            0.90m,   // 等级3
+            0.85m,   // 等级4
+            0.80m    // 等级5
         };
 
 
@@ -52,6 +52,8 @@ namespace DBManagement.Service
                 { 
                     return totalPrice;
                 }
+                Console.WriteLine($"客户找到: VIPLevel={customer.VIPLevel}, VIPPoints={customer.VIPPoints}");
+
                 int vipPoints = customer.VIPPoints;
                 int declineMoney = vipPoints / 100; // 每100积分抵1元
                 if (declineMoney > totalPrice)
@@ -65,6 +67,7 @@ namespace DBManagement.Service
 
                 // 3. 计算最终价格
                 decimal finalPrice = (totalPrice - declineMoney)* discount;
+                Console.WriteLine($"计算最终价: {finalPrice} (抵扣={declineMoney}, 折扣={discount})");
                 // 4. 更新会员积分（减少使用的积分）
                 if (declineMoney > 0)
                 {
@@ -74,6 +77,7 @@ namespace DBManagement.Service
                     {
                         customer.VIPPoints = 0;
                     }
+                    Console.WriteLine($"更新积分: 原={customer.VIPPoints + declineMoney * 100}, 新={customer.VIPPoints}");
                     // 更新数据库
                     _db.Customers.Update(customer);
                     _db.SaveChanges();

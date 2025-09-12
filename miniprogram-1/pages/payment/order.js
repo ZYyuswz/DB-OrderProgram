@@ -22,8 +22,15 @@ Page({
       //必须要setdata，否则无法渲染上去
       this.setData({tableNumber : wx.getStorageSync('tableNumber')});
       //测试时不用，正式运行时取消掉
+<<<<<<< Updated upstream
       // this.data.customerId = wx.getStorageSync('userInfo').phone || 1;
       console.log(this.data.tableId,this.data.storeId);
+=======
+      this.data.customerId = wx.getStorageSync('userInfo').customerId || 1;
+      let userinfo = wx.getStorageSync('userInfo')
+      this.setData({ points : userinfo.points} ?? 100);
+      console.log("积分为",userinfo);
+>>>>>>> Stashed changes
       console.log(items,price);
       if (items && price) {
         this.setData({

@@ -591,12 +591,12 @@ namespace ConsoleApp1.Services
         {
             return levelCode switch
             {
-                "bronze" => 1,
-                "silver" => 2,
-                "gold" => 3,
-                "platinum" => 4,
-                "diamond" => 5,
-                _ => 1
+                "bronze" => 0,
+                "silver" => 1,
+                "gold" => 2,
+                "platinum" => 3,
+                "diamond" => 4,
+                _ => 0
             };
         }
 
