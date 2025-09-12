@@ -20,6 +20,16 @@ namespace ConsoleApp1.Services
             _logger = logger;
         }
 
+        public string GetConnectionString()
+        {
+            return _connectionString;
+        }
+
+        public string GetConnectionString(string connectionStringName)
+        {
+            return _connectionString; // 这里可以根据需要实现按名称获取连接字符串
+        }
+
         /// <summary>
         /// 测试数据库连接
         /// </summary>

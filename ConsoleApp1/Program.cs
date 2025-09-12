@@ -43,7 +43,6 @@ builder.Services.AddScoped<PointsService>();
 builder.Services.AddScoped<MemberService>();
 builder.Services.AddScoped<QRCodeService>();
 builder.Services.AddScoped<CustomerService>();
-builder.Services.AddScoped<DatabaseService>();
 builder.Services.AddHttpClient();
 
 // 来自第二个后端（B_DBManagement）的数据库上下文

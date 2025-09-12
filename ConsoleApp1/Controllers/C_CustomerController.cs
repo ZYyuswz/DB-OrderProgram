@@ -12,11 +12,15 @@ namespace ConsoleApp1.Controllers
     {
         private readonly DatabaseService _databaseService;
         private readonly ILogger<CustomerController> _logger;
+        private readonly CustomerService _customerService;
 
-        public CustomerController(DatabaseService databaseService, ILogger<CustomerController> logger)
+        public CustomerController(DatabaseService databaseService, 
+                                ILogger<CustomerController> logger,
+                                CustomerService customerService)
         {
             _databaseService = databaseService;
             _logger = logger;
+            _customerService = customerService;
         }
 
         #region 
@@ -29,7 +33,7 @@ namespace ConsoleApp1.Controllers
         {
             try
             {
-                var customerInfo = await GetCustomerProfileAsync(customerId);
+                var customerInfo = await _customerService.GetCustomerProfileAsync(customerId);
                 if (customerInfo == null)
                 {
                     return NotFound(new { message = "客户不存在" });
@@ -52,7 +56,7 @@ namespace ConsoleApp1.Controllers
         {
             try
             {
-                var success = await UpdateCustomerProfileAsync(customerId, updateInfo);
+                var success = await _customerService.UpdateCustomerProfileAsync(customerId, updateInfo);
                 if (!success)
                 {
                     return NotFound(new { message = "客户不存在" });
@@ -259,75 +263,6 @@ namespace ConsoleApp1.Controllers
         #endregion
 
         #region 私有方法
-
-        // 原有功能的私有方法
-        private async Task<CustomerProfileInfo?> GetCustomerProfileAsync(int customerId)
-        {
-            try
-            {
-                using var connection = new OracleConnection(_databaseService.GetConnectionString());
-                await connection.OpenAsync();
-                
-                var sql = @"SELECT CustomerID, CustomerName, Phone, Email, 
-                                  VIPLevel, RegisterTime 
-                           FROM PUB.Customer 
-                           WHERE CustomerID = :customerId";
-                
-                using var command = new OracleCommand(sql, connection);
-                command.Parameters.Add(":customerId", OracleDbType.Int32).Value = customerId;
-                
-                using var reader = await command.ExecuteReaderAsync();
-                
-                if (await reader.ReadAsync())
-                {
-                    return new CustomerProfileInfo
-                    {
-                        CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerID")),
-                        CustomerName = reader.GetString(reader.GetOrdinal("CustomerName")),
-                        Phone = reader.IsDBNull(reader.GetOrdinal("Phone")) ? null : reader.GetString(reader.GetOrdinal("Phone")),
-                        Email = reader.IsDBNull(reader.GetOrdinal("Email")) ? null : reader.GetString(reader.GetOrdinal("Email")),
-                        VipLevelName = GetVipLevelName(reader.IsDBNull(reader.GetOrdinal("VIPLevel")) ? 1 : reader.GetInt32(reader.GetOrdinal("VIPLevel"))),
-                        RegisterTime = reader.GetDateTime(reader.GetOrdinal("RegisterTime"))
-                    };
-                }
-                
-                return null;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"获取客户 {customerId} 信息失败");
-                throw;
-            }
-        }
-
-        private async Task<bool> UpdateCustomerProfileAsync(int customerId, CustomerUpdateInfo updateInfo)
-        {
-            try
-            {
-                using var connection = new OracleConnection(_databaseService.GetConnectionString());
-                await connection.OpenAsync();
-                
-                var sql = @"UPDATE PUB.Customer 
-                           SET CustomerName = :customerName, 
-                               Phone = :phone, 
-                               Email = :email 
-                           WHERE CustomerID = :customerId";
-                
-                using var command = new OracleCommand(sql, connection);
-                command.Parameters.Add(":customerName", OracleDbType.Varchar2).Value = updateInfo.CustomerName;
-                command.Parameters.Add(":phone", OracleDbType.Varchar2).Value = updateInfo.Phone ?? (object)DBNull.Value;
-                command.Parameters.Add(":email", OracleDbType.Varchar2).Value = updateInfo.Email ?? (object)DBNull.Value;
-                command.Parameters.Add(":customerId", OracleDbType.Int32).Value = customerId;
-                
-                int rowsAffected = await command.ExecuteNonQueryAsync();
-                return rowsAffected > 0;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"更新客户 {customerId} 信息失败");
-                throw;
-            }
-        }
 
         private string GetVipLevelName(int vipLevel)
         {
