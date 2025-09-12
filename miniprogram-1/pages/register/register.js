@@ -59,16 +59,19 @@ Page({
           });
         }, 2000);
       } else {
+        // 显示具体的错误信息
         wx.showToast({ 
           title: result.message || '注册失败', 
-          icon: 'none' 
+          icon: 'none',
+          duration: 3000
         });
       }
     } catch (error) {
       console.error('注册失败:', error);
       wx.showToast({ 
         title: '网络错误，请重试', 
-        icon: 'none' 
+        icon: 'none',
+        duration: 2000
       });
     } finally {
       this.setData({ loading: false });
@@ -119,6 +122,9 @@ Page({
         },
         success: (res) => {
           if (res.statusCode === 200) {
+            resolve(res.data);
+          } else if (res.statusCode === 400) {
+            // 处理业务逻辑错误（如手机号已注册）
             resolve(res.data);
           } else {
             reject(new Error(`请求失败: ${res.statusCode}`));

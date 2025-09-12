@@ -3,6 +3,7 @@ using ConsoleApp1.Services;
 using ConsoleApp1.Models;
 using Microsoft.Extensions.Logging;
 using Oracle.ManagedDataAccess.Client;
+using Oracle.ManagedDataAccess.Types;
 
 namespace ConsoleApp1.Controllers
 {
@@ -86,15 +87,28 @@ namespace ConsoleApp1.Controllers
                 _logger.LogInformation($"客户注册请求: 手机号={request.Phone}");
 
                 // 1. 验证手机号是否已注册
-                if (await IsPhoneRegisteredAsync(request.Phone))
+                var isPhoneRegistered = await IsPhoneRegisteredAsync(request.Phone);
+                if (isPhoneRegistered)
                 {
+                    _logger.LogWarning($"手机号 {request.Phone} 已被注册");
                     return BadRequest(new { 
                         success = false, 
-                        message = "该手机号已注册" 
+                        message = "该手机号已被注册，请使用其他手机号或尝试登录" 
                     });
                 }
 
-                // 2. 验证密码确认
+                // 2. 验证用户名是否已存在（防止生成的默认用户名重复）
+                var defaultUsername = "用户" + request.Phone.Substring(request.Phone.Length - 4);
+                var isUsernameExists = await IsUsernameExistsAsync(defaultUsername);
+                if (isUsernameExists)
+                {
+                    // 如果默认用户名已存在，添加随机后缀
+                    var random = new Random();
+                    defaultUsername = $"用户{request.Phone.Substring(request.Phone.Length - 4)}_{random.Next(1000, 9999)}";
+                    _logger.LogInformation($"默认用户名已存在，使用新用户名: {defaultUsername}");
+                }
+
+                // 3. 验证密码确认
                 if (request.Password != request.ConfirmPassword)
                 {
                     return BadRequest(new { 
@@ -103,7 +117,7 @@ namespace ConsoleApp1.Controllers
                     });
                 }
 
-                // 3. 验证密码长度
+                // 4. 验证密码长度
                 if (request.Password.Length < 6)
                 {
                     return BadRequest(new { 
@@ -112,17 +126,20 @@ namespace ConsoleApp1.Controllers
                     });
                 }
 
-                // 4. 创建客户记录
-                var customerId = await CreateCustomerAsync(request);
+                // 5. 创建客户记录
+                var customerId = await CreateCustomerAsync(request, defaultUsername);
                 
                 if (customerId > 0)
                 {
-                    _logger.LogInformation($"客户注册成功: ID={customerId}, 手机号={request.Phone}");
+                    _logger.LogInformation($"客户注册成功: ID={customerId}, 手机号={request.Phone}, 用户名={defaultUsername}");
                     
                     return Ok(new { 
                         success = true, 
                         message = "注册成功", 
-                        data = new { customerId = customerId }
+                        data = new { 
+                            customerId = customerId,
+                            username = defaultUsername
+                        }
                     });
                 }
                 else
@@ -133,6 +150,29 @@ namespace ConsoleApp1.Controllers
                     });
                 }
             }
+            catch (OracleException oracleEx) when (oracleEx.Number == 1) // ORA-00001: 违反唯一约束条件
+            {
+                _logger.LogWarning(oracleEx, $"注册时违反唯一约束: {oracleEx.Message}");
+                
+                // 检查是手机号冲突还是用户名冲突
+                if (oracleEx.Message.Contains("PHONE"))
+                {
+                    return BadRequest(new { 
+                        success = false, 
+                        message = "该手机号已被注册，请使用其他手机号或尝试登录" 
+                    });
+                }
+                else if (oracleEx.Message.Contains("CUSTOMERNAME"))
+                {
+                    // 用户名冲突，重新尝试注册
+                    return await HandleUsernameConflictAndRetry(request);
+                }
+                
+                return BadRequest(new { 
+                    success = false, 
+                    message = "注册信息冲突，请修改后重试" 
+                });
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "客户注册失败");
@@ -140,6 +180,54 @@ namespace ConsoleApp1.Controllers
                     success = false, 
                     message = "注册失败，系统错误", 
                     error = ex.Message 
+                });
+            }
+        }
+
+        /// <summary>
+        /// 处理用户名冲突并重试注册
+        /// </summary>
+        private async Task<ActionResult<object>> HandleUsernameConflictAndRetry(RegisterRequest request)
+        {
+            try
+            {
+                // 生成带随机后缀的用户名
+                var random = new Random();
+                var uniqueUsername = $"用户{request.Phone.Substring(request.Phone.Length - 4)}_{random.Next(1000, 9999)}";
+                
+                // 再次检查用户名是否唯一
+                while (await IsUsernameExistsAsync(uniqueUsername))
+                {
+                    uniqueUsername = $"用户{request.Phone.Substring(request.Phone.Length - 4)}_{random.Next(1000, 9999)}";
+                }
+
+                var customerId = await CreateCustomerAsync(request, uniqueUsername);
+                
+                if (customerId > 0)
+                {
+                    _logger.LogInformation($"重试注册成功: ID={customerId}, 手机号={request.Phone}, 用户名={uniqueUsername}");
+                    
+                    return Ok(new { 
+                        success = true, 
+                        message = "注册成功", 
+                        data = new { 
+                            customerId = customerId,
+                            username = uniqueUsername
+                        }
+                    });
+                }
+                
+                return BadRequest(new { 
+                    success = false, 
+                    message = "注册失败，请重试" 
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "重试注册失败");
+                return StatusCode(500, new { 
+                    success = false, 
+                    message = "注册失败，系统错误" 
                 });
             }
         }
@@ -239,6 +327,36 @@ namespace ConsoleApp1.Controllers
         }
 
         /// <summary>
+        /// 检查手机号是否可用
+        /// </summary>
+        [HttpPost("check-phone")]
+        public async Task<ActionResult<object>> CheckPhoneAvailability([FromBody] CheckPhoneRequest request)
+        {
+            try
+            {
+                _logger.LogInformation($"检查手机号可用性: {request.Phone}");
+
+                var isRegistered = await IsPhoneRegisteredAsync(request.Phone);
+                
+                return Ok(new {
+                    success = true,
+                    data = new {
+                        available = !isRegistered,
+                        message = isRegistered ? "该手机号已被注册" : "手机号可用"
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "检查手机号可用性失败");
+                return StatusCode(500, new {
+                    success = false,
+                    message = "检查失败，系统错误"
+                });
+            }
+        }
+
+        /// <summary>
         /// 重置密码
         /// </summary>
         [HttpPost("reset-password")]
@@ -332,7 +450,7 @@ namespace ConsoleApp1.Controllers
                 using var connection = new OracleConnection(_databaseService.GetConnectionString("OracleConnection"));
                 await connection.OpenAsync();
                 
-                var sql = "SELECT COUNT(*) FROM PUB.Customer WHERE Phone = :phone";
+                var sql = "SELECT COUNT(*) FROM PUB.Customer WHERE Phone = :phone AND Status = '正常'";
                 
                 using var command = new OracleCommand(sql, connection);
                 command.Parameters.Add(":phone", OracleDbType.Varchar2).Value = phone;
@@ -347,8 +465,31 @@ namespace ConsoleApp1.Controllers
             }
         }
 
+        // 检查用户名是否已存在
+        private async Task<bool> IsUsernameExistsAsync(string username)
+        {
+            try
+            {
+                using var connection = new OracleConnection(_databaseService.GetConnectionString("OracleConnection"));
+                await connection.OpenAsync();
+                
+                var sql = "SELECT COUNT(*) FROM PUB.Customer WHERE CustomerName = :username AND Status = '正常'";
+                
+                using var command = new OracleCommand(sql, connection);
+                command.Parameters.Add(":username", OracleDbType.Varchar2).Value = username;
+                
+                var count = Convert.ToInt32(await command.ExecuteScalarAsync());
+                return count > 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "检查用户名是否存在失败");
+                throw;
+            }
+        }
+
         // 创建客户记录
-        private async Task<int> CreateCustomerAsync(RegisterRequest request)
+        private async Task<int> CreateCustomerAsync(RegisterRequest request, string username)
         {
             try
             {
@@ -365,10 +506,7 @@ namespace ConsoleApp1.Controllers
                 
                 using var command = new OracleCommand(sql, connection);
                 
-                // 生成默认用户名（使用手机号后4位）
-                var customerName = "用户" + request.Phone.Substring(request.Phone.Length - 4);
-                
-                command.Parameters.Add(":CustomerName", OracleDbType.Varchar2).Value = customerName;
+                command.Parameters.Add(":CustomerName", OracleDbType.Varchar2).Value = username;
                 command.Parameters.Add(":Phone", OracleDbType.Varchar2).Value = request.Phone;
                 command.Parameters.Add(":Password", OracleDbType.Varchar2).Value = HashPassword(request.Password);
                 
@@ -401,7 +539,7 @@ namespace ConsoleApp1.Controllers
                 var sql = @"SELECT CustomerID, CustomerName, Phone, Password, 
                                   VIPPoints, TotalConsumption, VIPLevel 
                            FROM PUB.Customer 
-                           WHERE Phone = :phone AND Password = :password";
+                           WHERE Phone = :phone AND Password = :password AND Status = '正常'";
                 
                 using var command = new OracleCommand(sql, connection);
                 command.Parameters.Add(":phone", OracleDbType.Varchar2).Value = phone;
@@ -442,7 +580,7 @@ namespace ConsoleApp1.Controllers
                 var sql = @"SELECT CustomerID, CustomerName, Phone, Password, 
                                   VIPPoints, TotalConsumption, VIPLevel 
                            FROM PUB.Customer 
-                           WHERE CustomerName = :username AND Password = :password";
+                           WHERE CustomerName = :username AND Password = :password AND Status = '正常'";
                 
                 using var command = new OracleCommand(sql, connection);
                 command.Parameters.Add(":username", OracleDbType.Varchar2).Value = username;
@@ -607,6 +745,14 @@ namespace ConsoleApp1.Controllers
         public string Phone { get; set; } = string.Empty;
         public string NewPassword { get; set; } = string.Empty;
         public string ConfirmPassword { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// 检查手机号请求模型
+    /// </summary>
+    public class CheckPhoneRequest
+    {
+        public string Phone { get; set; } = string.Empty;
     }
 
     #endregion
