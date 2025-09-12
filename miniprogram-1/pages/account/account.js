@@ -6,12 +6,10 @@ Page({
       nickname: '未登录',
       avatar: '/images/default-avatar.png',
       phone: '',
-      memberLevel: '普通会员',
-      memberLevelName: '普通会员',
       points: 0,
       totalConsumption: 0
     },
-    loadingMember: false,
+
     menuItems: [
       {
         icon: '👤',

@@ -181,7 +181,7 @@ Page({
         const formattedOrder = {
           ...order,
           // 确保字段存在且有默认值
-          orderId: order.orderId || order.OrderID || 0,
+          orderId: order.orderID || order.OrderID || 0,
           orderTime: order.orderTime || order.OrderTime || '未知时间',
           totalPrice: order.totalPrice || order.TotalPrice || 0,
           orderStatus: order.orderStatus || order.OrderStatus || '状态未知',

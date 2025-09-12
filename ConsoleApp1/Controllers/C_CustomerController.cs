@@ -58,7 +58,7 @@ namespace ConsoleApp1.Controllers
             try
             {
                 var success = await _customerService.UpdateCustomerProfileAsync(customerId, updateInfo);
-                if (!success)
+                if (success == 0)
                 {
                     return NotFound(new { 
                         success = false, 
