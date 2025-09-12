@@ -21,7 +21,7 @@ Page({
   },
 
   // 登录功能
-  handleLogin() {
+  async handleLogin() {
     const { username, password } = this.data;
 
     // 表单验证
@@ -44,31 +44,21 @@ Page({
     // 显示加载状态
     this.setData({ loading: true });
 
-    // 模拟登录验证（纯前端，无后端验证）
-    setTimeout(() => {
-      // 验证演示账户
-      const validAccounts = {
-        'admin': '123456',
-        'user': '123456',
-        'test': '123456'
-      };
+    try {
+      // 调用真实API进行登录验证
+      const loginResult = await this.requestLogin({
+        username: username,
+        password: password
+      });
 
-      if (validAccounts[username] && validAccounts[username] === password) {
+      if (loginResult.success) {
         // 登录成功，保存用户信息到本地存储
-        const userInfo = {
-          username: username,
-          nickname: username === 'admin' ? '系统管理员' : 
-                   username === 'user' ? '普通用户' : 
-                   username === 'test' ? '测试用户' : '用户昵称',
-          avatar: '/images/default-avatar.png',
-          phone: '138****8888',
-          memberLevel: username === 'admin' ? '钻石会员' : '黄金会员',
-          points: username === 'admin' ? 5000 : 1520,
-          loginTime: new Date().getTime()
-        };
-
+        const userInfo = loginResult.data;
+        
         wx.setStorageSync('userInfo', userInfo);
         wx.setStorageSync('isLogin', true);
+        wx.setStorageSync('token', loginResult.token || '');
+        wx.setStorageSync('customerId', userInfo.customerId || '');
 
         this.setData({ loading: false });
 
@@ -89,16 +79,48 @@ Page({
         this.setData({ loading: false });
         
         wx.showToast({
-          title: '用户名或密码错误',
+          title: loginResult.message || '用户名或密码错误',
           icon: 'none',
           duration: 2000
         });
       }
-
-    }, 1000); // 模拟网络请求延迟
+    } catch (error) {
+      console.error('登录失败:', error);
+      this.setData({ loading: false });
+      
+      wx.showToast({
+        title: '网络错误，请重试',
+        icon: 'none',
+        duration: 2000
+      });
+    }
   },
 
-  // 注册功能（暂时只是提示）
+  // API请求：登录
+  async requestLogin(data) {
+    return new Promise((resolve, reject) => {
+      wx.request({
+        url: 'http://localhost:5002/api/customer/login',
+        method: 'POST',
+        data: data,
+        header: {
+          'content-type': 'application/json'
+        },
+        success: (res) => {
+          if (res.statusCode === 200) {
+            resolve(res.data);
+          } else {
+            reject(new Error(`请求失败: ${res.statusCode}`));
+          }
+        },
+        fail: (err) => {
+          reject(new Error('网络连接失败'));
+        }
+      });
+    });
+  },
+
+  // 注册功能
   handleRegister() {
     wx.navigateTo({
       url: '/pages/register/register'
@@ -121,5 +143,18 @@ Page({
         url: '/pages/index/index'
       });
     }
+  },
+
+  onShow() {
+    // 页面显示时检查是否有注册成功传递的手机号
+    const pages = getCurrentPages();
+    const currentPage = pages[pages.length - 1];
+    const options = currentPage.options;
+    
+    if (options.phone) {
+      this.setData({
+        username: options.phone
+      });
+    }
   }
-}); 
+});
