@@ -3,14 +3,14 @@ import API from '../../utils/api.js';
 Page({
   data: {
     userInfo: {
-      nickname: '未登录',
-      avatar: '/images/default-avatar.png',
+      customerId: 0,
+      customerName: '加载中...',
       phone: '',
-      memberLevel: '普通会员',
-      memberLevelName: '普通会员',
+      vipLevelName: '普通会员',
       points: 0,
       totalConsumption: 0
     },
+    loading: false,
     loadingMember: false,
     menuItems: [
       {
@@ -51,21 +51,93 @@ Page({
     this.loadUserInfo();
   },
 
-  // 加载用户信息
-  loadUserInfo() {
+  // 获取用户ID
+  getCustomerId() {
     const userInfo = wx.getStorageSync('userInfo');
-    const isLogin = wx.getStorageSync('isLogin');
+    if (userInfo && userInfo.customerId) {
+      return userInfo.customerId;
+    }
+    // 如果没有客户ID，使用默认客户ID=1进行测试
+    return 1;
+  },
+
+  // 加载用户信息
+  async loadUserInfo() {
+    if (this.data.loading) return;
     
-    if (isLogin && userInfo) {
+    try {
+      this.setData({ loading: true });
+      
+      const customerId = this.getCustomerId();
+      console.log('🔄 个人中心开始加载用户信息，客户ID:', customerId);
+      
+      // 从数据库获取基本用户信息
+      const customerProfile = await API.getCustomerProfile(customerId);
+      console.log('✅ 获取到用户基本信息:', customerProfile);
+      
+      if (customerProfile) {
+        // 处理字段映射，兼容PascalCase和camelCase
+        const processedUserInfo = {
+          customerId: customerProfile.CustomerId || customerProfile.customerId || customerId,
+          customerName: customerProfile.CustomerName || customerProfile.customerName || '未设置',
+          phone: customerProfile.Phone || customerProfile.phone || '',
+          vipLevelName: customerProfile.VipLevelName || customerProfile.vipLevelName || '普通会员',
+          points: 0, // 先设为0，由loadMemberInfo更新
+          totalConsumption: 0 // 先设为0，由loadMemberInfo更新
+        };
+
+        this.setData({
+          userInfo: processedUserInfo,
+          loading: false
+        });
+
+        // 更新本地存储
+        const storageUserInfo = wx.getStorageSync('userInfo') || {};
+        const updatedStorageInfo = {
+          ...storageUserInfo,
+          customerId: processedUserInfo.customerId,
+          customerName: processedUserInfo.customerName,
+          phone: processedUserInfo.phone,
+          vipLevelName: processedUserInfo.vipLevelName
+        };
+        wx.setStorageSync('userInfo', updatedStorageInfo);
+
+        // 加载会员统计信息（积分、消费等）
+        this.loadMemberInfo();
+      } else {
+        // 如果没有找到用户信息，使用默认信息
+        this.setData({
+          loading: false,
+          userInfo: {
+            customerId: customerId,
+            customerName: '用户未找到',
+            phone: '',
+            vipLevelName: '普通会员',
+            points: 0,
+            totalConsumption: 0
+          }
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ 加载用户信息失败:', error);
+      this.setData({ loading: false });
+      
+      // 显示错误时使用默认信息
       this.setData({
-        userInfo: userInfo
+        userInfo: {
+          customerId: this.getCustomerId(),
+          customerName: '加载失败',
+          phone: '',
+          vipLevelName: '普通会员',
+          points: 0,
+          totalConsumption: 0
+        }
       });
-      // 加载最新的会员信息
-      this.loadMemberInfo();
-    } else {
-      // 未登录，跳转到登录页面
-      wx.redirectTo({
-        url: '/pages/login/login'
+      
+      wx.showToast({
+        title: '加载用户信息失败',
+        icon: 'none'
       });
     }
   },
@@ -90,11 +162,10 @@ Page({
       
       console.log('✅ 处理后的字段值:', { currentLevelName, vipPoints, totalConsumption });
       
-      // 更新用户信息，包含最新的会员等级
+      // 更新用户信息，包含最新的会员等级和统计信息
       const updatedUserInfo = {
         ...this.data.userInfo,
-        memberLevel: currentLevelName,
-        memberLevelName: currentLevelName,
+        vipLevelName: currentLevelName,
         points: vipPoints,
         totalConsumption: parseFloat(totalConsumption).toFixed(2)
       };
@@ -120,16 +191,6 @@ Page({
         });
       }
     }
-  },
-
-  // 获取客户ID
-  getCustomerId() {
-    const userInfo = this.data.userInfo;
-    if (userInfo && userInfo.customerId) {
-      return userInfo.customerId;
-    }
-    // 如果没有客户ID，使用默认客户ID=1进行测试
-    return 1;
   },
 
   // 导航到具体页面

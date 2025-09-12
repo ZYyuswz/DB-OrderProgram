@@ -45,6 +45,16 @@ namespace ConsoleApp1.Services
                 var currentLevel = CalculateCurrentLevel(customer.TotalConsumption, levels);
                 var nextLevel = CalculateNextLevel(customer.TotalConsumption, levels);
 
+                // 检查并更新数据库中的会员等级（如果需要）
+                var currentDbLevelCode = GetLevelCode(currentLevel.LevelCode);
+                if (customer.VIPLevel != currentDbLevelCode)
+                {
+                    _logger.LogInformation($"客户 {customerId} 的会员等级需要更新: {customer.VIPLevel} -> {currentDbLevelCode}");
+                    await UpdateCustomerMemberLevelAsync(customerId);
+                    // 更新本地customer对象的VIPLevel，以保持一致性
+                    customer.VIPLevel = currentDbLevelCode;
+                }
+
                 // 计算升级进度
                 var progressToNextLevel = CalculateProgressToNextLevel(customer.TotalConsumption, currentLevel, nextLevel);
 

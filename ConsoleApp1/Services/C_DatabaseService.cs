@@ -14,10 +14,20 @@ namespace ConsoleApp1.Services
         private readonly ILogger<DatabaseService> _logger;
 
         public DatabaseService(IConfiguration configuration, ILogger<DatabaseService> logger)
+{
+    _connectionString = configuration.GetConnectionString("OracleConnection")
+        ?? throw new ArgumentNullException("Oracle connection string not found");
+    _logger = logger;
+}
+
+        public string GetConnectionString()
         {
-            _connectionString = configuration.GetConnectionString("OracleConnection")
-                ?? throw new ArgumentNullException("Oracle connection string not found");
-            _logger = logger;
+            return _connectionString;
+        }
+
+        public string GetConnectionString(string connectionStringName)
+        {
+            return _connectionString; // 这里可以根据需要实现按名称获取连接字符串
         }
 
         /// <summary>

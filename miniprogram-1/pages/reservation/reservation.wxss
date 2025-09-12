@@ -1,35 +1,106 @@
-.container {
+/* 页面基础 */
+.reservation-page {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #f6f7fb 0%, #eef2f7 100%);
+  padding: 24rpx;
+  padding-bottom: 140rpx; /* 为固定提交栏预留空间 */
+  box-sizing: border-box;
+}
+
+.page-header {
+  padding: 6rpx 6rpx 14rpx;
+}
+.title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #111827;
+}
+.subtitle {
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  color: #6b7280;
+}
+
+/* 卡片 */
+.card {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin: 16rpx 0;
+  box-shadow: 0 12rpx 36rpx rgba(17,24,39,0.06);
+}
+.card-title {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 12rpx;
+}
+
+/* 表单字段 */
+.field {
+  margin-top: 14rpx;
+}
+.field-label {
+  display: block;
+  font-size: 24rpx;
+  color: #6b7280;
+  margin-bottom: 8rpx;
+}
+.field-control {
+  background: #f9fafb;
+  border: 2rpx solid #e5e7eb;
+  border-radius: 12rpx;
+  padding: 18rpx 20rpx;
+  font-size: 28rpx;
+  color: #111827;
+}
+.picker-display {
+  color: #111827;
+}
+
+.grid-2 {
   display: flex;
-  flex-direction: column;
-  gap: 20rpx;
-  padding: 30rpx;
+  gap: 16rpx;
 }
-
-.picker {
-  padding: 20rpx;
-  background-color: #f6f6f6;
-  border-radius: 8rpx;
-  font-size: 28rpx;
-}
-
-.input-label {
-  font-size: 28rpx;
-  margin-top: 10rpx;
-}
+.field-item { flex: 1; }
 
 .text-input {
-  border: 1px solid #ccc;
-  border-radius: 6rpx;
-  padding: 16rpx;
+  background: #f9fafb;
+  border: 2rpx solid #e5e7eb;
+  border-radius: 12rpx;
+  padding: 18rpx 20rpx;
   font-size: 28rpx;
-  background-color: #fff;
+  color: #111827;
 }
 
 .textarea-input {
-  border: 1px solid #ccc;
-  border-radius: 6rpx;
-  padding: 16rpx;
+  background: #f9fafb;
+  border: 2rpx solid #e5e7eb;
+  border-radius: 12rpx;
+  padding: 18rpx 20rpx;
   font-size: 28rpx;
-  background-color: #fff;
-  min-height: 100rpx;
+  color: #111827;
+  min-height: 120rpx;
+}
+
+/* 固定底部提交 */
+.fixed-submit {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 4rpx 24rpx env(safe-area-inset-bottom);
+  background: transparent;
+  box-shadow: none;
+}
+
+.btn-primary {
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 999rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+  background: linear-gradient(90deg, #FF8C42, #FFB366);
+  color: #fff;
+  box-shadow: 0 10rpx 24rpx rgba(255, 140, 66, 0.35);
 }
