@@ -1,3 +1,30 @@
+/* 通用灰色状态样式 */
+.status-secondary {
+    background: #e9ecef;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+/* 订单状态 badge 颜色扩展（全局） */
+.status-pending {
+    background: #e9ecef;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
+}
+.status-making {
+    background: linear-gradient(90deg, #ffe0b2 0%, #ffb74d 100%);
+    color: #e67e22;
+    border: 1px solid #ffb74d;
+}
+.status-finished {
+    background: linear-gradient(90deg, #b7f5c2 0%, #4be37b 100%);
+    color: #218838;
+    border: 1px solid #4be37b;
+}
+.status-paid {
+    background: linear-gradient(90deg, #b3e5fc 0%, #2196f3 100%) !important;
+    color: #1565c0 !important;
+    border: 1px solid #2196f3 !important;
+}
 
 * {
     margin: 0;
@@ -193,6 +220,9 @@ body {
     border-radius: 12px;
     font-size: 0.8rem;
     font-weight: 500;
+    background: #e9ecef;
+    color: #6c757d;
+    border: 1px solid #dee2e6;
 }
 
 .status-available {

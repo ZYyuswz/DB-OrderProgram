@@ -6,6 +6,27 @@
     <title>订单管理 - 餐饮管理系统</title>
     <link rel="stylesheet" href="css/styles.css">
     <style>
+        /* 订单状态 badge 颜色扩展 */
+        .status-pending {
+            background: #f6f7fa;
+            color: #8a8f99;
+            border: 1px solid #e3e6ed;
+        }
+        .status-making {
+            background: linear-gradient(90deg, #fff7e0 0%, #ffe6b3 100%);
+            color: #e6a23c;
+            border: 1px solid #ffe6b3;
+        }
+        .status-finished {
+            background: linear-gradient(90deg, #e6f9ed 0%, #b2f2d7 100%);
+            color: #38b87f;
+            border: 1px solid #b2f2d7;
+        }
+        .status-paid {
+            background: linear-gradient(90deg, #e3f2fd 0%, #bbdefb 100%);
+            color: #2196f3;
+            border: 1px solid #bbdefb;
+        }
         /* 订单详情模态框样式增强 */
         .table-responsive {
             -webkit-overflow-scrolling: touch;
@@ -41,47 +62,7 @@
             flex: 1;
             overflow-y: auto;
             max-height: calc(90vh - 120px);
-        }
-        
-        /* 粘性表头样式 */
-        .table thead th {
-            position: sticky;
-            top: 0;
-            background-color: #f8f9fa !important;
-            z-index: 10;
-        }
-        
-        /* 搜索建议下拉框样式 */
-        .suggestions-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid #ddd;
-            border-top: none;
-            border-radius: 0 0 4px 4px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .suggestion-item {
-            padding: 0.5rem;
-            cursor: pointer;
-            border-bottom: 1px solid #f1f1f1;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .suggestion-item:hover {
-            background-color: #f8f9fa;
-        }
-        
-        .suggestion-item:last-child {
-            border-bottom: none;
+
         }
         
         .suggestion-main {
@@ -125,6 +106,21 @@
             font-weight: normal;
             margin-left: 5px;
         }
+
+        /* 加菜弹窗样式调整 */
+        .dish-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
@@ -132,11 +128,11 @@
         <h1>餐饮管理系统</h1>
         <div class="nav-links">
             <a href="index.html">首页</a>
-            <a href="tables.html" data-permission="tables">桌台管理</a>
-            <a href="orders.html" class="active" data-permission="orders">订单管理</a>
-            <a href="menu.html" data-permission="menu">菜单管理</a>
-            <a href="staff.html" data-permission="staff">员工管理</a>
-            <a href="inventory.html" data-permission="inventory">库存管理</a>
+            <a href="tables.html">桌台管理</a>
+            <a href="orders.html" class="active">订单管理</a>
+            <a href="menu.html">菜单管理</a>
+            <a href="staff.html">员工管理</a>
+            <a href="inventory.html">库存管理</a>
         </div>
     </nav>
 
@@ -189,7 +185,7 @@
                             <option value="all">全部状态</option>
                             <option value="待处理">待处理</option>
                             <option value="制作中">制作中</option>
-                            <option value="进行中">进行中</option>
+                            <option value="已完成">已完成</option>
                             <option value="已结账">已结账</option>
                         </select>
                     </div>
@@ -239,7 +235,7 @@
                                     下单时间 
                                     <span id="sort-orderTime" style="margin-left: 5px; color: #ccc;">⇅</span>
                                 </th>
-                                <th>服务员</th>
+                                
                                 <th style="cursor: pointer; user-select: none;" onclick="sortOrders('orderStatus')" title="点击排序">
                                     订单状态 
                                     <span id="sort-orderStatus" style="margin-left: 5px; color: #ccc;">⇅</span>
@@ -282,32 +278,45 @@
         </div>
     </div>
 
-    <!-- 加菜模态框 -->
+    <!-- 加菜模态框（桌台管理同款） -->
     <div id="addDishModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;">
             <div class="modal-header">
-                <h3>为订单加菜</h3>
+                <h3 id="addDishModalTitle">加菜</h3>
                 <span class="close">&times;</span>
             </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="dishSelect">选择菜品:</label>
-                    <select id="dishSelect" class="form-control" required>
-                        <option value="">请选择菜品</option>
-                    </select>
+            <div class="modal-body" style="flex: 1; overflow-y: auto; padding: 1rem;">
+                <!-- 订单信息摘要 -->
+                <div id="orderSummary" style="background: #f8f9fa; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;"></div>
+                <!-- 菜品分类和搜索 -->
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label for="dishCategoryFilter">菜品分类:</label>
+                            <select id="dishCategoryFilter" class="form-control">
+                                <option value="">全部分类</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label for="dishSearchInput">搜索菜品:</label>
+                            <input type="text" id="dishSearchInput" class="form-control" placeholder="输入菜品名称搜索">
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="dishQuantity">数量:</label>
-                    <input type="number" id="dishQuantity" class="form-control" min="1" value="1" required>
-                </div>
-                <div class="form-group">
-                    <label for="specialRequests">特殊要求:</label>
-                    <textarea id="specialRequests" class="form-control" rows="3" placeholder="如：不要辣、多放香菜等"></textarea>
+                <!-- 菜品列表 -->
+                <div id="dishesGrid" style="max-height: 350px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.5rem; background: #f8f9fa; margin-bottom: 1rem;"></div>
+                <!-- 已选菜品 -->
+                <div id="selectedDishesSection" style="display: none;">
+                    <h5>已选菜品:</h5>
+                    <div id="selectedDishesList" style="background: #f8f9fa; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; max-height: 200px; overflow-y: auto;"></div>
+                    <div style="text-align: right; margin-bottom: 1rem;">
+                        <strong>本次加菜总计: <span id="addDishTotal" style="color: #28a745; font-size: 1.2rem;">¥0.00</span></strong>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer" style="flex-shrink: 0;">
                 <button onclick="Utils.hideModal('addDishModal')" class="btn btn-secondary">取消</button>
-                <button onclick="confirmAddDish()" class="btn btn-primary">确认加菜</button>
+                <button onclick="confirmAddSelectedDishes()" class="btn btn-primary" id="confirmAddDishBtn" disabled>确认加菜</button>
             </div>
         </div>
     </div>
@@ -325,14 +334,16 @@
 
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
-            // 初始化权限控制
-            const user = Auth.init();
-            if (!user) return;
-            
             loadOrders();
             loadDishes();
             setupEventListeners();
             updateSortIndicators(); // 初始化排序指示器
+
+            // 绑定加菜弹窗分类和搜索事件（保证只绑定一次且元素已渲染）
+            const catSel = document.getElementById('dishCategoryFilter');
+            const searchInput = document.getElementById('dishSearchInput');
+            if (catSel) catSel.addEventListener('change', renderDishesGrid);
+            if (searchInput) searchInput.addEventListener('input', renderDishesGrid);
         });
 
         function setupEventListeners() {
@@ -416,24 +427,28 @@
                 tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #666;">暂无订单数据</td></tr>';
                 return;
             }
+            console.log(pageOrders)
 
             pageOrders.forEach(order => {
                 const row = document.createElement('tr');
-                const statusInfo = Utils.getStatusInfo(order.OrderStatus, 'order');
-                
+                const rawStatus = order.OrderStatus || order.orderStatus || '';
+                const statusInfo = Utils.getStatusInfo(String(rawStatus).trim(), 'order');
+                console.log(statusInfo)
+                // 调试输出状态class和text
+                console.log('OrderID:', order.OrderID, 'OrderStatus:', rawStatus, 'class:', statusInfo.class, 'text:', statusInfo.text);
+                // 允许待处理、制作中、已完成都能加菜，已完成显示结账
+                const canAddDish = ['待处理', '制作中', '已完成'].includes(order.OrderStatus);
+                const canCheckout = order.OrderStatus === '已完成';
                 row.innerHTML = `
                     <td>${order.OrderID}</td>
                     <td>桌台${order.TableID || '-'}</td>
                     <td>${Utils.formatDateTime(order.OrderTime)}</td>
-                    <td>${getStaffName(order.StaffID)}</td>
-                    <td><span class="status-badge ${statusInfo.class}">${statusInfo.text}</span></td>
+                    <td>${statusInfo.text ? `<span class="status-badge ${statusInfo.class}">${statusInfo.text}</span>` : ''}</td>
                     <td>${Utils.formatCurrency(order.TotalPrice || 0)}</td>
                     <td>
                         <button onclick="viewOrderDetails(${order.OrderID})" class="btn btn-primary" style="margin-right: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">详情</button>
-                        ${(order.OrderStatus === '进行中' || order.OrderStatus === '制作中') ? `
-                            <button onclick="showAddDishModal(${order.OrderID})" class="btn btn-secondary" style="margin-right: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">加菜</button>
-                            <button onclick="checkoutOrder(${order.OrderID})" class="btn btn-success" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">结账</button>
-                        ` : ''}
+                        ${canAddDish ? `<button onclick="showAddDishModal(${order.OrderID})" class="btn btn-secondary" style="margin-right: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.8rem;">加菜</button>` : ''}
+                        ${canCheckout ? `<button onclick="checkoutOrder(${order.OrderID})" class="btn btn-success" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">结账</button>` : ''}
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -515,7 +530,7 @@
                 // 状态过滤
                 const orderStatus = order.orderStatus || order.OrderStatus;
                 const statusMatch = statusFilter === 'all' || orderStatus === statusFilter;
-
+                
                 // 桌台过滤 - 增强模糊搜索
                 const tableId = order.tableID || order.TableID;
                 let tableMatch = true;
@@ -583,7 +598,6 @@
         function applySorting() {
             filteredOrders.sort((a, b) => {
                 let aValue, bValue;
-                
                 switch (sortConfig.field) {
                     case 'orderID':
                         aValue = a.orderID || a.OrderID || 0;
@@ -597,10 +611,22 @@
                         aValue = new Date(a.orderTime || a.OrderTime);
                         bValue = new Date(b.orderTime || b.OrderTime);
                         break;
-                    case 'orderStatus':
-                        aValue = a.orderStatus || a.OrderStatus || '';
-                        bValue = b.orderStatus || b.OrderStatus || '';
-                        break;
+                    case 'orderStatus': {
+                        // 自定义状态顺序
+                        const statusOrder = ['待处理', '制作中', '已完成', '已结账'];
+                        const aStatus = a.orderStatus || a.OrderStatus || '';
+                        const bStatus = b.orderStatus || b.OrderStatus || '';
+                        const aIdx = statusOrder.indexOf(aStatus);
+                        const bIdx = statusOrder.indexOf(bStatus);
+                        if (aIdx === -1 && bIdx === -1) return 0;
+                        if (aIdx === -1) return 1;
+                        if (bIdx === -1) return -1;
+                        if (sortConfig.direction === 'asc') {
+                            return aIdx - bIdx;
+                        } else {
+                            return bIdx - aIdx;
+                        }
+                    }
                     case 'totalAmount':
                         aValue = a.totalAmount || a.TotalAmount || a.totalPrice || a.TotalPrice || 0;
                         bValue = b.totalAmount || b.TotalAmount || b.totalPrice || b.TotalPrice || 0;
@@ -608,7 +634,6 @@
                     default:
                         return 0;
                 }
-                
                 if (aValue < bValue) {
                     return sortConfig.direction === 'asc' ? -1 : 1;
                 }
@@ -675,7 +700,8 @@
             matchingTables.slice(0, 8).forEach(tableId => {
                 const tableOrders = allOrders.filter(o => (o.tableID || o.TableID) === tableId);
                 const recentOrder = tableOrders.sort((a, b) => new Date(b.orderTime || b.OrderTime) - new Date(a.orderTime || a.OrderTime))[0];
-                const statusInfo = Utils.getStatusInfo(recentOrder.orderStatus || recentOrder.OrderStatus, 'order');
+                const rawStatus = recentOrder.OrderStatus || recentOrder.orderStatus || '';
+                const statusInfo = Utils.getStatusInfo(String(rawStatus).trim(), 'order');
                 
                 suggestionsHTML += `
                     <div class="suggestion-item" onclick="selectTableSuggestion('${tableId}')">
@@ -720,7 +746,8 @@
                 const orderId = order.orderID || order.OrderID;
                 const tableId = order.tableID || order.TableID;
                 const orderTime = new Date(order.orderTime || order.OrderTime);
-                const statusInfo = Utils.getStatusInfo(order.orderStatus || order.OrderStatus, 'order');
+                const rawStatus = order.OrderStatus || order.orderStatus || '';
+                const statusInfo = Utils.getStatusInfo(String(rawStatus).trim(), 'order');
                 
                 suggestionsHTML += `
                     <div class="suggestion-item" onclick="selectOrderSuggestion('${orderId}')">
@@ -925,9 +952,10 @@
                 
                 document.getElementById('orderDetailTitle').textContent = `订单详情 - #${orderId}`;
                 
-                const statusInfo = Utils.getStatusInfo(order.orderStatus || order.OrderStatus, 'order');
-                const canModify = ['待处理', '制作中'].includes(order.orderStatus || order.OrderStatus);
-                const canCheckout = ['待处理', '制作中', '已完成'].includes(order.orderStatus || order.OrderStatus);
+                const rawStatus = order.OrderStatus || order.orderStatus || '';
+                const statusInfo = Utils.getStatusInfo(String(rawStatus).trim(), 'order');
+                const canModify = ['待处理', '制作中', '已完成'].includes(order.orderStatus || order.OrderStatus);
+                const canCheckout = ['已完成'].includes(order.orderStatus || order.OrderStatus);
                 
                 let detailsHTML = `
                     <!-- 订单基本信息 -->
@@ -939,7 +967,7 @@
                             <div><strong>订单号:</strong> #${order.orderID || order.OrderID}</div>
                             <div><strong>桌台信息:</strong> 桌台${order.tableID || order.TableID || '-'}</div>
                             <div><strong>下单时间:</strong> ${Utils.formatDateTime(order.orderTime || order.OrderTime)}</div>
-                            <div><strong>服务员:</strong> ${getStaffName(order.staffID || order.StaffID)}</div>
+                            
                             <div><strong>订单状态:</strong> <span class="status-badge ${statusInfo.class}">${statusInfo.text}</span></div>
                             <div><strong>总金额:</strong> <span style="color: #e74c3c; font-size: 1.2rem; font-weight: bold;">${Utils.formatCurrency(order.totalPrice || order.TotalPrice || statistics.totalAmount)}</span></div>
                         </div>
@@ -1027,6 +1055,7 @@
                 const modalFooter = document.querySelector('#orderDetailModal .modal-footer');
                 modalFooter.innerHTML = `
                     <button onclick="Utils.hideModal('orderDetailModal')" class="btn btn-secondary">关闭</button>
+                    ${canCheckout ? `<button onclick="checkoutOrder(${orderId})" class="btn btn-success"><i class="icon">💳</i> 结账</button>` : ''}
                 `;
                 
                 Utils.showModal('orderDetailModal');
@@ -1044,68 +1073,304 @@
             Utils.showNotification('订单详情已刷新', 'success');
         }
 
-        function showAddDishModal(orderId) {
-            currentOrderId = orderId;
-            document.getElementById('dishQuantity').value = 1;
-            document.getElementById('specialRequests').value = '';
-            document.getElementById('dishSelect').value = '';
-            Utils.showModal('addDishModal');
+
+        // --- 新加菜弹窗相关变量和函数（迁移自tables.html，适配订单页面） ---
+        let currentAddDishOrderId = null;
+        let availableDishes = [];
+        let dishCategories = [];
+        let selectedDishes = new Map(); // {dishId: {dish, quantity, specialRequests}}
+
+        // 打开加菜弹窗，加载订单和菜品信息
+        async function showAddDishModal(orderId) {
+            try {
+                currentAddDishOrderId = orderId;
+                // 获取订单信息
+                const order = await API.get(`/orders/${orderId}`);
+                if (!order) {
+                    Utils.showNotification('订单不存在', 'error');
+                    return;
+                }
+                // 设置模态框标题和订单摘要
+                document.getElementById('addDishModalTitle').textContent = `加菜 - 订单 #${orderId}`;
+                document.getElementById('orderSummary').innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h5 style="margin: 0; color: #28a745;">订单 #${orderId}</h5>
+                            <p style="margin: 0.25rem 0 0 0; color: #6c757d;">${Utils.formatDateTime(order.OrderTime || order.orderTime)}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="color: #6c757d; font-size: 0.9rem;">当前状态</div>
+                            <span class="status-badge ${Utils.getStatusInfo(String((order.OrderStatus || order.orderStatus) || '').trim(), 'order').class}">${order.OrderStatus || order.orderStatus}</span>
+                        </div>
+                    </div>
+                `;
+                // 加载菜品和分类（只加载一次）
+                if (availableDishes.length === 0) {
+                    await loadDishesForAddDish();
+                }
+                // 清空已选
+                selectedDishes = new Map();
+                renderDishesGrid();
+                updateSelectedDishesDisplay();
+                Utils.showModal('addDishModal');
+            } catch (error) {
+                console.error('加载加菜模态框失败:', error);
+                Utils.showNotification('加载菜品信息失败', 'error');
+            }
         }
 
-        async function confirmAddDish() {
-            const dishId = document.getElementById('dishSelect').value;
-            const quantity = parseInt(document.getElementById('dishQuantity').value);
-            const specialRequests = document.getElementById('specialRequests').value;
+        // 加载菜品和分类
+        async function loadDishesForAddDish() {
+            try {
+                availableDishes = await API.get('/menu/dishes');
+                availableDishes = availableDishes?.filter(dish => dish.IsAvailable === true || dish.IsAvailable === 'Y') || [];
+                try {
+                    const categories = await API.get('/menu/categories');
+                    dishCategories = categories || [];
+                    // 填充分类下拉框
+                    const categorySelect = document.getElementById('dishCategoryFilter');
+                    if (categorySelect) {
+                        categorySelect.innerHTML = '<option value="">全部分类</option>';
+                        dishCategories.forEach(category => {
+                            const option = document.createElement('option');
+                            option.value = category.CategoryID;
+                            option.textContent = category.CategoryName;
+                            categorySelect.appendChild(option);
+                        });
+                    }
+                } catch (categoryError) {
+                    dishCategories = [];
+                }
+            } catch (error) {
+                availableDishes = [];
+                dishCategories = [];
+                Utils.showNotification('加载菜品数据失败', 'error');
+            }
+        }
 
-            if (!dishId || !quantity) {
-                Utils.showNotification('请选择菜品并输入数量', 'warning');
+        // 渲染菜品网格
+        function renderDishesGrid() {
+            const dishesGrid = document.getElementById('dishesGrid');
+            const categoryFilter = document.getElementById('dishCategoryFilter').value;
+            const searchQuery = document.getElementById('dishSearchInput').value.toLowerCase().trim();
+            let filteredDishes = availableDishes;
+            if (categoryFilter) {
+                filteredDishes = filteredDishes.filter(dish => (dish.CategoryID || dish.CATEGORYID) == categoryFilter);
+            }
+            if (searchQuery) {
+                filteredDishes = filteredDishes.filter(dish => {
+                    const dishName = (dish.DishName || '').toLowerCase();
+                    const description = (dish.Description || '').toLowerCase();
+                    return dishName.includes(searchQuery) || description.includes(searchQuery);
+                });
+                // 高亮
+                filteredDishes = filteredDishes.map(dish => {
+                    let dishName = dish.DishName || '';
+                    let description = dish.Description || '';
+                    const reg = new RegExp(searchQuery, 'gi');
+                    dishName = dishName.replace(reg, match => `<span style="color:#28a745;font-weight:bold">${match}</span>`);
+                    description = description.replace(reg, match => `<span style="color:#28a745;font-weight:bold">${match}</span>`);
+                    return { ...dish, DishName: dishName, Description: description };
+                });
+            }
+            if (filteredDishes.length === 0) {
+                dishesGrid.innerHTML = `<div style="text-align: center; padding: 2rem; color: #6c757d;">没有找到符合条件的菜品</div>`;
                 return;
             }
+            dishesGrid.innerHTML = `
+                <div class="dish-grid">
+                    ${filteredDishes.map(dish => {
+                        const dishID = dish.DishID;
+                        const dishName = dish.DishName || '未知菜品';
+                        const description = dish.Description || '暂无描述';
+                        const price = dish.Price || 0;
+                        const isSelected = selectedDishes.has(dishID);
+                        const selectedData = selectedDishes.get(dishID);
+                        const quantity = selectedData ? selectedData.quantity : 0;
+                        return `
+                            <div class="dish-item ${isSelected ? 'selected' : ''}" id="dish-${dishID}">
+                                <div class="dish-name">${dishName}</div>
+                                <div class="dish-description">${description}</div>
+                                <div class="dish-price">¥${price.toFixed(2)}</div>
+                                <div class="dish-controls">
+                                    <div class="quantity-controls">
+                                        <button class="quantity-btn" onclick="updateDishQuantity(${dishID}, ${quantity - 1})" ${quantity === 0 ? 'disabled' : ''}>-</button>
+                                        <input type="number" class="quantity-input" value="${quantity}" min="0" max="99" onchange="updateDishQuantity(${dishID}, parseInt(this.value) || 0)" id="quantity-${dishID}">
+                                        <button class="quantity-btn" onclick="updateDishQuantity(${dishID}, ${quantity + 1})">+</button>
+                                    </div>
+                                    ${isSelected ? `<span style="color: #28a745; font-weight: 600;">已选</span>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
 
-            try {
-                const selectedOption = document.querySelector(`#dishSelect option[value="${dishId}"]`);
-                const unitPrice = parseFloat(selectedOption.dataset.price);
-
-                const orderDetail = {
-                    dishID: parseInt(dishId),
-                    quantity: quantity,
-                    unitPrice: unitPrice,
-                    specialRequests: specialRequests || null
+        // 修改菜品数量
+        function updateDishQuantity(dishId, newQuantity) {
+            newQuantity = Math.max(0, Math.min(99, newQuantity));
+            const dish = availableDishes.find(d => (d.DishID) === dishId);
+            if (!dish) return;
+            if (newQuantity === 0) {
+                selectedDishes.delete(dishId);
+            } else {
+                const standardizedDish = {
+                    dishID: dish.DishID,
+                    dishName: dish.DishName,
+                    price: dish.Price,
+                    description: dish.Description,
+                    categoryID: dish.CategoryID
                 };
+                selectedDishes.set(dishId, {
+                    dish: standardizedDish,
+                    quantity: newQuantity,
+                    specialRequests: ''
+                });
+            }
+            renderDishesGrid();
+            updateSelectedDishesDisplay();
+        }
 
-                await API.post(`/orders/${currentOrderId}/details`, orderDetail);
-                
+        // 移除已选菜品
+        function removeDishFromSelection(dishId) {
+            selectedDishes.delete(dishId);
+            renderDishesGrid();
+            updateSelectedDishesDisplay();
+        }
+
+        // 更新已选菜品显示和总价
+        function updateSelectedDishesDisplay() {
+            const selectedSection = document.getElementById('selectedDishesSection');
+            const selectedList = document.getElementById('selectedDishesList');
+            const totalElement = document.getElementById('addDishTotal');
+            const confirmBtn = document.getElementById('confirmAddDishBtn');
+            if (selectedDishes.size === 0) {
+                selectedSection.style.display = 'none';
+                confirmBtn.disabled = true;
+                return;
+            }
+            selectedSection.style.display = 'block';
+            confirmBtn.disabled = false;
+            let totalAmount = 0;
+            let selectedHTML = '';
+            selectedDishes.forEach((data, dishId) => {
+                const { dish, quantity, specialRequests } = data;
+                const subtotal = dish.price * quantity;
+                totalAmount += subtotal;
+                selectedHTML += `
+                    <div class="selected-dish-item">
+                        <div class="selected-dish-info">
+                            <div class="selected-dish-name">${dish.dishName}</div>
+                            <div class="selected-dish-details">
+                                数量: ${quantity} | 单价: ¥${dish.price.toFixed(2)}
+                                ${specialRequests ? ` | 备注: ${specialRequests}` : ''}
+                            </div>
+                        </div>
+                        <div class="selected-dish-total">¥${subtotal.toFixed(2)}</div>
+                        <button class="remove-dish-btn" onclick="removeDishFromSelection(${dishId})" title="移除">×</button>
+                    </div>
+                `;
+            });
+            selectedList.innerHTML = selectedHTML;
+            totalElement.textContent = `¥${totalAmount.toFixed(2)}`;
+        }
+
+        // 批量确认加菜
+        async function confirmAddSelectedDishes() {
+            if (selectedDishes.size === 0) {
+                Utils.showNotification('请先选择要加的菜品', 'warning');
+                return;
+            }
+            if (!currentAddDishOrderId) {
+                Utils.showNotification('订单信息异常，请重试', 'error');
+                return;
+            }
+            try {
+                Utils.showNotification('正在添加菜品...', 'info');
+                // 组装要添加的菜品数据
+                const dishesToAdd = [];
+                selectedDishes.forEach((data, dishId) => {
+                    const { dish, quantity, specialRequests } = data;
+                    dishesToAdd.push({
+                        DishID: dish.dishID,
+                        Quantity: quantity,
+                        UnitPrice: dish.price,
+                        SpecialRequests: specialRequests || null
+                    });
+                });
+                // 获取当前订单信息
+                let orderInfo = null;
+                try {
+                    orderInfo = await API.get(`/orders/${currentAddDishOrderId}`);
+                } catch {}
+                // 如果订单状态为“已完成”，先改为“制作中”
+                if (orderInfo && (orderInfo.orderStatus === '已完成' || orderInfo.OrderStatus === '已完成')) {
+                    await API.put(`/orders/${currentAddDishOrderId}/status`, { status: '制作中' });
+                }
+                // 批量添加菜品
+                for (const detail of dishesToAdd) {
+                    await API.post(`/orders/${currentAddDishOrderId}/details`, detail);
+                }
                 Utils.showNotification('加菜成功', 'success');
                 Utils.hideModal('addDishModal');
-                
                 // 刷新订单列表
                 await loadOrders();
-
             } catch (error) {
                 console.error('加菜失败:', error);
                 Utils.showNotification('加菜失败', 'error');
             }
         }
 
+
+
         async function checkoutOrder(orderId) {
-            if (!Utils.showConfirm('确认要为此订单结账吗？\n结账后桌台状态将变为清洁中。')) {
+            // 获取订单信息
+            let order = null;
+            try {
+                order = await API.get(`/orders/${orderId}`);
+            } catch {
+                Utils.showNotification('获取订单信息失败', 'error');
                 return;
             }
+            // 构建弹窗内容
+            const modalHtml = `
+                <div id="checkoutModal" class="modal" style="display:block;z-index:9999;">
+                  <div class="modal-content" style="max-width:400px;margin:10% auto;padding:2rem 1.5rem;">
+                    <span class="close" onclick="document.getElementById('checkoutModal').remove()" style="float:right;font-size:1.5rem;cursor:pointer;">&times;</span>
+                    <h3 style="margin-bottom:1rem;">确认结账</h3>
+                    <div style="margin-bottom:1rem;">
+                      <div><strong>订单号：</strong>#${order.OrderID}</div>
+                      <div><strong>桌台：</strong>${order.TableID}</div>
+                      <div><strong>总金额：</strong><span style="color:#e74c3c;font-weight:bold;">${Utils.formatCurrency(order.TotalPrice || order.totalPrice || 0)}</span></div>
+                    </div>
+                    <div style="margin-bottom:1rem;color:#888;">结账后桌台状态将变为清洁中。</div>
+                    <div style="text-align:right;">
+                      <button onclick="document.getElementById('checkoutModal').remove()" class="btn btn-secondary" style="margin-right:1rem;">取消</button>
+                      <button onclick="window.confirmCheckout(${orderId})" class="btn btn-success">确认结账</button>
+                    </div>
+                  </div>
+                </div>
+            `;
+            // 移除已存在的弹窗
+            const old = document.getElementById('checkoutModal');
+            if (old) old.remove();
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
 
+        // 结账弹窗确认
+        window.confirmCheckout = async function(orderId) {
             try {
                 Utils.showNotification('正在处理结账...', 'info');
-                
-                const response = await API.put(`/orders/${orderId}/checkout`);
-                
+                await API.put(`/orders/${orderId}/checkout`);
                 Utils.showNotification('结账成功！', 'success');
                 Utils.hideModal('orderDetailModal');
+                const modal = document.getElementById('checkoutModal');
+                if (modal) modal.remove();
                 await loadOrders();
-                
-                // 可选：显示结账成功的详细信息
                 setTimeout(() => {
                     Utils.showNotification('桌台状态已更新为清洁中', 'info');
                 }, 1500);
-                
             } catch (error) {
                 console.error('结账失败:', error);
                 let errorMessage = '结账失败';
@@ -1268,32 +1533,46 @@
         }
 
         async function updateOrderStatus(orderId) {
+            // 弹窗选择状态
             const statusOptions = [
                 { value: '待处理', text: '待处理' },
                 { value: '制作中', text: '制作中' },
                 { value: '已完成', text: '已完成' },
-                { value: '已结账', text: '已结账' },
-                { value: '已取消', text: '已取消' }
+                { value: '已结账', text: '已结账' }
             ];
+            const modalHtml = `
+                <div id="statusModal" class="modal" style="display:block;z-index:9999;">
+                  <div class="modal-content" style="max-width:350px;margin:12% auto;padding:2rem 1.5rem;">
+                    <span class="close" onclick="document.getElementById('statusModal').remove()" style="float:right;font-size:1.5rem;cursor:pointer;">&times;</span>
+                    <h3 style="margin-bottom:1rem;">更新订单状态</h3>
+                    <div style="margin-bottom:1rem;">
+                      <select id="statusSelect" style="width:100%;padding:0.5rem;font-size:1rem;">
+                        ${statusOptions.map(opt => `<option value="${opt.value}">${opt.text}</option>`).join('')}
+                      </select>
+                    </div>
+                    <div style="text-align:right;">
+                      <button onclick="document.getElementById('statusModal').remove()" class="btn btn-secondary" style="margin-right:1rem;">取消</button>
+                      <button onclick="window.confirmStatusUpdate(${orderId})" class="btn btn-success">确认</button>
+                    </div>
+                  </div>
+                </div>
+            `;
+            // 移除已存在的弹窗
+            const old = document.getElementById('statusModal');
+            if (old) old.remove();
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+        }
 
-            let selectHTML = statusOptions.map(option => 
-                `<option value="${option.value}">${option.text}</option>`
-            ).join('');
-
-            const newStatus = prompt(`请选择新的订单状态：\n\n${statusOptions.map((opt, idx) => `${idx + 1}. ${opt.text}`).join('\n')}\n\n请输入对应的数字或直接输入状态名:`);
-            
-            if (!newStatus) return;
-
-            let actualStatus = newStatus;
-            const numericChoice = parseInt(newStatus);
-            if (numericChoice >= 1 && numericChoice <= statusOptions.length) {
-                actualStatus = statusOptions[numericChoice - 1].value;
-            }
-
+        // 状态弹窗确认
+        window.confirmStatusUpdate = async function(orderId) {
+            const select = document.getElementById('statusSelect');
+            const actualStatus = select.value;
             try {
                 await API.put(`/orders/${orderId}/status`, { status: actualStatus });
                 Utils.showNotification(`订单状态已更新为：${actualStatus}`, 'success');
                 Utils.hideModal('orderDetailModal');
+                const modal = document.getElementById('statusModal');
+                if (modal) modal.remove();
                 await loadOrders();
             } catch (error) {
                 console.error('更新订单状态失败:', error);

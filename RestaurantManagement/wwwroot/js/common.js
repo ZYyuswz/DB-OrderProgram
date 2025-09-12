@@ -208,6 +208,8 @@ function formatCurrency(amount) {
 
 // 获取状态显示文本和样式类
 function getStatusInfo(status, type = 'table') {
+    console.log("..........................")
+    console.log('[getStatusInfo 调试]', 'type:', type, 'status:', status, 'typeof:', typeof status, 'json:', JSON.stringify(status));
     const statusMap = {
         table: {
             '空闲': { text: '空闲', class: 'status-available' },
@@ -216,9 +218,10 @@ function getStatusInfo(status, type = 'table') {
             '清洁中': { text: '清洁中', class: 'status-cleaning' }
         },
         order: {
-            '进行中': { text: '进行中', class: 'status-occupied' },
-            '已结账': { text: '已结账', class: 'status-available' },
-            '已取消': { text: '已取消', class: 'status-cleaning' }
+            '待处理': { text: '待处理', class: 'status-pending' }, // 灰色
+            '制作中': { text: '制作中', class: 'status-making' },   // 橙色
+            '已完成': { text: '已完成', class: 'status-finished' }, // 绿色
+            '已结账': { text: '已结账', class: 'status-paid' },    // 蓝色
         },
         staff: {
             '在职': { text: '在职', class: 'status-available' },
@@ -232,7 +235,8 @@ function getStatusInfo(status, type = 'table') {
         }
     };
 
-    return statusMap[type]?.[status] || { text: status, class: 'status-secondary' };
+        const norm = (status || '').toString().trim();
+        return statusMap[type]?.[norm] || { text: norm || '未知', class: 'status-secondary' };
 }
 
 // 表单验证
