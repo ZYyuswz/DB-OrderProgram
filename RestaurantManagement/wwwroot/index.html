@@ -5,28 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>餐饮管理系统 - 商家端</title>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* 权限受限时的样式 */
+        .permission-restricted {
+            opacity: 0.6;
+            pointer-events: none;
+            position: relative;
+        }
+        
+        .permission-restricted::after {
+            content: '🔒 权限不足';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            z-index: 10;
+        }
+
+        /* 用户角色徽章样式 */
+        .role-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: white;
+            margin-left: 0.5rem;
+        }
+
+        .role-admin {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .role-manager {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+
+        .role-cashier {
+            background: linear-gradient(135deg, #27ae60, #229954);
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar">
         <h1>餐饮管理系统</h1>
         <div class="nav-links">
             <a href="index.html" class="active">首页</a>
-            <a href="tables.html">桌台管理</a>
-            <a href="orders.html">订单管理</a>
-            <a href="menu.html">菜单管理</a>
-            <a href="staff.html">员工管理</a>
-            <a href="inventory.html">库存管理</a>
+            <a href="tables.html" data-permission="tables">桌台管理</a>
+            <a href="orders.html" data-permission="orders">订单管理</a>
+            <a href="menu.html" data-permission="menu">菜单管理</a>
+            <a href="staff.html" data-permission="staff">员工管理</a>
+            <a href="inventory.html" data-permission="inventory">库存管理</a>
         </div>
     </nav>
 
     <div class="container">
         <div class="main-content">
-            <h2>欢迎使用餐饮管理系统</h2>
-            <p>请选择相应的功能模块进行管理操作。</p>
+            <div id="welcomeMessage">
+                <h2>欢迎使用餐饮管理系统</h2>
+                <p>请选择相应的功能模块进行管理操作。</p>
+            </div>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 2rem;">
                 <!-- 桌台管理卡片 -->
-                <div class="card">
+                <div class="card" data-permission="tables">
                     <h3>🍽️ 桌台管理</h3>
                     <p>实时查看桌台状态，管理开台、清台操作</p>
                     <div style="margin-top: 1rem;">
@@ -40,7 +87,7 @@
                 </div>
 
                 <!-- 订单管理卡片 -->
-                <div class="card">
+                <div class="card" data-permission="orders">
                     <h3>📋 订单管理</h3>
                     <p>查看订单详情，处理加菜、结账等操作</p>
                     <div style="margin-top: 1rem;">
@@ -53,7 +100,7 @@
                 </div>
 
                 <!-- 菜单管理卡片 -->
-                <div class="card">
+                <div class="card" data-permission="menu">
                     <h3>🍜 菜单管理</h3>
                     <p>管理菜品分类、菜品信息和价格</p>
                     <div style="margin-top: 1rem;">
@@ -66,7 +113,7 @@
                 </div>
 
                 <!-- 员工管理卡片 -->
-                <div class="card">
+                <div class="card" data-permission="staff">
                     <h3>👥 员工管理</h3>
                     <p>管理员工信息、排班和考勤记录</p>
                     <div style="margin-top: 1rem;">
@@ -79,7 +126,7 @@
                 </div>
 
                 <!-- 库存管理卡片 -->
-                <div class="card">
+                <div class="card" data-permission="inventory">
                     <h3>📦 库存管理</h3>
                     <p>监控原材料库存，管理采购和入库</p>
                     <div style="margin-top: 1rem;">
@@ -91,7 +138,7 @@
                     </div>
                 </div>
 
-                <!-- 系统状态卡片 -->
+                <!-- 系统状态卡片 - 所有角色都可以看到 -->
                 <div class="card">
                     <h3>⚙️ 系统状态</h3>
                     <p>查看系统运行状态和Oracle数据库连接</p>
@@ -102,7 +149,7 @@
                     </div>
                     <div style="margin-top: 1rem;">
                         <button onclick="checkSystemStatus()" class="btn btn-secondary">刷新状态</button>
-                        <button onclick="showDatabaseInfo()" class="btn btn-info" style="margin-left: 0.5rem;">数据库信息</button>
+                        <button onclick="showDatabaseInfo()" class="btn btn-info" style="margin-left: 0.5rem;" data-permission="staff">数据库信息</button>
                     </div>
                 </div>
             </div>
@@ -114,41 +161,102 @@
     <script>
         // 页面加载时获取统计数据
         document.addEventListener('DOMContentLoaded', function() {
+            // 设置个性化欢迎信息
+            setWelcomeMessage();
+            
             loadDashboardData();
             updateSystemTime();
             setInterval(updateSystemTime, 1000); // 每秒更新时间
         });
 
+        // 设置个性化欢迎信息
+        function setWelcomeMessage() {
+            const user = Auth.getCurrentUser();
+            if (!user) return;
+
+            const welcomeElement = document.getElementById('welcomeMessage');
+            let roleDescription = '';
+            let availableFeatures = '';
+            let roleClass = '';
+
+            switch(user.role) {
+                case '超级管理员':
+                    roleDescription = '您拥有系统的完整管理权限';
+                    availableFeatures = '可以管理所有功能模块：员工管理、库存管理、菜单管理、桌台管理、订单管理等。';
+                    roleClass = 'role-admin';
+                    break;
+                case '店长':
+                    roleDescription = '您拥有日常经营管理权限';
+                    availableFeatures = '可以管理：员工信息、库存采购、菜单设置、桌台状态、订单处理等功能。';
+                    roleClass = 'role-manager';
+                    break;
+                case '收银员':
+                    roleDescription = '您拥有前台操作权限';
+                    availableFeatures = '可以进行：桌台管理、订单处理、基础数据查看等操作。';
+                    roleClass = 'role-cashier';
+                    break;
+                default:
+                    roleDescription = '欢迎使用餐饮管理系统';
+                    availableFeatures = '请选择相应的功能模块进行管理操作。';
+                    roleClass = 'role-admin';
+            }
+
+            welcomeElement.innerHTML = `
+                <h2>欢迎使用餐饮管理系统，${user.username}！<span class="role-badge ${roleClass}">${user.role}</span></h2>
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <p style="margin: 0; font-size: 1.1rem; font-weight: 500;">
+                        <span style="font-size: 1.2rem;">👋</span> ${roleDescription}
+                    </p>
+                    <p style="margin: 0.5rem 0 0 0; opacity: 0.9; font-size: 0.95rem;">
+                        ${availableFeatures}
+                    </p>
+                </div>
+            `;
+        }
+
         async function loadDashboardData() {
             try {
-                // 获取桌台统计
-                const tables = await API.get('/tables');
-                if (tables) {
-                    updateTableStats(tables);
+                const user = Auth.getCurrentUser();
+                if (!user) return;
+
+                // 获取桌台统计 - 所有角色都有桌台权限
+                if (Auth.hasPermission('tables')) {
+                    const tables = await API.get('/tables');
+                    if (tables) {
+                        updateTableStats(tables);
+                    }
                 }
 
-                // 获取今日订单统计
-                await loadTodayOrderStats();
-
-                // 获取菜品统计
-                const dishes = await API.get('/menu/dishes');
-                if (dishes) {
-                    updateDishStats(dishes);
+                // 获取今日订单统计 - 所有角色都有订单权限
+                if (Auth.hasPermission('orders')) {
+                    await loadTodayOrderStats();
                 }
 
-                // 获取员工统计
-                const staff = await API.get('/staff');
-                if (staff) {
-                    updateStaffStats(staff);
+                // 获取菜品统计 - 只有有菜单权限的用户
+                if (Auth.hasPermission('menu')) {
+                    const dishes = await API.get('/menu/dishes');
+                    if (dishes) {
+                        updateDishStats(dishes);
+                    }
                 }
 
-                // 获取库存统计
-                const materials = await API.get('/inventory');
-                if (materials) {
-                    updateInventoryStats(materials);
+                // 获取员工统计 - 只有有员工权限的用户
+                if (Auth.hasPermission('staff')) {
+                    const staff = await API.get('/staff');
+                    if (staff) {
+                        updateStaffStats(staff);
+                    }
                 }
 
-                // 检查数据库连接状态
+                // 获取库存统计 - 只有有库存权限的用户
+                if (Auth.hasPermission('inventory')) {
+                    const materials = await API.get('/inventory');
+                    if (materials) {
+                        updateInventoryStats(materials);
+                    }
+                }
+
+                // 检查数据库连接状态 - 所有用户都可以看到
                 checkSystemStatus();
 
             } catch (error) {
@@ -236,6 +344,12 @@
         }
 
         async function showDatabaseInfo() {
+            // 检查权限 - 只有管理员和店长可以查看详细数据库信息
+            if (!Auth.hasPermission('staff') && !Auth.hasPermission('all')) {
+                Utils.showNotification('您没有权限查看数据库详细信息', 'error');
+                return;
+            }
+
             try {
                 const result = await API.get('/database/info');
                 if (result && result.success) {

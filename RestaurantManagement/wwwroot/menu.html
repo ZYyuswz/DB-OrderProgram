@@ -11,11 +11,11 @@
         <h1>餐饮管理系统</h1>
         <div class="nav-links">
             <a href="index.html">首页</a>
-            <a href="tables.html">桌台管理</a>
-            <a href="orders.html">订单管理</a>
-            <a href="menu.html" class="active">菜单管理</a>
-            <a href="staff.html">员工管理</a>
-            <a href="inventory.html">库存管理</a>
+            <a href="tables.html" data-permission="tables">桌台管理</a>
+            <a href="orders.html" data-permission="orders">订单管理</a>
+            <a href="menu.html" class="active" data-permission="menu">菜单管理</a>
+            <a href="staff.html" data-permission="staff">员工管理</a>
+            <a href="inventory.html" data-permission="inventory">库存管理</a>
         </div>
     </nav>
 
@@ -223,6 +223,10 @@
 
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
+            // 初始化权限控制
+            const user = Auth.init();
+            if (!user) return;
+            
             loadCategories();
             loadDishes();
             setupEventListeners();

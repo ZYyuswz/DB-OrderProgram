@@ -1,5 +1,15 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+   <nav class="navbar">
+        <h1>餐饮管理系统</h1>
+        <div class="nav-links">
+            <a href="index.html">首页</a>
+            <a href="tables.html" data-permission="tables">桌台管理</a>
+            <a href="orders.html" data-permission="orders">订单管理</a>
+            <a href="menu.html" data-permission="menu">菜单管理</a>
+            <a href="staff.html" data-permission="staff">员工管理</a>
+            <a href="inventory.html" class="active" data-permission="inventory">库存管理</a>
+        </div>
+    </nav>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,18 +17,6 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <nav class="navbar">
-        <h1>餐饮管理系统</h1>
-        <div class="nav-links">
-            <a href="index.html">首页</a>
-            <a href="tables.html">桌台管理</a>
-            <a href="orders.html">订单管理</a>
-            <a href="menu.html">菜单管理</a>
-            <a href="staff.html">员工管理</a>
-            <a href="inventory.html" class="active">库存管理</a>
-        </div>
-    </nav>
-
     <div class="container">
         <div class="main-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
@@ -370,6 +368,10 @@
 
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
+            // 初始化权限控制
+            const user = Auth.init();
+            if (!user) return;
+            
             loadInventory();
             loadSuppliers();
             setupEventListeners();
