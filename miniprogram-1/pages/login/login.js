@@ -53,13 +53,17 @@ Page({
   
         if (loginResult.success) {
           // 登录成功，保存用户信息到本地存储
-          const userInfo = loginResult.data;
+          const userInfo = loginResult.data.userInfo;
           
           wx.setStorageSync('userInfo', userInfo);
           wx.setStorageSync('isLogin', true);
           wx.setStorageSync('token', loginResult.token || '');
           wx.setStorageSync('customerId', userInfo.customerId || '');
-  
+          console.log('🔒 已写入缓存:');
+          console.log('userInfo:', wx.getStorageSync('userInfo'));
+          console.log('isLogin:', wx.getStorageSync('isLogin'));
+          console.log('token:', wx.getStorageSync('token'));
+          console.log('customerId:', wx.getStorageSync('customerId'));
           this.setData({ loading: false });
   
           wx.showToast({
@@ -105,7 +109,7 @@ Page({
           this.setData({ loading: false });
           
           wx.showToast({
-            title: loginResult.message || '用户名或密码错误',
+            title: '用户名或密码错误',
             icon: 'none',
             duration: 2000
           });

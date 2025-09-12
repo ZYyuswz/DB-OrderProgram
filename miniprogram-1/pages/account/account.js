@@ -203,15 +203,7 @@ Page({
     }
   },
 
-  // 获取客户ID
-  getCustomerId() {
-    const userInfo = this.data.userInfo;
-    if (userInfo && userInfo.customerId) {
-      return userInfo.customerId;
-    }
-    // 如果没有客户ID，使用默认客户ID=1进行测试
-    return 1;
-  },
+ 
 
   // 导航到具体页面
   navigateTo(e) {

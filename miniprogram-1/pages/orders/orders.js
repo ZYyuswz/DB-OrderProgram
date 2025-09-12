@@ -84,9 +84,6 @@ Page({
     }
   },
 
-<<<<<<< Updated upstream
-  // 调用后端API获取订单数据
-=======
   // 为所有订单加载菜品详情
   async loadOrderDetailsForAll(orders) {
     try {
@@ -152,24 +149,15 @@ Page({
     }
   },
 
->>>>>>> Stashed changes
   async fetchOrdersFromAPI() {
     try {
       const userInfo = this.data.userInfo;
       let customerId;
       if (!userInfo || !userInfo.customerId) {
-<<<<<<< Updated upstream
-        // 如果没有客户ID，使用默认客户ID=1进行测试
-        const customerId = 1;
-        const orders = await API.getCustomerOrders(customerId, this.data.page, this.data.pageSize);
-        
-        return this.formatOrdersData(orders);
-=======
         customerId = 1; // 默认
         console.warn('⚠️ 未找到用户 customerId，使用默认 1');
       } else {
         customerId = userInfo.customerId;
->>>>>>> Stashed changes
       }
       
       console.log(`🚀 调用 API: getCustomerOrders(${customerId}, ${this.data.page}, ${this.data.pageSize})`);

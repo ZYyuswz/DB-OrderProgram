@@ -36,7 +36,6 @@ Page({
   },
 
   onLoad() {
-    // 页面加载时获取用户信息并加载会员数据
     this.loadUserInfo();
     this.loadMemberData();
   },
@@ -67,7 +66,6 @@ Page({
     this.setData({ loading: true });
 
     try {
-      // 并行获取会员信息、消费统计和等级规则
       const customerId = this.getCustomerId();
       
       const [memberInfo, stats, levels] = await Promise.all([
@@ -77,13 +75,13 @@ Page({
       ]);
 
       // 处理会员信息
-      const processedMemberInfo = this.processMemberInfo(memberInfo, levels);
+      const processedMemberInfo = this.formatMemberInfo(memberInfo, levels);
       
       // 计算会员时长
-      const memberSince = this.calculateMemberSince(memberInfo.registerTime);
+      const memberSince = this.calculateMemberSince(processedMemberInfo.registerTime);
       
       // 计算距离下一等级所需金额
-      const remainingAmount = memberInfo.nextLevelThreshold - memberInfo.totalConsumption;
+      const remainingAmount = processedMemberInfo.nextLevelThreshold - processedMemberInfo.totalConsumption;
 
       this.setData({
         memberInfo: processedMemberInfo,
@@ -92,6 +90,12 @@ Page({
         memberSince: memberSince,
         remainingAmount: Math.max(0, remainingAmount.toFixed(2)),
         loading: false
+      });
+
+      // 处理特权数据
+      const privileges = this.processPrivileges(processedMemberInfo.currentLevel);
+      this.setData({
+        'memberInfo.privileges': privileges
       });
 
     } catch (error) {
@@ -110,140 +114,60 @@ Page({
     if (userInfo && userInfo.customerId) {
       return userInfo.customerId;
     }
-    // 如果没有客户ID，使用默认客户ID=1进行测试
-    return 1;
+    return 1; // 默认ID用于测试
   },
 
-  // 处理会员信息
-  processMemberInfo(memberInfo, levels) {
-    // 找到当前等级的颜色和图标
+  // 格式化会员信息（只负责数据格式，不做请求）
+  formatMemberInfo(memberInfo, levels) {
     const currentLevelData = levels.find(level => level.levelCode === memberInfo.currentLevel);
-    
-<<<<<<< Updated upstream
-=======
-    try {
-      this.setData({ loading: true });
-      
-      const customerId = this.getCustomerId();
-      console.log('🔄 开始加载会员信息，客户ID:', customerId);
-      
-      // 获取会员信息
-      const memberInfo = await API.getCustomerMemberInfo(customerId);
-      console.log('✅ 获取到会员信息:', memberInfo);
-      
-      // 处理字段名映射，确保兼容PascalCase和camelCase
-      const processedMemberInfo = this.processMemberInfo(memberInfo);
-      
-      // 计算会员时长
-      const registerTime = processedMemberInfo.registerTime || processedMemberInfo.RegisterTime;
-      const registerDate = new Date(registerTime);
-      const now = new Date();
-      const diffTime = Math.abs(now - registerDate);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      const memberSince = diffDays > 365 ? 
-        Math.floor(diffDays / 365) + '年' + Math.floor((diffDays % 365) / 30) + '个月' : 
-        Math.floor(diffDays / 30) + '个月' + (diffDays % 30) + '天';
 
-      // 根据会员等级设置颜色和图标
-      const levelInfo = this.getLevelInfo(processedMemberInfo.currentLevel);
-
-      this.setData({
-        memberInfo: {
-          ...processedMemberInfo,
-          currentLevelInfo: levelInfo
-        },
-        memberSince: memberSince,
-        loading: false
-      });
-
-      // 处理特权数据
-      const privileges = this.processPrivileges(
-        memberInfo.Privileges || memberInfo.privileges || [], 
-        processedMemberInfo.currentLevel
-      );
-      
-      // 更新特权数据
-      this.setData({
-        'memberInfo.privileges': privileges
-      });
-      
-      console.log('🎁 特权数据已更新:', privileges);
-
-      // 加载所有会员等级信息
-      await this.loadAllLevels();
-      
-    } catch (error) {
-      console.error('❌ 加载会员信息失败:', error);
-      this.setData({ loading: false });
-      wx.showToast({
-        title: '加载会员信息失败',
-        icon: 'none'
-      });
-    }
-  },
-
-  // 处理会员信息字段映射
-  processMemberInfo(memberInfo) {
-    console.log('🔍 原始会员信息数据:', memberInfo);
-    
     const processed = {
       customerId: memberInfo.CustomerId || memberInfo.customerId || 0,
       customerName: memberInfo.CustomerName || memberInfo.customerName || '',
-      totalConsumption: memberInfo.TotalConsumption || memberInfo.totalConsumption || 0,
+      totalConsumption: parseFloat(memberInfo.TotalConsumption || memberInfo.totalConsumption || 0).toFixed(2),
       currentLevel: memberInfo.CurrentLevel || memberInfo.currentLevel || 'bronze',
       currentLevelName: memberInfo.CurrentLevelName || memberInfo.currentLevelName || '青铜会员',
       nextLevel: memberInfo.NextLevel || memberInfo.nextLevel || '',
       nextLevelName: memberInfo.NextLevelName || memberInfo.nextLevelName || '',
-      nextLevelThreshold: memberInfo.NextLevelThreshold || memberInfo.nextLevelThreshold || 0,
-      progressToNextLevel: memberInfo.ProgressToNextLevel || memberInfo.progressToNextLevel || 0,
+      nextLevelThreshold: parseFloat(memberInfo.NextLevelThreshold || memberInfo.nextLevelThreshold || 0).toFixed(2),
+      progressToNextLevel: parseFloat(memberInfo.ProgressToNextLevel || memberInfo.progressToNextLevel || 0).toFixed(1),
       vipPoints: memberInfo.VipPoints || memberInfo.vipPoints || 0,
       registerTime: memberInfo.RegisterTime || memberInfo.registerTime || new Date(),
-      privileges: [] // 先设为空数组，稍后处理
+      privileges: [],
+      currentLevelInfo: {
+        color: currentLevelData?.levelColor || '#CD7F32',
+        icon: currentLevelData?.levelIcon || '🥉'
+      }
     };
     
-    console.log('✅ 处理后的会员信息数据:', processed);
     return processed;
   },
 
-  // 处理特权数据字段映射
-  processPrivileges(privileges, currentLevel) {
-    // 需求变更：只展示折扣特权，忽略后端返回的其他特权项
-    // 按会员等级生成唯一一条“折扣特权”
+  // 处理特权数据：只展示折扣
+  processPrivileges(currentLevel) {
     const discount = this.getDiscountByLevel(currentLevel);
     return [
       {
         privilegeType: 'discount',
         privilegeName: '会员折扣',
         privilegeDesc: '根据您的会员等级享受专属折扣',
-        privilegeValue: discount.display, // 例如：9.5折 / 8.0折 / 7.5折
+        privilegeValue: discount.fold + '折',
         privilegeIcon: '💰'
       }
     ];
   },
 
-  // 根据等级获取折扣（仅用于展示）
+  // 根据等级获取折扣
   getDiscountByLevel(level) {
-    // 折扣映射：单位为“折”（x.x折），同时附带百分比便于后续可能用途
     const map = {
       bronze: { fold: 9.9, percent: 99 },
       silver: { fold: 9.5, percent: 95 },
-      gold: { fold: 9.0, percent: 9.0 },
+      gold: { fold: 9.0, percent: 90 },
       platinum: { fold: 8.5, percent: 85 },
-      diamond: { fold: 8.0, percent: 8.0 }
+      diamond: { fold: 8.0, percent: 80 }
     };
-  const key = (level || 'bronze').toString().toLowerCase();
-  const d = map[key] || map['bronze'];
->>>>>>> Stashed changes
-    return {
-      ...memberInfo,
-      currentLevelInfo: {
-        color: currentLevelData?.levelColor || '#CD7F32',
-        icon: currentLevelData?.levelIcon || '🥉'
-      },
-      totalConsumption: parseFloat(memberInfo.totalConsumption).toFixed(2),
-      nextLevelThreshold: parseFloat(memberInfo.nextLevelThreshold).toFixed(2),
-      progressToNextLevel: parseFloat(memberInfo.progressToNextLevel).toFixed(1)
-    };
+    const key = (level || 'bronze').toString().toLowerCase();
+    return map[key] || map['bronze'];
   },
 
   // 处理统计数据
