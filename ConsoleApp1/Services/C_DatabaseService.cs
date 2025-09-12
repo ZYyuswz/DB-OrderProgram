@@ -14,11 +14,11 @@ namespace ConsoleApp1.Services
         private readonly ILogger<DatabaseService> _logger;
 
         public DatabaseService(IConfiguration configuration, ILogger<DatabaseService> logger)
-        {
-            _connectionString = configuration.GetConnectionString("OracleConnection")
-                ?? throw new ArgumentNullException("Oracle connection string not found");
-            _logger = logger;
-        }
+{
+    _connectionString = configuration.GetConnectionString("OracleConnection")
+        ?? throw new ArgumentNullException("Oracle connection string not found");
+    _logger = logger;
+}
 
         public string GetConnectionString()
         {

@@ -282,7 +282,7 @@ namespace ConsoleApp1.Controllers
         {
             try
             {
-                using var connection = new OracleConnection(_databaseService.GetConnectionString());
+                using var connection = new OracleConnection(_databaseService.GetConnectionString("OracleConnection"));
                 await connection.OpenAsync();
                 
                 var sql = "SELECT COUNT(*) FROM PUB.Customer WHERE Phone = :phone";
@@ -304,7 +304,7 @@ namespace ConsoleApp1.Controllers
         {
             try
             {
-                using var connection = new OracleConnection(_databaseService.GetConnectionString());
+                using var connection = new OracleConnection(_databaseService.GetConnectionString("OracleConnection"));
                 await connection.OpenAsync();
                 
                 var sql = @"INSERT INTO PUB.Customer (
@@ -346,7 +346,7 @@ namespace ConsoleApp1.Controllers
         {
             try
             {
-                using var connection = new OracleConnection(_databaseService.GetConnectionString());
+                using var connection = new OracleConnection(_databaseService.GetConnectionString("OracleConnection"));
                 await connection.OpenAsync();
                 
                 var sql = @"SELECT CustomerID, CustomerName, Phone, Password, 
@@ -385,7 +385,7 @@ namespace ConsoleApp1.Controllers
         {
             try
             {
-                using var connection = new OracleConnection(_databaseService.GetConnectionString());
+                using var connection = new OracleConnection(_databaseService.GetConnectionString("OracleConnection"));
                 await connection.OpenAsync();
                 
                 var sql = @"SELECT CustomerID, CustomerName, Phone 
@@ -421,7 +421,7 @@ namespace ConsoleApp1.Controllers
         {
             try
             {
-                using var connection = new OracleConnection(_databaseService.GetConnectionString());
+                using var connection = new OracleConnection(_databaseService.GetConnectionString("OracleConnection"));
                 await connection.OpenAsync();
                 
                 var sql = @"UPDATE PUB.Customer 
