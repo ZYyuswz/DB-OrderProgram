@@ -141,48 +141,58 @@ Page({
         title: '保存中...'
       });
 
-      // 调用后端API更新用户信息
+      // 准备更新数据 - 确保字段名与后端一致
       const updateInfo = {
         CustomerName: userInfo.customerName,
         Phone: userInfo.phone || null,
         Email: userInfo.email || null
       };
 
-      await API.updateCustomerProfile(userInfo.customerId, updateInfo);
+      console.log('准备保存的用户信息:', userInfo);
+      console.log('发送到后端的更新数据:', updateInfo);
 
-      // 更新本地存储
-      const storageUserInfo = wx.getStorageSync('userInfo') || {};
-      const updatedStorageInfo = {
-        ...storageUserInfo,
-        customerName: userInfo.customerName,
-        phone: userInfo.phone,
-        email: userInfo.email
-      };
-      wx.setStorageSync('userInfo', updatedStorageInfo);
+      // 调用API更新用户信息
+      const response = await API.updateCustomerProfile(userInfo.customerId, updateInfo);
 
-      wx.hideLoading();
-      wx.showToast({
-        title: '保存成功',
-        icon: 'success'
-      });
+      if (response && response.success) {
+        // 更新本地存储
+        const storageUserInfo = wx.getStorageSync('userInfo') || {};
+        const updatedStorageInfo = {
+          ...storageUserInfo,
+          customerName: userInfo.customerName,
+          phone: userInfo.phone,
+          email: userInfo.email
+        };
+        wx.setStorageSync('userInfo', updatedStorageInfo);
 
-      this.setData({
-        isFormChanged: false,
-        originalUserInfo: { ...userInfo }
-      });
+        wx.hideLoading();
+        wx.showToast({
+          title: '保存成功',
+          icon: 'success',
+          duration: 1500
+        });
 
-      // 更新全局数据
-      const app = getApp();
-      if (app.globalData) {
-        app.globalData.userInfo = updatedStorageInfo;
+        this.setData({
+          isFormChanged: false,
+          originalUserInfo: { ...userInfo }
+        });
+
+        // 更新全局数据
+        const app = getApp();
+        if (app.globalData) {
+          app.globalData.userInfo = updatedStorageInfo;
+        }
+      } else {
+        throw new Error(response?.message || '保存失败');
       }
 
     } catch (error) {
       wx.hideLoading();
       console.error('保存用户信息失败:', error);
       wx.showToast({
-        title: '保存失败，请重试',
-        icon: 'none'
+        title: error.message || '保存失败，请重试',
+        icon: 'none',
+        duration: 2000
       });
     }
   },

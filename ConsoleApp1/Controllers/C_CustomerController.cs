@@ -60,15 +60,25 @@ namespace ConsoleApp1.Controllers
                 var success = await _customerService.UpdateCustomerProfileAsync(customerId, updateInfo);
                 if (!success)
                 {
-                    return NotFound(new { message = "客户不存在" });
+                    return NotFound(new { 
+                        success = false, 
+                        message = "客户不存在" 
+                        });
                 }
 
-                return Ok(new { message = "客户信息更新成功" });
+                return Ok(new { 
+                    success = true, 
+                    message = "客户信息更新成功" 
+                });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"更新客户 {customerId} 信息失败");
-                return StatusCode(500, new { message = "更新客户信息失败", error = ex.Message });
+                return StatusCode(500, new { 
+                    success = false, 
+                    message = "更新客户信息失败", 
+                    error = ex.Message 
+                });
             }
         }
 
