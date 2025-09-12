@@ -43,7 +43,6 @@ builder.Services.AddScoped<PointsService>();
 builder.Services.AddScoped<MemberService>();
 builder.Services.AddScoped<QRCodeService>();
 builder.Services.AddScoped<CustomerService>();
-builder.Services.AddScoped<CustomerController>();
 builder.Services.AddScoped<DatabaseService>();
 builder.Services.AddHttpClient();
 
