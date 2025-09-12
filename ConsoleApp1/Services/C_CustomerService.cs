@@ -99,31 +99,92 @@ namespace ConsoleApp1.Services
         /// <returns>是否更新成功</returns>
         public async Task<bool> UpdateCustomerProfileAsync(int customerId, CustomerUpdateInfo updateInfo)
         {
+            // 1. 记录方法入口和接收到的原始数据
+            _logger.LogInformation("Attempting to update profile for CustomerID: {CustomerId}", customerId);
+            _logger.LogInformation("Received update data: CustomerName='{Name}', Phone='{Phone}', Email='{Email}'",
+                                   updateInfo.CustomerName, updateInfo.Phone, updateInfo.Email);
+
             try
             {
                 using var connection = new OracleConnection(_connectionString);
                 await connection.OpenAsync();
+                _logger.LogInformation("Database connection opened successfully.");
 
+                // 2. 构建 SQL 查询
+                // 我们保持这个查询不变，因为它在逻辑上是正确的
                 var query = @"
-                    UPDATE PUB.Customer 
-                    SET 
-                        CustomerName = :CustomerName,
-                        Phone = :Phone,
-                        Email = :Email
-                    WHERE CustomerID = :CustomerId AND Status = '正常'";
+            UPDATE PUB.Customer 
+            SET 
+                CustomerName = :CustomerName,
+                Phone = :Phone,
+                Email = :Email
+            WHERE CustomerID = :CustomerId AND Status = '正常'";
 
                 using var command = new OracleCommand(query, connection);
-                command.Parameters.Add(":CustomerId", OracleDbType.Int32).Value = customerId;
-                command.Parameters.Add(":CustomerName", OracleDbType.Varchar2).Value = updateInfo.CustomerName;
-                command.Parameters.Add(":Phone", OracleDbType.Varchar2).Value = updateInfo.Phone ?? (object)DBNull.Value;
-                command.Parameters.Add(":Email", OracleDbType.Varchar2).Value = updateInfo.Email ?? (object)DBNull.Value;
 
+                // 3. 安全地绑定参数
+                // 这里我们显式地处理 null 和空字符串，增加代码的明确性
+                command.Parameters.Add(":CustomerId", OracleDbType.Int32).Value = customerId;
+
+                command.Parameters.Add(":CustomerName", OracleDbType.Varchar2).Value =
+                    string.IsNullOrEmpty(updateInfo.CustomerName) ? (object)DBNull.Value : updateInfo.CustomerName;
+
+                command.Parameters.Add(":Phone", OracleDbType.Varchar2).Value =
+                    string.IsNullOrEmpty(updateInfo.Phone) ? (object)DBNull.Value : updateInfo.Phone;
+
+                command.Parameters.Add(":Email", OracleDbType.Varchar2).Value =
+                    string.IsNullOrEmpty(updateInfo.Email) ? (object)DBNull.Value : updateInfo.Email;
+
+
+                // 4. 执行前的终极诊断日志 (这是最重要的部分)
+                _logger.LogInformation("------------------- Pre-Execution Diagnosis -------------------");
+                _logger.LogInformation("Executing SQL Command: {SQL}", command.CommandText);
+
+                foreach (OracleParameter p in command.Parameters)
+                {
+                    // 对参数值进行安全处理，以防日志记录本身出错
+                    string paramValueStr;
+                    if (p.Value == null || p.Value == DBNull.Value)
+                    {
+                        paramValueStr = "[DBNull]";
+                    }
+                    else
+                    {
+                        paramValueStr = p.Value.ToString();
+                    }
+                    _logger.LogInformation("  -> Param: {Name} | Type: {Type} | Value: '{Value}'",
+                                           p.ParameterName, p.OracleDbType, paramValueStr);
+                }
+                _logger.LogInformation("-------------------------------------------------------------");
+
+
+                // 5. 执行命令 (你的 line 121 就在这里或附近)
                 var rowsAffected = await command.ExecuteNonQueryAsync();
+
+                // 6. 记录执行结果
+                if (rowsAffected > 0)
+                {
+                    _logger.LogInformation("Successfully updated profile for CustomerID: {CustomerId}. Rows affected: {Rows}", customerId, rowsAffected);
+                }
+                else
+                {
+                    _logger.LogWarning("Update command executed but no rows were affected for CustomerID: {CustomerId}. The customer might not exist or status is not '正常'.", customerId);
+                }
+
                 return rowsAffected > 0;
+            }
+            catch (OracleException oraEx)
+            {
+                // 7. 捕获并记录详细的 Oracle 异常
+                _logger.LogError(oraEx, "An OracleException occurred while updating CustomerID {CustomerId}. Error Number: {ErrorNumber}",
+                                 customerId, oraEx.Number);
+                // 将原始异常再次抛出，以便上层可以捕获到500错误
+                throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"更新客户 {customerId} 档案信息失败");
+                // 8. 捕获其他类型的异常
+                _logger.LogError(ex, "A general exception occurred while updating CustomerID {CustomerId}.", customerId);
                 throw;
             }
         }

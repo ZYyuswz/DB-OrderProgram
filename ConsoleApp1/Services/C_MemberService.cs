@@ -15,7 +15,7 @@ namespace ConsoleApp1.Services
         {
             _databaseService = databaseService;
             _logger = logger;
-            _connectionString = configuration.GetConnectionString("OracleConnection")
+            _connectionString = configuration.GetConnectionString("OracleConnection") 
                 ?? throw new ArgumentNullException("Oracle connection string not found");
         }
 
@@ -30,7 +30,7 @@ namespace ConsoleApp1.Services
             {
                 // 先更新客户的累计消费金额，确保数据是最新的
                 await UpdateCustomerTotalConsumptionAsync(customerId);
-
+                
                 // 获取客户基本信息
                 var customer = await GetCustomerAsync(customerId);
                 if (customer == null)
@@ -40,20 +40,10 @@ namespace ConsoleApp1.Services
 
                 // 获取会员等级规则
                 var levels = await GetMemberLevelsAsync();
-
+                
                 // 计算当前等级和下一等级
                 var currentLevel = CalculateCurrentLevel(customer.TotalConsumption, levels);
                 var nextLevel = CalculateNextLevel(customer.TotalConsumption, levels);
-
-                // 检查并更新数据库中的会员等级（如果需要）
-                var currentDbLevelCode = GetLevelCode(currentLevel.LevelCode);
-                if (customer.VIPLevel != currentDbLevelCode)
-                {
-                    _logger.LogInformation($"客户 {customerId} 的会员等级需要更新: {customer.VIPLevel} -> {currentDbLevelCode}");
-                    await UpdateCustomerMemberLevelAsync(customerId);
-                    // 更新本地customer对象的VIPLevel，以保持一致性
-                    customer.VIPLevel = currentDbLevelCode;
-                }
 
                 // 计算升级进度
                 var progressToNextLevel = CalculateProgressToNextLevel(customer.TotalConsumption, currentLevel, nextLevel);
@@ -325,16 +315,16 @@ namespace ConsoleApp1.Services
             {
                 using var connection = new OracleConnection(_connectionString);
                 await connection.OpenAsync();
-
+                
                 // 开始事务
                 using var transaction = connection.BeginTransaction();
-
+                
                 // 计算客户的累计消费金额 - 移除状态过滤，与消费统计保持一致
                 var calculateSql = @"
                     SELECT NVL(SUM(o.TotalPrice), 0) as TotalConsumption
                     FROM PUB.Orders o
                     WHERE o.CustomerID = :CustomerID";
-
+                
                 decimal totalConsumption = 0;
                 using (var calculateCommand = new OracleCommand(calculateSql, connection))
                 {
@@ -349,7 +339,7 @@ namespace ConsoleApp1.Services
                 checkCommand.Transaction = transaction;
                 checkCommand.Parameters.Add(":CustomerID", OracleDbType.Int32).Value = customerId;
                 var customerExists = Convert.ToInt32(await checkCommand.ExecuteScalarAsync()) > 0;
-
+                
                 if (!customerExists)
                 {
                     _logger.LogWarning($"客户 {customerId} 不存在，无法更新累计消费金额");
@@ -364,7 +354,7 @@ namespace ConsoleApp1.Services
 
                 var rowsAffected = await updateCommand.ExecuteNonQueryAsync();
                 transaction.Commit();
-
+                
                 return rowsAffected > 0;
             }
             catch (Exception ex)
@@ -395,9 +385,9 @@ namespace ConsoleApp1.Services
                 // 更新数据库中的会员等级
                 using var connection = new OracleConnection(_connectionString);
                 await connection.OpenAsync();
-
+                
                 var updateSql = "UPDATE PUB.Customer SET VIPLevel = :VIPLevel WHERE CustomerID = :CustomerID";
-
+                
                 using var command = new OracleCommand(updateSql, connection);
                 command.Parameters.Add(":CustomerID", OracleDbType.Int32).Value = customerId;
                 command.Parameters.Add(":VIPLevel", OracleDbType.Int32).Value = GetLevelCode(currentLevel.LevelCode);
@@ -425,7 +415,7 @@ namespace ConsoleApp1.Services
             {
                 using var connection = new OracleConnection(_connectionString);
                 await connection.OpenAsync();
-
+                
                 var statsSql = @"
                     SELECT 
                         c.CustomerID,
@@ -445,21 +435,21 @@ namespace ConsoleApp1.Services
 
                 using var command = new OracleCommand(statsSql, connection);
                 command.Parameters.Add(":CustomerID", OracleDbType.Int32).Value = customerId;
-
+                
                 using var reader = await command.ExecuteReaderAsync();
-
+                
                 if (await reader.ReadAsync())
                 {
                     return new ConsumptionStats
                     {
                         CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerID")),
-                        TotalConsumption = SafeGetDecimal(reader, "TotalConsumption"),
+                        TotalConsumption = reader.GetDecimal(reader.GetOrdinal("TotalConsumption")),
                         TotalOrders = reader.GetInt32(reader.GetOrdinal("TotalOrders")),
-                        MonthlyConsumption = SafeGetDecimal(reader, "MonthlyConsumption"),
+                        MonthlyConsumption = reader.GetDecimal(reader.GetOrdinal("MonthlyConsumption")),
                         MonthlyOrders = reader.GetInt32(reader.GetOrdinal("MonthlyOrders")),
-                        AverageOrderAmount = SafeGetDecimal(reader, "AverageOrderAmount"),
-                        LastOrderTime = SafeGetDateTime(reader, "LastOrderTime"),
-                        FavoriteStore = SafeGetString(reader, "FavoriteStore")
+                        AverageOrderAmount = reader.GetDecimal(reader.GetOrdinal("AverageOrderAmount")),
+                        LastOrderTime = reader.GetDateTime(reader.GetOrdinal("LastOrderTime")),
+                        FavoriteStore = reader.GetString(reader.GetOrdinal("FavoriteStore"))
                     };
                 }
 
@@ -485,14 +475,14 @@ namespace ConsoleApp1.Services
             {
                 using var connection = new OracleConnection(_connectionString);
                 await connection.OpenAsync();
-
+                
                 var sql = "SELECT * FROM PUB.Customer WHERE CustomerID = :CustomerID";
-
+                
                 using var command = new OracleCommand(sql, connection);
                 command.Parameters.Add(":CustomerID", OracleDbType.Int32).Value = customerId;
-
+                
                 using var reader = await command.ExecuteReaderAsync();
-
+                
                 if (await reader.ReadAsync())
                 {
                     return new Customer
@@ -505,7 +495,7 @@ namespace ConsoleApp1.Services
                         Gender = reader.IsDBNull(reader.GetOrdinal("Gender")) ? null : reader.GetString(reader.GetOrdinal("Gender"))[0],
                         RegisterTime = reader.GetDateTime(reader.GetOrdinal("RegisterTime")),
                         LastVisitTime = null, // 字段不存在，设为null
-                        TotalConsumption = SafeGetDecimal(reader, "TotalConsumption"),
+                        TotalConsumption = reader.GetDecimal(reader.GetOrdinal("TotalConsumption")),
                         VIPLevel = reader.IsDBNull(reader.GetOrdinal("VIPLevel")) ? null : reader.GetInt32(reader.GetOrdinal("VIPLevel")),
                         VIPPoints = reader.GetInt32(reader.GetOrdinal("VIPPoints")),
                         Status = reader.GetString(reader.GetOrdinal("Status")),
@@ -531,7 +521,7 @@ namespace ConsoleApp1.Services
         private MemberLevel CalculateCurrentLevel(decimal totalConsumption, List<MemberLevel> levels)
         {
             var sortedLevels = levels.OrderByDescending(l => l.MinConsumption).ToList();
-
+            
             foreach (var level in sortedLevels)
             {
                 if (totalConsumption >= level.MinConsumption)
@@ -552,7 +542,7 @@ namespace ConsoleApp1.Services
         private MemberLevel? CalculateNextLevel(decimal totalConsumption, List<MemberLevel> levels)
         {
             var sortedLevels = levels.OrderBy(l => l.MinConsumption).ToList();
-
+            
             foreach (var level in sortedLevels)
             {
                 if (totalConsumption < level.MinConsumption)
@@ -601,97 +591,13 @@ namespace ConsoleApp1.Services
         {
             return levelCode switch
             {
-                "bronze" => 1,
-                "silver" => 2,
-                "gold" => 3,
-                "platinum" => 4,
-                "diamond" => 5,
-                _ => 1
+                "bronze" => 0,
+                "silver" => 1,
+                "gold" => 2,
+                "platinum" => 3,
+                "diamond" => 4,
+                _ => 0
             };
-        }
-
-        /// <summary>
-        /// 安全地读取Decimal类型字段
-        /// </summary>
-        /// <param name="reader">数据读取器</param>
-        /// <param name="columnName">列名</param>
-        /// <returns>Decimal值，如果为NULL则返回0</returns>
-        private decimal SafeGetDecimal(OracleDataReader reader, string columnName)
-        {
-            try
-            {
-                var ordinal = reader.GetOrdinal(columnName);
-                if (reader.IsDBNull(ordinal))
-                    return 0;
-
-                var value = reader.GetValue(ordinal);
-                if (value == null)
-                    return 0;
-
-                // 尝试多种转换方式
-                if (value is decimal decimalValue)
-                    return decimalValue;
-                if (value is double doubleValue)
-                    return Convert.ToDecimal(doubleValue);
-                if (value is int intValue)
-                    return Convert.ToDecimal(intValue);
-                if (value is long longValue)
-                    return Convert.ToDecimal(longValue);
-                if (value is float floatValue)
-                    return Convert.ToDecimal(floatValue);
-
-                // 最后尝试字符串转换
-                return Convert.ToDecimal(value.ToString());
-            }
-            catch
-            {
-                return 0;
-            }
-        }
-
-        /// <summary>
-        /// 安全地读取DateTime类型字段
-        /// </summary>
-        /// <param name="reader">数据读取器</param>
-        /// <param name="columnName">列名</param>
-        /// <returns>DateTime值，如果为NULL则返回DateTime.MinValue</returns>
-        private DateTime SafeGetDateTime(OracleDataReader reader, string columnName)
-        {
-            try
-            {
-                var ordinal = reader.GetOrdinal(columnName);
-                if (reader.IsDBNull(ordinal))
-                    return DateTime.MinValue;
-
-                return reader.GetDateTime(ordinal);
-            }
-            catch
-            {
-                return DateTime.MinValue;
-            }
-        }
-
-        /// <summary>
-        /// 安全地读取String类型字段
-        /// </summary>
-        /// <param name="reader">数据读取器</param>
-        /// <param name="columnName">列名</param>
-        /// <returns>String值，如果为NULL则返回"未知"</returns>
-        private string SafeGetString(OracleDataReader reader, string columnName)
-        {
-            try
-            {
-                var ordinal = reader.GetOrdinal(columnName);
-                if (reader.IsDBNull(ordinal))
-                    return "未知";
-
-                var value = reader.GetString(ordinal);
-                return string.IsNullOrEmpty(value) ? "未知" : value;
-            }
-            catch
-            {
-                return "未知";
-            }
         }
 
         #endregion

@@ -1,4 +1,4 @@
-// pages/login/login.js
+// login.js
 Page({
   data: {
     username: '',
@@ -21,8 +21,13 @@ Page({
   },
 
   // 登录功能
-  async handleLogin() {
+  handleLogin() {
     const { username, password } = this.data;
+     // 先清空所有旧缓存
+    wx.removeStorageSync('userInfo');
+    wx.removeStorageSync('token');
+    wx.removeStorageSync('customerId');
+    wx.removeStorageSync('isLogin');
 
     // 表单验证
     if (!username.trim()) {
@@ -44,22 +49,61 @@ Page({
     // 显示加载状态
     this.setData({ loading: true });
 
-    try {
-      // 调用真实API进行登录验证
-      const loginResult = await this.requestLogin({
-        username: username,
-        password: password
-      });
+<<<<<<< Updated upstream
+    // 模拟登录验证（纯前端，无后端验证）
+    setTimeout(() => {
+      // 验证演示账户
+      const validAccounts = {
+        'admin': '123456',
+        'user': '123456',
+        'test': '123456'
+      };
 
-      if (loginResult.success) {
+      if (validAccounts[username] && validAccounts[username] === password) {
         // 登录成功，保存用户信息到本地存储
-        const userInfo = loginResult.data;
-        
+        const userInfo = {
+          username: username,
+          nickname: username === 'admin' ? '系统管理员' : 
+                   username === 'user' ? '普通用户' : 
+                   username === 'test' ? '测试用户' : '用户昵称',
+          avatar: '/images/default-avatar.png',
+          phone: '138****8888',
+          memberLevel: username === 'admin' ? '钻石会员' : '黄金会员',
+          points: username === 'admin' ? 5000 : 1520,
+          loginTime: new Date().getTime()
+        };
+
         wx.setStorageSync('userInfo', userInfo);
         wx.setStorageSync('isLogin', true);
-        wx.setStorageSync('token', loginResult.token || '');
-        wx.setStorageSync('customerId', userInfo.customerId || '');
 
+=======
+    try {
+        const loginResult = await this.requestLogin({
+          username: username,
+          password: password
+        });
+    
+        console.log('🔍 完整的登录返回结果:', loginResult);
+        console.log('🔍 loginResult.data 结构:', loginResult.data);
+        console.log('🔍 loginResult.token:', loginResult.token);
+    
+        if (loginResult.success) {
+            // 正确的数据提取方式
+            const userInfo = loginResult.data.userInfo; // 从 data.userInfo 获取
+            const customerId = userInfo.customerId;     // 从 userInfo.customerId 获取
+            const token = loginResult.token || '';      // token 为 undefined
+            // 保存到缓存
+            wx.setStorageSync('userInfo', userInfo);
+            wx.setStorageSync('isLogin', true);
+            wx.setStorageSync('token', token);          // 这里会存储空字符串
+            wx.setStorageSync('customerId', customerId);
+          
+            console.log('✅ 用户信息已更新到缓存:', {
+              userInfo: userInfo,
+              token: token,
+              customerId: customerId
+            });
+>>>>>>> Stashed changes
         this.setData({ loading: false });
 
         wx.showToast({
@@ -68,134 +112,50 @@ Page({
           duration: 1500
         });
 
-        // 登录成功后跳转：优先回到登录前的目标页（含二维码参数）
+        // 登录成功后跳转到主界面
         setTimeout(() => {
-          try {
-            const pending = wx.getStorageSync('pendingRedirect');
-            if (pending && pending.page) {
-              const page = pending.page;
-              const options = pending.options || {};
-
-              const tabBarPages = [
-                '/pages/index/index',
-                '/pages/goods/list',
-                '/pages/reservation/reservation',
-                '/pages/account/account'
-              ];
-
-              const query = Object.keys(options).map(k => `${k}=${encodeURIComponent(options[k])}`).join('&');
-              const urlWithQuery = query ? `${page}?${query}` : page;
-
-              if (tabBarPages.includes(page)) {
-                // 不清理 pendingRedirect，留给落地页读取并清理
-                wx.switchTab({ url: page });
-              } else {
-                wx.reLaunch({ url: urlWithQuery });
-                try { wx.removeStorageSync('pendingRedirect'); } catch (e2) {}
-              }
-              return;
-            }
-          } catch (e) {}
-
-          // 默认回到首页
-          wx.switchTab({ url: '/pages/index/index' });
+          wx.switchTab({
+            url: '/pages/index/index'
+          });
         }, 1500);
       } else {
-        // 登录失败
+        // 登录失败 
         this.setData({ loading: false });
         
         wx.showToast({
-          title: loginResult.message || '用户名或密码错误',
+          title: '用户名或密码错误',
           icon: 'none',
           duration: 2000
         });
       }
-    } catch (error) {
-      console.error('登录失败:', error);
-      this.setData({ loading: false });
-      
-      wx.showToast({
-        title: '网络错误，请重试',
-        icon: 'none',
-        duration: 2000
-      });
-    }
+
+    }, 1000); // 模拟网络请求延迟
   },
 
-  // API请求：登录（使用用户名）
-  async requestLogin(data) {
-    return new Promise((resolve, reject) => {
-      wx.request({
-        url: 'http://localhost:5002/api/customer/login-by-username',
-        method: 'POST',
-        data: data,
-        header: {
-          'content-type': 'application/json'
-        },
-        success: (res) => {
-          if (res.statusCode === 200) {
-            resolve(res.data);
-          } else {
-            reject(new Error(`请求失败: ${res.statusCode}`));
-          }
-        },
-        fail: (err) => {
-          reject(new Error('网络连接失败'));
-        }
-      });
-    });
-  },
-
-  // 注册功能
+  // 注册功能（暂时只是提示）
   handleRegister() {
-    wx.navigateTo({
-      url: '/pages/register/register'
+    wx.showToast({
+      title: '注册功能待开发',
+      icon: 'none'
     });
   },
 
   // 忘记密码
   handleForgotPassword() {
-    wx.navigateTo({
-      url: '/pages/forgot-password/forgot-password'
+    wx.showToast({
+      title: '找回密码功能待开发',
+      icon: 'none'
     });
   },
 
-  onLoad(options) {
-    // 不再自动跳过；若是二维码进入，则缓存参数用于登录后回跳
-    try {
-      let qrOptions = options || {};
-      if (wx.getEnterOptionsSync) {
-        const enter = wx.getEnterOptionsSync();
-        if (enter) {
-          qrOptions = { ...(qrOptions || {}), ...(enter.query || {}), scene: enter.scene, q: enter.query ? enter.query.q : undefined };
-        }
-      }
-      if (wx.getLaunchOptionsSync) {
-        const launch = wx.getLaunchOptionsSync();
-        if (launch) {
-          qrOptions = { ...(qrOptions || {}), ...(launch.query || {}), scene: launch.scene, q: launch.query ? launch.query.q : undefined };
-        }
-      }
-      const hasQrParams = qrOptions && (qrOptions.tableNumber || qrOptions.storeId || qrOptions.scene || qrOptions.q);
-      if (hasQrParams) {
-        wx.setStorageSync('pendingRedirect', {
-          page: '/pages/index/index',
-          options: qrOptions
-        });
-      }
-    } catch (e) {}
-  },
-
-  onShow() {
-    // 页面显示时检查是否有注册成功传递的用户名
-    const pages = getCurrentPages();
-    const currentPage = pages[pages.length - 1];
-    const options = currentPage.options;
-    
-    if (options.username) {
-      this.setData({
-        username: options.username
+  onLoad() {
+    // 检查是否已经登录
+    const isLogin = wx.getStorageSync('isLogin');
+    if (isLogin) {
+      // 如果已登录，直接跳转到主界面
+      wx.switchTab({
+        url: '/pages/index/index'
       });
     }
   }
-});
+}); 
