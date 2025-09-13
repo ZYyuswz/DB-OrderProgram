@@ -93,12 +93,12 @@ Page({
       }
       if(dish.isAvailable ==="Y"){
       // 组装商品字段
-      const API_BASE_URL = 'http://100.80.24.218:5002';
+      const API_BASE_URL = 'https://gypsophila-ui.github.io/DB-images/ID-';
         console.log(API_BASE_URL)
       categoryResult[cid].goods.push({
         dishId: dish.dishId,
         dishName: dish.dishName,
-        pic: API_BASE_URL + "/images/dish/ID-" + dish.dishId + ".png",
+        pic: API_BASE_URL  + dish.dishId + ".jpg",
         characteristic: dish.description,
         Price: dish.price, 
         categoryId:dish.categoryId, 

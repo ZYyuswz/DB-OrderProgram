@@ -10,7 +10,7 @@
   <view class="section order-details">
     <scroll-view class="order-scroll" scroll-y>
       <view class="order-item" wx:for="{{orderItems}}" wx:key="dishId">
-        <image class="dish-pic" src="/images/dish/ID-{{item.dishId}}.png" mode="aspectFill"></image>
+        <image class="dish-pic" src="https://Gypsophila-ui.github.io/DB-images/ID-{{item.dishId}}.jpg" mode="aspectFill"></image>
         <view class="dish-info">
           <text class="name">{{item.dishName}}</text>
           <text class="quantity">x {{item.quantity}}</text>
