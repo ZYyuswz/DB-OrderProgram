@@ -60,7 +60,7 @@ Page({
   
 
   onSubmit() {
-    const userInfo = wx.getStorageSync('userInfo');
+    const userInfo = wx.getStorageSync('customerId');
     console.log(userInfo);
     if (!this.data.name.trim()) {
       wx.showToast({ title: '请输入姓名', icon: 'none' });
@@ -76,7 +76,7 @@ Page({
     const reservationTime = `${this.data.date}T${mealTimeValue === 0 ? "12:00:00" : "18:00:00"}`;
   
     const reservationData = {
-      customerID: 23,
+      customerID: userInfo,
       customerName: this.data.name,
       contactPhone: this.data.phone,
       partySize: parseInt(this.data.peopleNumbers[this.data.peopleIndex]),
