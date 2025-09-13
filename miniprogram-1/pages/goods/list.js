@@ -36,8 +36,10 @@ Page({
   },
      
   onLoad: function () {
+    const app = getApp();
+    this.constURL = app.globalData.baseUrl;
     wx.request({
-      url: 'http://localhost:5002/api/dish',
+      url: this.constURL + 'dish',
       method: 'GET',
       success: (res) => {        
         if (res.statusCode === 200) {
@@ -62,6 +64,7 @@ Page({
     this.setData({tableNumber : this.tableIndex[this.data.tableId]});
     wx.setStorageSync('tableNumber', this.data.tableNumber);
     this.cacheMap = new Map();
+    
   },
   getTransformedDishData: function (rawData) {
     const categoryMap = {
@@ -140,7 +143,7 @@ decreaseQuantity: function(e) {
 
 createCache: function(dishId){
   wx.request({
-    url: 'http://localhost:5002/api/cache',
+    url: this.constURL + 'cache',
     method: 'POST',
     header: {
       'Content-Type': 'application/json'
@@ -167,7 +170,7 @@ deleteCache: function(dishId){
     }
   }
   wx.request({
-    url: 'http://localhost:5002/api/cache/'+ cacheId,
+    url: this.constURL + 'cache/'+ cacheId,
     method: 'DELETE',
     header: {
       'Content-Type': 'application/json'
@@ -388,7 +391,7 @@ clearCart: function() {
 cartsync: function() {
   return new Promise((resolve, reject) => {
     wx.request({
-      url: 'http://localhost:5002/api/cache/' + this.data.tableId,
+      url: this.constURL + 'cache/' + this.data.tableId,
       method: 'GET',
       success: (res) => {
         if (res.statusCode === 200) {
