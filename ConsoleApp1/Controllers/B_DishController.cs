@@ -77,5 +77,17 @@ namespace DBManagement.Controller
             var (success, message) = DbUtils.DeleteById<Dish>(_db, id);
             return new ApiResponse(success, message);
         }
+
+        [HttpGet("dish-image/{id}")]
+        public IActionResult GetDishImage(int id)
+        {
+            // 根据前端命名格式：ID-{id}.png
+            var imagePath = $"/images/dish/ID-{id}.png";
+
+            // 返回完整的URL
+            var imageUrl = $"{Request.Scheme}://{Request.Host}{imagePath}";
+
+            return Ok(new { imageUrl });
+        }
     }
 }

@@ -95,7 +95,7 @@ Page({
       // 组装商品字段
       const API_BASE_URL = 'http://100.80.24.218:5002';
         console.log(API_BASE_URL)
-        categoryResult[cid].goods.push({
+      categoryResult[cid].goods.push({
         dishId: dish.dishId,
         dishName: dish.dishName,
         pic: API_BASE_URL + "/images/dish/ID-" + dish.dishId + ".png",
