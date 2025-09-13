@@ -142,7 +142,7 @@ Page({
         "B-01": 3,
         "C-01": 4
       };
-      if(Number.isFinite(tableNumber)){
+      if(!isNaN(Number(tableNumber))){
         wx.setStorageSync('tableId', tableNumber);
       }
       else{
