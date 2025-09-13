@@ -8,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ========== 1. 配置基础服务 ==========
 // 配置服务监听所有网络接口
-builder.WebHost.UseUrls("http://localhost:5002");
+builder.WebHost.UseUrls("http://*:5002");
 
 // 注册控制器和Swagger
 builder.Services.AddControllers()
@@ -107,6 +107,6 @@ using (var scope = app.Services.CreateScope())
 // ========== 7. 启动应用 ==========
 app.Logger.LogInformation("=== 餐饮门店智能管理系统 - Web API 启动 ===");
 app.Logger.LogInformation("API服务已启动，支持小程序前端访问");
-app.Logger.LogInformation("API文档地址: http://localhost:5002/swagger");
+app.Logger.LogInformation("API文档地址: http://*:5002/swagger");
 
 app.Run();
