@@ -1,0 +1,75 @@
+.register-container {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding: 40rpx;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 60rpx;
+}
+
+.title {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.form-section {
+  background: white;
+  border-radius: 16rpx;
+  padding: 0 30rpx;
+  margin-bottom: 40rpx;
+}
+
+.form-item {
+  display: flex;
+  align-items: center;
+  padding: 30rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.form-item:last-child {
+  border-bottom: none;
+}
+
+.label {
+  width: 140rpx;
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.input {
+  flex: 1;
+  font-size: 32rpx;
+  color: #333;
+  padding: 10rpx 0;
+}
+
+.input::placeholder {
+  color: #999;
+}
+
+.register-btn {
+  background: #FF8C42;
+  color: white;
+  border-radius: 50rpx;
+  font-size: 36rpx;
+  margin-bottom: 30rpx;
+}
+
+.register-btn[disabled] {
+  background: #ccc;
+}
+
+.login-link {
+  text-align: center;
+  font-size: 28rpx;
+  color: #666;
+}
+
+.link {
+  color: #FF8C42;
+  margin-left: 10rpx;
+}

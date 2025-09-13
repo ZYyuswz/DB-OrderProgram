@@ -2,6 +2,7 @@
 Page({
   data: {
     tableId: 1, // 这里可以动态获取，例如从扫码参数中
+    tableNumber : '',
     orderItems: [], 
     totalPrice: 0,
     remark: '',
@@ -16,10 +17,16 @@ Page({
     try {
       const items = wx.getStorageSync('order_items');
       const price = wx.getStorageSync('order_total_price');
+      this.data.tableId = parseInt(wx.getStorageSync('tableId')) || 1;
+      this.data.storeId = wx.getStorageSync('storeId') || 1;
+      //必须要setdata，否则无法渲染上去
+      this.setData({tableNumber : wx.getStorageSync('tableNumber')});
+      //测试时不用，正式运行时取消掉
 
-      this.data.tableId = wx.getStorageSync('tableId') || 1;
-      this.data.customerId = wx.getStorageSync('customerId') || 1;
-
+      this.data.customerId = wx.getStorageSync('userInfo').customerId || 1;
+      let userinfo = wx.getStorageSync('userInfo')
+      this.setData({ points : userinfo.points} ?? 100);
+      console.log("积分为",userinfo);
       console.log(items,price);
       if (items && price) {
         this.setData({
@@ -93,7 +100,7 @@ Page({
         storeId: this.data.storeId,
         orderTime: new Date().toISOString() // 生成ISO 8601格式的时间字符串
       },
-      orderDetails: orderDetails // 这里属性名是 orderDetails, 我根据你的json示例调整
+      orderDetails: orderDetails // 这里属性名是 orderDetails
     };
     const isAddDish = wx.getStorageSync('isAddDish')||false;
     return isAddDish?orderDetails:data;
@@ -118,12 +125,10 @@ Page({
       },
       data: postData,
       success: (res) => {
-        // HTTP状态码200或201通常代表成功
+        // HTTP状态码200或201代表成功
         if (res.statusCode === 200 || res.statusCode === 201) {
           console.log('订单提交成功，后端返回:', res.data);
-
           this.putStatus();         
-
             // 订单创建成功后，再根据需求发起GET请求获取总价
             if(isAddDish){wx.redirectTo({ url: '/pages/payment/order-success'});return;}
           that.getTotalPriceFromServer(res.data.data);         
@@ -148,7 +153,6 @@ Page({
       }
     });
   },
-
   
   putStatus:function () {
     wx.request({
@@ -169,7 +173,6 @@ Page({
         success: (res) => {        
           if (res.statusCode === 200) {
             console.log("删除缓存成功");
-
           }
         }
     })

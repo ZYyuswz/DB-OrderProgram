@@ -11,7 +11,10 @@
   
     onLoad: function () {
       wx.setStorageSync('isAddDish', true);
-      this.data.orderId = wx.getStorageSync('orderId')
+      this.setData({
+        orderId : wx.getStorageSync('orderId'),
+        finalPrice : wx.getStorageSync('finalPrice')
+      });
       const backendApiUrl = 'http://localhost:5002/api/order/detail/'+ this.data.orderId; 
       // 页面加载时，从后端读取订单数据
       try {
@@ -38,7 +41,7 @@
         }
       },
     goToHome() {
-    
+      wx.setStorageSync('isAddDish',false)
       wx.reLaunch({
         url: '/pages/index/index' // 修改为你的首页路径
       });

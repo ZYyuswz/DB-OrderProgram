@@ -1,6 +1,6 @@
 Page({
   data: {
-    shops: ["店铺A", "店铺B", "店铺C"],
+    shops: ["店铺A"],
     shopIndex: 0,
 
     date: "2025-08-10",
@@ -60,6 +60,8 @@ Page({
   
 
   onSubmit() {
+    const userInfo = wx.getStorageSync('customerId');
+    console.log(userInfo);
     if (!this.data.name.trim()) {
       wx.showToast({ title: '请输入姓名', icon: 'none' });
       return;
@@ -74,7 +76,7 @@ Page({
     const reservationTime = `${this.data.date}T${mealTimeValue === 0 ? "12:00:00" : "18:00:00"}`;
   
     const reservationData = {
-      customerID: 123,
+      customerID: userInfo,
       customerName: this.data.name,
       contactPhone: this.data.phone,
       partySize: parseInt(this.data.peopleNumbers[this.data.peopleIndex]),
@@ -100,28 +102,12 @@ Page({
       data: postData,
       success: (res) => {
         // HTTP状态码200或201通常代表成功
-        if (res.statusCode === 200 || res.statusCode === 201) {
+        if (res.statusCode == 200 || res.statusCode == 201) {
           console.log('预约提交，后端返回:', res.data);
-          if(res.data.suceess === true){         
+                   
           // 订单创建成功后，发起GET请求
             this.getResponse(res.data.data);   
-          }
-          else{
-            wx.hideLoading();
-            console.error('提交失败:', res);
-            wx.showToast({
-              title: '预约失败: 没有多余的座位',
-              icon: 'none'
-            });
-          }       
-        } else {
-          // 其他状态码，表示有错误
-          wx.hideLoading();
-          console.error('提交失败:', res);
-          wx.showToast({
-            title: '预约失败: ' + (res.data.message || '请稍后再试'),
-            icon: 'none'
-          });
+          
         }
       },
       fail: (err) => {

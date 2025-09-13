@@ -149,7 +149,7 @@ namespace DBManagement.Utils
                 Status = "正常", // 会员状态
                 TotalConsumption = 0, // 初始消费总额为0
                 VIPPoints = 0, // 初始积分
-                VIPLevelId = null // 初始无会员等级（可根据实际等级表设置）
+                VIPLevel = 1 // 初始无会员等级（可根据实际等级表设置）
             };
 
             // 检查ID为1的是否已存在

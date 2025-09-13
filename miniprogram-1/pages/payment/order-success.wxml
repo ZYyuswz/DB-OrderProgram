@@ -11,7 +11,8 @@
         <text class="quantity">x{{item.quantity}}</text>  
       </view>
     </scroll-view>
-
+  <text class = "price-text">总价：</text>
+  <text class = "final-price">{{finalPrice}}</text>
   <view class="btn-group">
     <button bindtap="goToHome">返回首页</button>
     <button bindtap="goToMenu">继续点餐</button>

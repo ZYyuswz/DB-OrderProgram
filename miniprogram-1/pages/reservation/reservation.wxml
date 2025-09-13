@@ -1,40 +1,70 @@
-<view class="container">
-  <!-- 店铺选择 -->
-  <picker mode="selector" range="{{shops}}" value="{{shopIndex}}" bindchange="onShopChange">
-    <view class="picker">选择店铺：{{shops[shopIndex]}}</view>
-  </picker>
+<view class="container reservation-page">
+  <!-- 顶部信息 -->
+  <view class="page-header">
+    <view class="title">预定座位</view>
+    <view class="subtitle">提前预定，安心用餐</view>
+  </view>
 
-  <!-- 日期选择 -->
-  <picker mode="date" value="{{date}}" start="{{startDate}}" end="{{endDate}}" bindchange="onDateChange">
-    <view class="picker">选择日期：{{date}}</view>
-  </picker>
+  <!-- 店铺与时间 -->
+  <view class="card">
+    <view class="card-title">店铺与时间</view>
+    <view class="field">
+      <text class="field-label">店铺</text>
+      <picker mode="selector" range="{{shops}}" value="{{shopIndex}}" bindchange="onShopChange">
+        <view class="field-control picker-display">{{shops[shopIndex]}}</view>
+      </picker>
+    </view>
+    <view class="field grid-2">
+      <view class="field-item">
+        <text class="field-label">日期</text>
+        <picker mode="date" value="{{date}}" start="{{startDate}}" end="{{endDate}}" bindchange="onDateChange">
+          <view class="field-control picker-display">{{date}}</view>
+        </picker>
+      </view>
+      <view class="field-item">
+        <text class="field-label">时段</text>
+        <picker mode="selector" range="{{timeSlots}}" value="{{timeIndex}}" bindchange="onTimeChange">
+          <view class="field-control picker-display">{{timeSlots[timeIndex]}}</view>
+        </picker>
+      </view>
+    </view>
+    <view class="field grid-2">
+      <view class="field-item">
+        <text class="field-label">时长</text>
+        <picker mode="selector" range="{{durationSlots}}" value="{{durationIndex}}" bindchange="onDurationChange">
+          <view class="field-control picker-display">{{durationSlots[durationIndex]}} 分钟</view>
+        </picker>
+      </view>
+      <view class="field-item">
+        <text class="field-label">人数</text>
+        <picker mode="selector" range="{{peopleNumbers}}" value="{{peopleIndex}}" bindchange="onPeopleChange">
+          <view class="field-control picker-display">{{peopleNumbers[peopleIndex]}}</view>
+        </picker>
+      </view>
+    </view>
+  </view>
 
-  <!-- 时段选择（中午/晚上） -->
-  <picker mode="selector" range="{{timeSlots}}" value="{{timeIndex}}" bindchange="onTimeChange">
-    <view class="picker">选择时段：{{timeSlots[timeIndex]}}</view>
-  </picker>
+  <!-- 联系人信息 -->
+  <view class="card">
+    <view class="card-title">联系人</view>
+    <view class="field">
+      <text class="field-label">姓名</text>
+      <input class="text-input field-control" type="text" placeholder="请输入姓名" value="{{name}}" bindinput="onNameInput" />
+    </view>
+    <view class="field">
+      <text class="field-label">手机号</text>
+      <input class="text-input field-control" type="number" maxlength="11" placeholder="请输入手机号" value="{{phone}}" bindinput="onPhoneInput" />
+    </view>
+  </view>
 
-  <picker mode="selector" range="{{durationSlots}}" value="{{durationIndex}}" bindchange="onDurationChange">
-    <view class="picker">选择预计用餐时长(分钟)：{{durationSlots[durationIndex]}}</view>
-  </picker>
+  <!-- 备注 -->
+  <view class="card">
+    <view class="card-title">备注</view>
+    <textarea class="textarea-input field-control" placeholder="如有过敏或特殊需求可备注" value="{{remark}}" bindinput="onRemarkInput"></textarea>
+  </view>
 
-  <!-- 人数选择 -->
-  <picker mode="selector" range="{{peopleNumbers}}" value="{{peopleIndex}}" bindchange="onPeopleChange">
-    <view class="picker">选择人数：{{peopleNumbers[peopleIndex]}}</view>
-  </picker>
-
-  <!-- 姓名输入 -->
-  <view class="input-label">姓名：</view>
-  <input class="text-input" type="text" placeholder="请输入姓名" value="{{name}}" bindinput="onNameInput" />
-
-  <!-- 手机号输入 -->
-  <view class="input-label">手机号：</view>
-  <input class="text-input" type="number" maxlength="11" placeholder="请输入手机号" value="{{phone}}" bindinput="onPhoneInput" />
-
-  <!-- 备注输入 -->
-  <view class="input-label">备注：</view>
-  <textarea class="textarea-input" placeholder="请输入备注" value="{{remark}}" bindinput="onRemarkInput"></textarea>
-
-  <!-- 预定按钮 -->
-  <button type="primary" bindtap="onSubmit">预定座位</button>
+  <!-- 底部提交 -->
+  <view class="fixed-submit">
+    <button class="btn-primary" type="primary" catchtap="onSubmit">提交预定</button>
+  </view>
 </view>

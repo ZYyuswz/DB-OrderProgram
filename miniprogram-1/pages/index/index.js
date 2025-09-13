@@ -9,11 +9,39 @@ Page({
   },
 
   onLoad(options) {
+    // 若携带二维码参数（或场景值），未登录则先跳登录页并保存参数
+    const isLogin = wx.getStorageSync('isLogin');
+    const hasQrParams = options && (options.tableNumber || options.storeId || options.scene || options.q);
+    if (!isLogin && hasQrParams) {
+      try {
+        wx.setStorageSync('pendingRedirect', {
+          page: '/pages/index/index',
+          options: options || {}
+        });
+      } catch (e) {}
+      wx.reLaunch({ url: '/pages/login/login' });
+      return;
+    }
+
     // 页面加载逻辑
     console.log('点餐页面加载 - 此页面预留给其他组开发');
-    
+
+    wx.setStorageSync('isAddDish',false)
+
+
+    // 如果存在登录前保存的参数，优先使用
+    let pageOptions = options || {};
+    try {
+      const pending = wx.getStorageSync('pendingRedirect');
+      if (pending && pending.page === '/pages/index/index' && pending.options) {
+        pageOptions = pending.options;
+        wx.removeStorageSync('pendingRedirect');
+      }
+    } catch (e) {}
+
+
     // 检查是否从二维码进入
-    this.checkQRCodeParams(options);
+    this.checkQRCodeParams(pageOptions);
   },
 
   onShow() {
@@ -29,18 +57,53 @@ Page({
     // 处理可能的URL编码问题
     let tableNumber = null;
     let storeId = null;
-    
-    // 检查是否有tableNumber参数
-    if (options.tableNumber) {
+
+    // 优先从 scene 解析（扫码/二维码编译常见入口）
+    if (options && options.scene) {
+      let sceneStr = decodeURIComponent(options.scene || '');
+      const qIndex = sceneStr.indexOf('?');
+      if (qIndex >= 0) sceneStr = sceneStr.substring(qIndex + 1);
+      sceneStr = sceneStr.replace('\\u0026', '&').replace('\u0026', '&');
+      const kvs = sceneStr.split('&');
+      const map = {};
+      kvs.forEach(pair => {
+        const [k, v] = pair.split('=');
+        if (k) map[k] = decodeURIComponent(v || '');
+      });
+      if (map.tableNumber) tableNumber = map.tableNumber;
+      if (map.storeId) storeId = parseInt(map.storeId);
+      if (tableNumber && storeId) {
+        console.log('从 scene 解析参数:', { tableNumber, storeId });
+      }
+    }
+
+    // 其次从 q 参数解析（某些场景可能携带）
+    if ((!tableNumber || !storeId) && options && options.q) {
+      let qStr = decodeURIComponent(options.q || '');
+      const qIndex2 = qStr.indexOf('?');
+      if (qIndex2 >= 0) qStr = qStr.substring(qIndex2 + 1);
+      qStr = qStr.replace('\\u0026', '&').replace('\u0026', '&');
+      const params = {};
+      qStr.split('&').forEach(pair => {
+        const [k, v] = pair.split('=');
+        if (k) params[k] = decodeURIComponent(v || '');
+      });
+      if (params.tableNumber) tableNumber = params.tableNumber;
+      if (params.storeId) storeId = parseInt(params.storeId);
+      if (tableNumber && storeId) {
+        console.log('从 q 参数解析:', { tableNumber, storeId });
+      }
+    }
+
+    // 再退回到原有 tableNumber+storeId 解析
+    if ((!tableNumber || !storeId) && options && options.tableNumber) {
       let decodedTableNumber = decodeURIComponent(options.tableNumber);
       console.log('解码后的tableNumber:', decodedTableNumber);
       
-      // 检查是否包含storeId信息（处理各种分隔符）
       if (decodedTableNumber.includes('&storeId=') || 
           decodedTableNumber.includes('\\u0026storeId=') ||
           decodedTableNumber.includes('\u0026storeId=')) {
         
-        // 统一替换各种分隔符为标准分隔符
         let normalizedString = decodedTableNumber
           .replace('\\u0026', '&')
           .replace('\u0026', '&');
@@ -73,6 +136,21 @@ Page({
       console.log('桌台号:', tableNumber);
       console.log('店铺ID:', storeId);
       
+      let dict = {
+        "A-01" : 1,
+        "A-02": 2,
+        "B-01": 3,
+        "C-01": 4
+      };
+      if(Number.isFinite(tableNumber)){
+        wx.setStorageSync('tableId', tableNumber);
+      }
+      else{
+        let tableId = dict[tableNumber];
+        wx.setStorageSync('tableId', tableId);
+      }
+      wx.setStorageSync('storeId', storeId);
+
       // 显示桌台信息
       this.showTableInfo();
       

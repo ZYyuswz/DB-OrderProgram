@@ -3,7 +3,7 @@
   <!-- 上方：桌号信息 -->
   <view class="section table-info">
     <text class="label">桌号</text>
-    <text class="value">table:{{tableId}}</text>
+    <text class="value">{{tableNumber}}</text>
   </view>
 
   <!-- 中间：订单商品列表 -->
@@ -20,16 +20,17 @@
       </view>
     </scroll-view>
 
-    <!-- 优惠券区域 -->
+    <!-- 积分区域 -->
     <view class="coupon-section">
-      <text class="label">优惠券</text>
+      <text class="label">积分</text>
       <view class="action">
-        <text class="value">暂无可用</text>
-        <text class="arrow">></text>
+        <text class="value">{{points}}</text>
+        <text class="arrow"></text>
       </view>
-    </view>
+    </view>   
   </view>
 </view>
+
 
 <!-- 下方：固定的付款栏 -->
 <view class="payment-bar">

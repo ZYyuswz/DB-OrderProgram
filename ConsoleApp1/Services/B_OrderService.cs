@@ -1,8 +1,11 @@
 ﻿// OrderService 是一个服务层类，主要负责处理与 “Order” 相关的业务逻辑和数据处理
 // 通俗讲就是OrderController需要的方法
+using ConsoleApp1.Models;
 using DBManagement.Models;
 using DBManagement.Utils;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using OrderDetail = DBManagement.Models.OrderDetail;
 namespace DBManagement.Service
 {
     public class OrderService
@@ -25,6 +28,92 @@ namespace DBManagement.Service
                 .ToList(); // 执行查询并转换为列表
 
             return orders;
+        }
+
+        // VIP折扣数组
+        private static readonly decimal[] VIPDiscounts = new decimal[]
+        {
+            1.00m,   // 0不使用
+            0.99m,   // 等级1
+            0.98m,   // 等级2
+            0.97m,   // 等级3
+            0.96m,   // 等级4
+            0.95m    // 等级5
+        };
+
+
+        // 定义一个内部类用于存储可修改的VIP信息
+        private class VipInfo
+        {
+            public int VIPLevel { get; set; }
+            public int VIPPoints { get; set; }
+        }
+
+        public decimal CalculatePrice(long customerId, decimal totalPrice)
+        {
+            try
+            {
+                // 1. 查询客户积分（只选择需要的字段）
+                var customer = _db.Customers
+                    .Where(c => c.CustomerId == customerId)
+                    .Select(c => new VipInfo
+                    {
+                        VIPLevel = c.VIPLevel,
+                        VIPPoints = c.VIPPoints
+                    }) // 只选择需要的字段并映射到可修改的类
+                    .FirstOrDefault();
+
+                if (customer == null)
+                {
+                    return totalPrice;
+                }
+
+                Console.WriteLine($"客户: VIPLevel={customer.VIPLevel}, VIPPoints={customer.VIPPoints}");
+
+                int vipPoints = customer.VIPPoints;
+                int declineMoney = vipPoints / 100; // 每100积分抵1元
+                if (declineMoney > totalPrice)
+                {
+                    declineMoney = (int)totalPrice; // 抵扣金额不能超过总价
+                }
+
+                // 2. 根据VIP等级计算折扣（确保等级在有效范围内）
+                int viplevel = Math.Clamp(customer.VIPLevel, 0, VIPDiscounts.Length - 1);
+                decimal discount = VIPDiscounts[viplevel];
+
+                // 3. 计算最终价格
+                decimal finalPrice = (totalPrice - declineMoney) * discount;
+                Console.WriteLine($"计算最终价: {finalPrice} (抵扣={declineMoney}, 折扣={discount})");
+
+                // 4. 更新积分（先扣除使用的积分）
+                if (declineMoney > 0)
+                {
+                    customer.VIPPoints -= declineMoney * 100;
+                }
+
+                // 5. 增加积分（每消费1元增加1积分）
+                customer.VIPPoints += (int)Math.Floor(finalPrice); // 使用Floor确保是整数
+
+                // 确保积分不为负数
+                if (customer.VIPPoints < 0)
+                {
+                    customer.VIPPoints = 0;
+                }
+
+                // 6. 将修改保存到数据库
+                _db.Customers
+                    .Where(c => c.CustomerId == customerId)
+                    .ExecuteUpdate(c => c
+                        .SetProperty(c => c.VIPPoints, customer.VIPPoints)
+                    );
+
+                return finalPrice;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"计算价格时出错: {ex.Message}");
+                return totalPrice;
+            }
         }
 
         // 创建订单及订单详情
@@ -53,14 +142,12 @@ namespace DBManagement.Service
                     order.OrderDetails.Add(detail);
                 }
 
-                //// 设置订单的详情集合
-                //order.OrderDetails = orderDetails;
-
                 // 计算订单总价（所有明细小计之和）
                 order.TotalPrice = order.OrderDetails.Sum(d => d.Subtotal);
 
-                // 先设置finalPrice为0，后续可根据实际情况更新
-                order.FinalPrice = 0;
+                // 计算订单最终价格，调用函数
+                order.FinalPrice = CalculatePrice(order.CustomerId,order.TotalPrice);
+
 
                 // 只需要添加主订单，关联的详情会自动处理
                 _db.Orders.Add(order);

@@ -21,8 +21,9 @@ namespace DB_Prog.Models
 
         [ForeignKey("Customer")]
         [Column("CUSTOMERID")]
-        public int CustomerID { get; set; }
+        public long CustomerID { get; set; }
 
+        /*
         [Column("CUSTOMERNAME")]
         [StringLength(100)]
         public string CustomerName { get; set; }
@@ -30,6 +31,7 @@ namespace DB_Prog.Models
         [Column("CONTACTPHONE")]
         [StringLength(20)]
         public string ContactPhone { get; set; }
+        */
 
         [Column("PARTYSIZE")]
         public int PartySize { get; set; }
