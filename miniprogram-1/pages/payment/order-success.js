@@ -15,7 +15,7 @@
         orderId : wx.getStorageSync('orderId'),
         finalPrice : wx.getStorageSync('finalPrice')
       });
-      const backendApiUrl = 'http://localhost:5002/api/order/detail/'+ this.data.orderId; 
+      const backendApiUrl = 'http://100.80.24.218:5002/api/order/detail/'+ this.data.orderId; 
       // 页面加载时，从后端读取订单数据
       try {
         wx.request({

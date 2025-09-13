@@ -1,6 +1,6 @@
 class APIManager {
     constructor() {
-      this.baseURL = 'http://localhost:5002/api';
+      this.baseURL = 'http://100.80.24.218:5002/api';
       this.debugMode = false; // 调试模式，控制是否显示404等业务逻辑错误
     }
   

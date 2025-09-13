@@ -92,7 +92,7 @@ Page({
   },
 
   postReservation(postData){
-    const backendApiUrl ='http://localhost:5002/api/TableReservation';  
+    const backendApiUrl ='http://100.80.24.218:5002/api/TableReservation';  
     wx.request({
       url: backendApiUrl,
       method: 'POST',

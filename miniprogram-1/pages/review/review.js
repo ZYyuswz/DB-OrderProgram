@@ -124,12 +124,12 @@ Page({
     // 调用后端API提交评价
     async submitReviewToAPI(reviewData) {
       try {
-        console.log('开始发送请求到:', 'http://localhost:5002/api/review');
+        console.log('开始发送请求到:', 'http://100.80.24.218:5002/api/review');
         console.log('请求数据:', reviewData);
         
         const response = await new Promise((resolve, reject) => {
           wx.request({
-            url: 'http://localhost:5002/api/review',
+            url: 'http://100.80.24.218:5002/api/review',
             method: 'POST',
             data: reviewData,
             header: {

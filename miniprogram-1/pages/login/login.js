@@ -130,7 +130,7 @@ Page({
     async requestLogin(data) {
       return new Promise((resolve, reject) => {
         wx.request({
-          url: 'http://localhost:5002/api/customer/login-by-username',
+          url: 'http://100.80.24.218:5002/api/customer/login-by-username',
           method: 'POST',
           data: data,
           header: {

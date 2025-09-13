@@ -113,7 +113,7 @@ Page({
   postOrder: function(postData) {
     const that = this; // 保存this指向
     const isAddDish = wx.getStorageSync('isAddDish')||false;
-    const backendApiUrl = "http://localhost:5002/api/order"+ ( isAddDish ? ("/"+this.data.customerId ): "");    
+    const backendApiUrl = "http://100.80.24.218:5002/api/order"+ ( isAddDish ? ("/"+this.data.customerId ): "");    
     const method = isAddDish?'PUT':'POST';
     console.log(isAddDish,backendApiUrl,this.data.customerId,method);
     wx.request({
@@ -156,7 +156,7 @@ Page({
   
   putStatus:function () {
     wx.request({
-      url: 'http://localhost:5002/api/cache/status/'+ this.data.tableId,
+      url: 'http://100.80.24.218:5002/api/cache/status/'+ this.data.tableId,
       method: 'PUT',   
         success: (res) => {        
           if (res.statusCode === 200) {
@@ -168,7 +168,7 @@ Page({
 
   deleteCache:function () {
     wx.request({
-      url: 'http://localhost:5002/api/cache/table/'+ this.data.tableId,
+      url: 'http://100.80.24.218:5002/api/cache/table/'+ this.data.tableId,
       method: 'DELETE',   
         success: (res) => {        
           if (res.statusCode === 200) {
@@ -183,7 +183,7 @@ Page({
    * @param {number} orderId - 订单ID
    */
   getTotalPriceFromServer: function(orderId) {
-    const backendApiUrl = 'http://localhost:5002/api/order/'+ orderId; 
+    const backendApiUrl = 'http://100.80.24.218:5002/api/order/'+ orderId; 
     wx.setStorageSync('orderId', orderId);
     wx.request({
       url: backendApiUrl,

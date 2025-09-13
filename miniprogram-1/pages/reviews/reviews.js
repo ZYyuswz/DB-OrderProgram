@@ -101,7 +101,7 @@ Page({
       // 调用后端API获取评价列表
       const reviewsResponse = await new Promise((resolve, reject) => {
         wx.request({
-          url: `http://localhost:5002/api/review/customer/${customerId}`,
+          url: `http://100.80.24.218:5002/api/review/customer/${customerId}`,
           method: 'GET',
           success: (res) => {
             if (res.statusCode === 200 && res.data.success) {
