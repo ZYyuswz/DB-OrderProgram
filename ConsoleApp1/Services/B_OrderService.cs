@@ -42,14 +42,25 @@ namespace DBManagement.Service
         };
 
 
+        // 定义一个内部类用于存储可修改的VIP信息
+        private class VipInfo
+        {
+            public int VIPLevel { get; set; }
+            public int VIPPoints { get; set; }
+        }
+
         public decimal CalculatePrice(long customerId, decimal totalPrice)
         {
             try
             {
-                // 1. 查询客户积分（只选择需要的字段，避免读取可能为NULL的字段）
+                // 1. 查询客户积分（只选择需要的字段）
                 var customer = _db.Customers
                     .Where(c => c.CustomerId == customerId)
-                    .Select(c => new { c.VIPLevel, c.VIPPoints }) // 只选择需要的字段
+                    .Select(c => new VipInfo
+                    {
+                        VIPLevel = c.VIPLevel,
+                        VIPPoints = c.VIPPoints
+                    }) // 只选择需要的字段并映射到可修改的类
                     .FirstOrDefault();
 
                 if (customer == null)
@@ -74,21 +85,27 @@ namespace DBManagement.Service
                 decimal finalPrice = (totalPrice - declineMoney) * discount;
                 Console.WriteLine($"计算最终价: {finalPrice} (抵扣={declineMoney}, 折扣={discount})");
 
-                // 4. 如果需要更新积分，重新查询完整实体（但只更新需要的字段）
+                // 4. 更新积分（先扣除使用的积分）
                 if (declineMoney > 0)
                 {
-                    var customerToUpdate = _db.Customers
-                        .FirstOrDefault(c => c.CustomerId == customerId);
-
-                    if (customerToUpdate != null)
-                    {
-                        customerToUpdate.VIPPoints -= declineMoney * 100;
-                        customerToUpdate.VIPPoints = Math.Max(0, customerToUpdate.VIPPoints); // 确保积分不为负数
-                        Console.WriteLine($"更新积分: 原={customerToUpdate.VIPPoints + declineMoney * 100}, 新={customerToUpdate.VIPPoints}");
-
-                        _db.SaveChanges();
-                    }
+                    customer.VIPPoints -= declineMoney * 100;
                 }
+
+                // 5. 增加积分（每消费1元增加1积分）
+                customer.VIPPoints += (int)Math.Floor(finalPrice); // 使用Floor确保是整数
+
+                // 确保积分不为负数
+                if (customer.VIPPoints < 0)
+                {
+                    customer.VIPPoints = 0;
+                }
+
+                // 6. 将修改保存到数据库
+                _db.Customers
+                    .Where(c => c.CustomerId == customerId)
+                    .ExecuteUpdate(c => c
+                        .SetProperty(c => c.VIPPoints, customer.VIPPoints)
+                    );
 
                 return finalPrice;
             }
