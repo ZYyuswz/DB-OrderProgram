@@ -136,8 +136,20 @@ Page({
       console.log('桌台号:', tableNumber);
       console.log('店铺ID:', storeId);
       
-      wx.setStorageSync('tableId', tableNumber)
-      wx.setStorageSync('storeId', storeId)
+      let dict = {
+        "A-01" : 1,
+        "A-02": 2,
+        "B-01": 3,
+        "C-01": 4
+      };
+      if(Number.isFinite(tableNumber)){
+        wx.setStorageSync('tableId', tableNumber);
+      }
+      else{
+        let tableId = dict[tableNumber];
+        wx.setStorageSync('tableId', tableId);
+      }
+      wx.setStorageSync('storeId', storeId);
 
       // 显示桌台信息
       this.showTableInfo();
