@@ -60,8 +60,8 @@ Page({
   
 
   onSubmit() {
-    userinfo = wx.getStorageSync('customerId');
-    console.log(userinfo);
+    const userInfo = wx.getStorageSync('userInfo');
+    console.log(userInfo);
     if (!this.data.name.trim()) {
       wx.showToast({ title: '请输入姓名', icon: 'none' });
       return;
