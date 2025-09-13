@@ -21,7 +21,7 @@ namespace DB_Prog.Models
 
         [ForeignKey("Customer")]
         [Column("CUSTOMERID")]
-        public int CustomerID { get; set; }
+        public long CustomerID { get; set; }
 
         /*
         [Column("CUSTOMERNAME")]

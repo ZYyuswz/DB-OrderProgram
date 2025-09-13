@@ -39,11 +39,11 @@ namespace ConsoleApp1.Services
                         c.TotalConsumption,
                         c.RegisterTime,
                         CASE 
-                            WHEN c.VIPLevel = 1 THEN '青铜会员'
-                            WHEN c.VIPLevel = 2 THEN '白银会员'
-                            WHEN c.VIPLevel = 3 THEN '黄金会员'
-                            WHEN c.VIPLevel = 4 THEN '白金会员'
-                            WHEN c.VIPLevel = 5 THEN '钻石会员'
+                            WHEN c.VIPLevel = 0 THEN '青铜会员'
+                            WHEN c.VIPLevel = 1 THEN '白银会员'
+                            WHEN c.VIPLevel = 2 THEN '黄金会员'
+                            WHEN c.VIPLevel = 3 THEN '铂金会员'
+                            WHEN c.VIPLevel = 4 THEN '钻石会员'
                             ELSE '普通会员'
                         END AS VipLevelName
                     FROM PUB.Customer c
@@ -97,36 +97,48 @@ namespace ConsoleApp1.Services
         /// <param name="customerId">客户ID</param>
         /// <param name="updateInfo">更新信息</param>
         /// <returns>是否更新成功</returns>
-        public async Task<bool> UpdateCustomerProfileAsync(int customerId, CustomerUpdateInfo updateInfo)
+        public async Task<int> UpdateCustomerProfileAsync(decimal customerId, CustomerUpdateInfo updateInfo)
         {
-            try
-            {
-                using var connection = new OracleConnection(_connectionString);
-                await connection.OpenAsync();
+            const string query = @"
+        UPDATE PUB.Customer
+        SET 
+            CustomerName = :CustomerName,
+            Phone        = :Phone,
+            Email        = :Email
+        WHERE 
+            CustomerID   = :CustomerId
+            AND Status   = '正常'";
 
-                var query = @"
-                    UPDATE PUB.Customer 
-                    SET 
-                        CustomerName = :CustomerName,
-                        Phone = :Phone,
-                        Email = :Email
-                    WHERE CustomerID = :CustomerId AND Status = '正常'";
+            using var connection = new OracleConnection(_connectionString);
+            await connection.OpenAsync();
 
-                using var command = new OracleCommand(query, connection);
-                command.Parameters.Add(":CustomerId", OracleDbType.Int32).Value = customerId;
-                command.Parameters.Add(":CustomerName", OracleDbType.Varchar2).Value = updateInfo.CustomerName;
-                command.Parameters.Add(":Phone", OracleDbType.Varchar2).Value = updateInfo.Phone ?? (object)DBNull.Value;
-                command.Parameters.Add(":Email", OracleDbType.Varchar2).Value = updateInfo.Email ?? (object)DBNull.Value;
+            using var command = new OracleCommand(query, connection);
+            command.BindByName = true; // 👈 非常关键
 
-                var rowsAffected = await command.ExecuteNonQueryAsync();
-                return rowsAffected > 0;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"更新客户 {customerId} 档案信息失败");
-                throw;
-            }
+            // CustomerId -> NUMBER(10)
+            command.Parameters.Add(":CustomerId", OracleDbType.Decimal).Value = customerId;
+
+            // CustomerName -> VARCHAR2(100)
+            command.Parameters.Add(":CustomerName", OracleDbType.Varchar2, 100).Value =
+                string.IsNullOrWhiteSpace(updateInfo.CustomerName)
+                    ? (object)DBNull.Value
+                    : updateInfo.CustomerName.Trim();
+
+            // Phone -> VARCHAR2(20)
+            command.Parameters.Add(":Phone", OracleDbType.Varchar2, 20).Value =
+                string.IsNullOrWhiteSpace(updateInfo.Phone)
+                    ? (object)DBNull.Value
+                    : updateInfo.Phone.Trim();
+
+            // Email -> VARCHAR2(100)
+            command.Parameters.Add(":Email", OracleDbType.Varchar2, 100).Value =
+                string.IsNullOrWhiteSpace(updateInfo.Email)
+                    ? (object)DBNull.Value
+                    : updateInfo.Email.Trim();
+
+            return await command.ExecuteNonQueryAsync();
         }
+
 
         /// <summary>
         /// 根据消费总额计算会员等级

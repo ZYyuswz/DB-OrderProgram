@@ -10,7 +10,6 @@ Page({
     // 用于存储需要提交到后端的数据
     storeId: 1, // 假设店铺ID为1，实际应从全局或缓存获取
     customerId: 1, // 假设顾客ID为1，实际应在用户登录后获取
-    points : 0,
   },
 
   onLoad: function (options) {
@@ -23,7 +22,8 @@ Page({
       //必须要setdata，否则无法渲染上去
       this.setData({tableNumber : wx.getStorageSync('tableNumber')});
       //测试时不用，正式运行时取消掉
-      // this.data.customerId = wx.getStorageSync('userInfo').phone || 1;
+
+      this.data.customerId = wx.getStorageSync('userInfo').customerId || 1;
       let userinfo = wx.getStorageSync('userInfo')
       this.setData({ points : userinfo.points} ?? 100);
       console.log("积分为",userinfo);
@@ -176,7 +176,7 @@ Page({
           }
         }
     })
-  },  
+  },
 
   /**
    * 发起GET请求，从后端获取并确认总价
@@ -193,7 +193,6 @@ Page({
         if (res.statusCode === 200) {
           console.log(res.data)
           console.log(`后端确认总价为: ${res.data.data.finalPrice}`);
-          wx.setStorageSync('finalPrice',res.data.data.finalPrice);
           wx.showToast({
             title: '下单成功！',
             icon: 'success',

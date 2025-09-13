@@ -5,6 +5,7 @@ using DBManagement.Models;
 using DBManagement.Utils;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using OrderDetail = DBManagement.Models.OrderDetail;
 namespace DBManagement.Service
 {
     public class OrderService
@@ -41,17 +42,23 @@ namespace DBManagement.Service
         };
 
 
-        public decimal CalculatePrice(int? customerId, decimal totalPrice)
+        public decimal CalculatePrice(long customerId, decimal totalPrice)
         {
             try
             {
-                // 1. 查询客户积分
+                // 1. 查询客户积分（只选择需要的字段，避免读取可能为NULL的字段）
                 var customer = _db.Customers
-                    .FirstOrDefault(c => c.CustomerId == customerId);
+                    .Where(c => c.CustomerId == customerId)
+                    .Select(c => new { c.VIPLevel, c.VIPPoints }) // 只选择需要的字段
+                    .FirstOrDefault();
+
                 if (customer == null)
-                { 
+                {
                     return totalPrice;
                 }
+
+                Console.WriteLine($"客户: VIPLevel={customer.VIPLevel}, VIPPoints={customer.VIPPoints}");
+
                 int vipPoints = customer.VIPPoints;
                 int declineMoney = vipPoints / 100; // 每100积分抵1元
                 if (declineMoney > totalPrice)
@@ -59,38 +66,41 @@ namespace DBManagement.Service
                     declineMoney = (int)totalPrice; // 抵扣金额不能超过总价
                 }
 
-                // 2. 根据积分计算折扣
-                int viplevel = customer.VIPLevel;
+                // 2. 根据VIP等级计算折扣（确保等级在有效范围内）
+                int viplevel = Math.Clamp(customer.VIPLevel, 0, VIPDiscounts.Length - 1);
                 decimal discount = VIPDiscounts[viplevel];
 
                 // 3. 计算最终价格
-                decimal finalPrice = (totalPrice - declineMoney)* discount;
-                // 4. 更新会员积分（减少使用的积分）
+                decimal finalPrice = (totalPrice - declineMoney) * discount;
+                Console.WriteLine($"计算最终价: {finalPrice} (抵扣={declineMoney}, 折扣={discount})");
+
+                // 4. 如果需要更新积分，重新查询完整实体（但只更新需要的字段）
                 if (declineMoney > 0)
                 {
-                    customer.VIPPoints -= declineMoney*100;
-                    // 确保积分不为负数
-                    if (customer.VIPPoints < 0)
+                    var customerToUpdate = _db.Customers
+                        .FirstOrDefault(c => c.CustomerId == customerId);
+
+                    if (customerToUpdate != null)
                     {
-                        customer.VIPPoints = 0;
+                        customerToUpdate.VIPPoints -= declineMoney * 100;
+                        customerToUpdate.VIPPoints = Math.Max(0, customerToUpdate.VIPPoints); // 确保积分不为负数
+                        Console.WriteLine($"更新积分: 原={customerToUpdate.VIPPoints + declineMoney * 100}, 新={customerToUpdate.VIPPoints}");
+
+                        _db.SaveChanges();
                     }
-                    // 更新数据库
-                    _db.Customers.Update(customer);
-                    _db.SaveChanges();
                 }
 
                 return finalPrice;
             }
             catch (Exception ex)
             {
-                // 记录日志或处理异常
                 Console.WriteLine($"计算价格时出错: {ex.Message}");
                 return totalPrice;
             }
         }
 
         // 创建订单及订单详情
-        public (bool success, string message, int order_id) CreateOrder(Order order, List<DBManagement.Models.OrderDetail> orderDetails)
+        public (bool success, string message, int order_id) CreateOrder(Order order, List<OrderDetail> orderDetails)
         {
             try
             {
@@ -134,7 +144,7 @@ namespace DBManagement.Service
             }
         }
 
-        public (bool success, string message) ContinueOrder(int tableId, List<DBManagement.Models.OrderDetail> orderDetails)
+        public (bool success, string message) ContinueOrder(int tableId, List<OrderDetail> orderDetails)
         {
             try
             {

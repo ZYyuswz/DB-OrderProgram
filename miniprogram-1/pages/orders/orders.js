@@ -15,51 +15,6 @@ Page({
     // 页面加载时获取用户信息并加载订单
     this.loadUserInfo();
     this.loadOrders();
-    
-    // 关闭API调试模式，减少404等业务逻辑错误的日志输出
-    API.setDebugMode(false);
-  },
-
-  onShow() {
-    // 页面显示时重新检查订单评价状态
-    if (this.data.orders.length > 0) {
-      this.refreshOrderReviewStatus();
-    }
-  },
-
-  // 刷新订单评价状态
-  async refreshOrderReviewStatus() {
-    try {
-      const updatedOrders = [];
-      
-      for (const order of this.data.orders) {
-        try {
-          // 检查订单是否已评价
-          const reviewStatus = await API.checkOrderReviewStatus(order.orderId);
-          
-          updatedOrders.push({
-            ...order,
-            hasReview: !!reviewStatus,
-            reviewData: reviewStatus
-          });
-        } catch (error) {
-          console.error(`刷新订单 ${order.orderId} 评价状态失败:`, error);
-          // 如果获取评价状态失败，保持原有状态
-          updatedOrders.push({
-            ...order,
-            hasReview: order.hasReview || false,
-            reviewData: order.reviewData || null
-          });
-        }
-      }
-      
-      this.setData({
-        orders: updatedOrders
-      });
-      
-    } catch (error) {
-      console.error('刷新订单评价状态失败:', error);
-    }
   },
 
   // 获取用户信息
@@ -101,17 +56,14 @@ Page({
       // 调用后端API获取订单数据
       const orders = await this.fetchOrdersFromAPI();
       
-      // 为每个订单获取菜品详情
-      const ordersWithDetails = await this.loadOrderDetailsForAll(orders);
-      
       if (refresh) {
         this.setData({
-          orders: ordersWithDetails,
+          orders: orders,
           page: 2
         });
       } else {
         this.setData({
-          orders: [...this.data.orders, ...ordersWithDetails],
+          orders: [...this.data.orders, ...orders],
           page: this.data.page + 1
         });
       }
@@ -197,40 +149,27 @@ Page({
     }
   },
 
-  // 调用后端API获取订单数据
   async fetchOrdersFromAPI() {
     try {
-      // 获取当前用户ID（假设存储在userInfo中）
       const userInfo = this.data.userInfo;
+      let customerId;
       if (!userInfo || !userInfo.customerId) {
-        // 如果没有客户ID，使用默认客户ID=1进行测试
-        const customerId = 1;
-        console.log('🔍 开始获取客户', customerId, '的订单数据...');
-        
-        const orders = await API.getCustomerOrders(customerId, this.data.page, this.data.pageSize);
-        console.log('📊 后端返回的原始订单数据:', orders);
-        console.log('🔍 第一个订单的字段检查:', {
-          hasOrderID: orders[0] && 'OrderID' in orders[0],
-          hasOrderTime: orders[0] && 'OrderTime' in orders[0],
-          hasTotalPrice: orders[0] && 'TotalPrice' in orders[0],
-          orderKeys: orders[0] ? Object.keys(orders[0]) : [],
-          firstOrder: orders[0]
-        });
-        
-        const formattedOrders = this.formatOrdersData(orders);
-        console.log('✨ 格式化后的订单数据:', formattedOrders);
-        
-        return formattedOrders;
+        customerId = 1; // 默认
+        console.warn('⚠️ 未找到用户 customerId，使用默认 1');
+      } else {
+        customerId = userInfo.customerId;
       }
-
-      const orders = await API.getCustomerOrders(userInfo.customerId, this.data.page, this.data.pageSize);
-      return this.formatOrdersData(orders);
+      
+      console.log(`🚀 调用 API: getCustomerOrders(${customerId}, ${this.data.page}, ${this.data.pageSize})`);
+      const orders = await API.getCustomerOrders(customerId, this.data.page, this.data.pageSize);
+      
+      console.log('📦 API 响应状态:', orders.length > 0 ? '有数据' : '空数组');
+      console.log('📦 完整响应:', orders); // 打印整个响应
+      
+      const formattedOrders = this.formatOrdersData(orders);
+      return formattedOrders;
     } catch (error) {
-      console.error('获取订单数据失败:', error);
-      wx.showToast({
-        title: '获取订单数据失败',
-        icon: 'none'
-      });
+      console.error('💥 API 错误详情:', error.response || error); // 打印更多错误
       throw error;
     }
   },
@@ -239,36 +178,25 @@ Page({
   formatOrdersData(orders) {
     return orders.map((order, index) => {
       try {
-        console.log(`🔍 格式化第${index + 1}个订单，原始字段:`, Object.keys(order));
-        
         const formattedOrder = {
           ...order,
-          // 统一字段名（后端返回大写开头，前端使用小写开头）
-          orderId: order.OrderID || order.orderID || order.orderId || 0,
-          orderTime: order.OrderTime || order.orderTime || '未知时间',
-          totalPrice: order.TotalPrice || order.totalPrice || 0,
-          orderStatus: order.OrderStatus || order.orderStatus || '状态未知',
-          storeName: order.StoreName || order.storeName || '未知店铺',
-          tableNumber: order.TableNumber || order.tableNumber || '',
-          customerName: order.CustomerName || order.customerName || '未知客户',
-          formattedTime: API.formatTime((order.OrderTime || order.orderTime || '').toString()),
-          statusInfo: API.formatOrderStatus(order.OrderStatus || order.orderStatus),
-          // 初始化空的详情数组，稍后会通过API获取
-          details: [],
-          // 评价状态
-          hasReview: order.hasReview || false,
-          reviewData: order.reviewData || null,
-          // 调试信息：记录所有可用字段
-          __allKeys: Object.keys(order).join(', ')
+          // 确保字段存在且有默认值
+          orderId: order.orderID || order.OrderID || 0,
+          orderTime: order.orderTime || order.OrderTime || '未知时间',
+          totalPrice: order.totalPrice || order.TotalPrice || 0,
+          orderStatus: order.orderStatus || order.OrderStatus || '状态未知',
+          storeName: order.storeName || order.StoreName || '未知店铺',
+          tableNumber: order.tableNumber || order.TableNumber || '',
+          customerName: order.customerName || order.CustomerName || '未知客户',
+          formattedTime: API.formatTime(order.orderTime || order.OrderTime),
+          statusInfo: API.formatOrderStatus(order.orderStatus || order.OrderStatus)
         };
         
-        console.log(`✅ 第${index + 1}个订单格式化完成:`, formattedOrder);
         return formattedOrder;
       } catch (error) {
-        console.error(`❌ 格式化第${index + 1}个订单失败:`, error, order);
         // 返回安全的默认订单对象
         return {
-          orderId: order.OrderID || order.orderID || order.orderId || index + 1,
+          orderId: order.orderId || order.OrderID || index + 1,
           orderTime: '时间未知',
           totalPrice: 0,
           orderStatus: '状态未知',
@@ -277,51 +205,27 @@ Page({
           customerName: '未知客户',
           formattedTime: '时间未知',
           statusInfo: { text: '状态未知', class: 'default' },
-          details: [],
-          hasReview: false,
-          reviewData: null
+          details: []
         };
       }
     });
   },
 
   // 查看订单详情
-  async viewOrderDetail(e) {
+  viewOrderDetail(e) {
     const orderId = e.currentTarget.dataset.orderid;
     const order = this.data.orders.find(o => o.orderId === orderId);
     
     if (!order) return;
 
-    // 直接显示订单详情，因为详情已经在加载订单时获取了
+    // 显示订单详情弹窗
     this.setData({
       selectedOrder: order,
       showDetail: true
     });
   },
-
-  // 关闭详情弹窗
-  closeDetail() {
-    this.setData({
-      showDetail: false,
-      selectedOrder: null
-    });
-  },
-
-  // 下拉刷新
-  onPullDownRefresh() {
-    this.loadOrders(true);
-    wx.stopPullDownRefresh();
-  },
-
-  // 上拉加载更多
-  onReachBottom() {
-    if (this.data.hasMore && !this.data.loading) {
-      this.loadOrders();
-    }
-  },
-
-  // 跳转到评价页面
-  goToReview(e) {
+// 跳转到评价页面
+goToReview(e) {
     const orderId = e.currentTarget.dataset.orderid;
     const order = this.data.orders.find(o => o.orderId === orderId);
     
@@ -347,17 +251,46 @@ Page({
       url: `/pages/review/review?orderId=${orderId}`
     });
   },
+  // 关闭详情弹窗
+  closeDetail() {
+    this.setData({
+      showDetail: false,
+      selectedOrder: null
+    });
+  },
+
+  // 下拉刷新
+  onPullDownRefresh() {
+    this.loadOrders(true);
+    wx.stopPullDownRefresh();
+  },
+
+  // 上拉加载更多
+  onReachBottom() {
+    if (this.data.hasMore && !this.data.loading) {
+      this.loadOrders();
+    }
+  },
+
+  // 重新点餐（跳转到点餐页面）
+  reorder(e) {
+    const orderId = e.currentTarget.dataset.orderid;
+    wx.showToast({
+      title: '正在准备重新点餐',
+      icon: 'loading'
+    });
+    
+    setTimeout(() => {
+      wx.switchTab({
+        url: '/pages/index/index'
+      });
+    }, 1000);
+  },
 
   // 跳转到点餐页面
   goToOrder() {
     wx.switchTab({
       url: '/pages/index/index'
     });
-  },
-
-  // 阻止事件冒泡
-  stopEvent() {
-    // 这个方法什么都不做，只是用来阻止事件冒泡
-    return;
   }
 });
