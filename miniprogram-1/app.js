@@ -15,6 +15,6 @@ App({
   },
   globalData: {
     userInfo: null,
-    baseUrl: "https://localhost:5002/api/" // 后端接口基础地址
+    baseUrl: "http://localhost:5002/api/" // 后端接口基础地址
   }
 })
